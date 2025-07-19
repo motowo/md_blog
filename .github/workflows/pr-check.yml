@@ -118,41 +118,15 @@ jobs:
       - name: Create environment file
         working-directory: backend
         run: |
-          cat > .env << EOF
-          APP_NAME=Laravel
-          APP_ENV=testing
-          APP_DEBUG=true
-          APP_TIMEZONE=Asia/Tokyo
-          APP_URL=http://localhost
-          
-          APP_LOCALE=ja
-          APP_FALLBACK_LOCALE=en
-          APP_FAKER_LOCALE=ja_JP
-          
-          BCRYPT_ROUNDS=4
-          
-          LOG_CHANNEL=stack
-          LOG_STACK=single
-          LOG_LEVEL=debug
-          
-          DB_CONNECTION=mysql
-          DB_HOST=127.0.0.1
-          DB_PORT=3306
-          DB_DATABASE=md_blog_test
-          DB_USERNAME=user
-          DB_PASSWORD=password
-          
-          SESSION_DRIVER=array
-          SESSION_LIFETIME=120
-          
-          BROADCAST_CONNECTION=log
-          FILESYSTEM_DISK=local
-          QUEUE_CONNECTION=sync
-          
-          CACHE_STORE=array
-          
-          MAIL_MAILER=array
-          EOF
+          cp .env.example .env
+          sed -i 's/APP_ENV=local/APP_ENV=testing/' .env
+          sed -i 's/DB_HOST=mysql/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_DATABASE=md_blog/DB_DATABASE=md_blog_test/' .env
+          sed -i 's/DB_USERNAME=root/DB_USERNAME=user/' .env
+          sed -i 's/BCRYPT_ROUNDS=12/BCRYPT_ROUNDS=4/' .env
+          sed -i 's/SESSION_DRIVER=database/SESSION_DRIVER=array/' .env
+          sed -i 's/CACHE_STORE=database/CACHE_STORE=array/' .env
+          sed -i 's/QUEUE_CONNECTION=database/QUEUE_CONNECTION=sync/' .env
 
       - name: Generate application key
         working-directory: backend
