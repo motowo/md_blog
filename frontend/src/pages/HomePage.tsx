@@ -20,22 +20,14 @@ export function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <h1 className="text-3xl font-bold text-gray-900">
-                MD Blog
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-900">MD Blog</h1>
             </div>
-            
+
             <nav className="flex items-center space-x-4">
               {isAuthenticated ? (
                 <>
-                  <span className="text-gray-700">
-                    ようこそ、{user?.name}さん
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLogout}
-                  >
+                  <span className="text-gray-700">ようこそ、{user?.name}さん</span>
+                  <Button variant="outline" size="sm" onClick={handleLogout}>
                     ログアウト
                   </Button>
                 </>
@@ -47,9 +39,7 @@ export function HomePage() {
                     </Button>
                   </Link>
                   <Link to="/register">
-                    <Button size="sm">
-                      登録
-                    </Button>
+                    <Button size="sm">登録</Button>
                   </Link>
                 </>
               )}
@@ -69,13 +59,11 @@ export function HomePage() {
               高品質な技術記事を投稿・購読できるプラットフォームです。
               専門知識を共有し、学習を促進しましょう。
             </p>
-            
+
             {!isAuthenticated && (
               <div className="mt-8 flex justify-center space-x-4">
                 <Link to="/register">
-                  <Button size="lg">
-                    今すぐ始める
-                  </Button>
+                  <Button size="lg">今すぐ始める</Button>
                 </Link>
                 <Link to="/login">
                   <Button variant="outline" size="lg">
@@ -90,9 +78,7 @@ export function HomePage() {
             <div className="mt-12">
               <div className="bg-white overflow-hidden shadow rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                    ユーザー情報
-                  </h3>
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">ユーザー情報</h3>
                   <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
                     <div>
                       <dt className="text-sm font-medium text-gray-500">ユーザー名</dt>

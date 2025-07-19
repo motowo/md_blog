@@ -4,25 +4,25 @@ import type { User, LoginRequest, RegisterRequest, AuthResponse } from '../types
 export class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>('/login', credentials);
-    
+
     // トークンをローカルストレージに保存
     if (response.token) {
       localStorage.setItem('auth_token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
     }
-    
+
     return response;
   }
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>('/register', userData);
-    
+
     // トークンをローカルストレージに保存
     if (response.token) {
       localStorage.setItem('auth_token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
     }
-    
+
     return response;
   }
 

@@ -6,23 +6,13 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   helpText?: string;
 }
 
-export function Input({ 
-  label, 
-  error, 
-  helpText, 
-  className = '', 
-  id,
-  ...props 
-}: InputProps) {
+export function Input({ label, error, helpText, className = '', id, ...props }: InputProps) {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
-  
+
   return (
     <div className="space-y-1">
       {label && (
-        <label 
-          htmlFor={inputId} 
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
           {label}
         </label>
       )}
@@ -37,12 +27,8 @@ export function Input({
         `}
         {...props}
       />
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
-      {helpText && !error && (
-        <p className="text-sm text-gray-500">{helpText}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      {helpText && !error && <p className="text-sm text-gray-500">{helpText}</p>}
     </div>
   );
 }

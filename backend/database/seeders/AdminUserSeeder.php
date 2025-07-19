@@ -15,8 +15,8 @@ class AdminUserSeeder extends Seeder
     {
         // 管理者アカウントがすでに存在するかチェック
         $adminEmail = 'admin@md-blog.local';
-        
-        if (!User::where('email', $adminEmail)->exists()) {
+
+        if (! User::where('email', $adminEmail)->exists()) {
             User::create([
                 'name' => 'システム管理者',
                 'username' => 'admin',
@@ -27,7 +27,7 @@ class AdminUserSeeder extends Seeder
             ]);
 
             $this->command->info('管理者アカウントを作成しました');
-            $this->command->info('Email: ' . $adminEmail);
+            $this->command->info('Email: '.$adminEmail);
             $this->command->info('Password: admin123!');
         } else {
             $this->command->info('管理者アカウントは既に存在します');

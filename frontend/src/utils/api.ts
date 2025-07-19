@@ -14,7 +14,7 @@ class ApiClient {
   private getHeaders(): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
     };
 
     const token = this.getAuthToken();
@@ -25,10 +25,7 @@ class ApiClient {
     return headers;
   }
 
-  async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     const config: RequestInit = {
       headers: this.getHeaders(),
@@ -37,7 +34,7 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'An error occurred' }));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);

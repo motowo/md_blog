@@ -30,11 +30,10 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            アクセス権限がありません
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">アクセス権限がありません</h2>
           <p className="text-gray-600">
-            このページにアクセスするには{requireRole === 'admin' ? '管理者' : '投稿者'}権限が必要です。
+            このページにアクセスするには{requireRole === 'admin' ? '管理者' : '投稿者'}
+            権限が必要です。
           </p>
         </div>
       </div>
