@@ -1,18 +1,18 @@
-FROM node:20-alpine
+FROM node:18-alpine
 
 WORKDIR /app
 
-# パッケージファイルをコピー
+# package.json と package-lock.json をコピー
 COPY package*.json ./
 
 # 依存関係をインストール
 RUN npm ci
 
-# アプリケーションのソースコードをコピー
+# ソースコードをコピー
 COPY . .
 
-# ポートを公開
-EXPOSE 3000
+# ポート80を公開
+EXPOSE 80
 
-# 開発サーバーを起動（Viteのホストを0.0.0.0に設定）
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# 開発サーバーを起動
+CMD ["npm", "run", "dev"]
