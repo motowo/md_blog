@@ -16,7 +16,6 @@ export function RegisterPage() {
     email: '',
     password: '',
     password_confirmation: '',
-    role: 'author',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string>('');
@@ -148,21 +147,6 @@ export function RegisterPage() {
               autoComplete="email"
             />
             
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                役割
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="author">投稿者</option>
-                <option value="admin">管理者</option>
-              </select>
-            </div>
             
             <Input
               label="パスワード"

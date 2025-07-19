@@ -19,7 +19,6 @@ export interface RegisterRequest {
   email: string;
   password: string;
   password_confirmation: string;
-  role?: 'author' | 'admin';
 }
 
 export interface AuthResponse {
