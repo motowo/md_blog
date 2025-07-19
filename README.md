@@ -3,7 +3,7 @@
 ## 概要
 ITエンジニアが技術記事を投稿し、有料コンテンツとして販売できるプラットフォームです。
 
-## 実装状況（Laravel基盤フェーズ完了）
+## 実装状況（記事CRUD APIフェーズ完了）
 
 ### ✅ 完了機能
 - **Docker環境構築**: フロントエンド、バックエンド、データベースのコンテナ化
@@ -12,13 +12,14 @@ ITエンジニアが技術記事を投稿し、有料コンテンツとして販
 - **データベース設計**: 7テーブル完全構築（users, articles, tags, article_tags, payments, comments, payouts）
 - **認証システム**: Laravel Sanctum実装、トークンベース認証API完成
 - **API基盤**: 認証関連エンドポイント（登録・ログイン・ログアウト・ユーザー情報取得）
-- **開発環境**: ESLint + Prettier設定、Laravel Pint対応、テスト環境整備
+- **記事CRUD API**: 記事の作成・読取・更新・削除の完全実装、権限制御、バリデーション
+- **開発環境**: ESLint + Prettier設定、Laravel Pint対応、テスト環境整備、TDD実践
 
 ### 🚧 次期実装予定（MVP機能開発）
-- 記事CRUD API（作成・読取・更新・削除）
 - タグ管理API（記事へのタグ付け機能）
 - フロントエンド認証画面（ログイン・登録）
 - 記事一覧・詳細画面
+- 記事投稿・編集画面
 - ダークモード実装
 
 ## 技術スタック
@@ -132,6 +133,55 @@ Authorization: Bearer {token}
 #### ユーザー情報取得（認証必要）
 ```bash
 GET /api/user
+Authorization: Bearer {token}
+```
+
+### 記事API
+
+#### 記事一覧取得
+```bash
+GET /api/articles
+```
+
+#### 記事詳細取得
+```bash
+GET /api/articles/{id}
+```
+
+#### 記事作成（認証必要）
+```bash
+POST /api/articles
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+    "title": "記事タイトル",
+    "content": "記事本文",
+    "thumbnail_url": "https://example.com/image.jpg",
+    "status": "draft",
+    "is_paid": false,
+    "price": 1000,
+    "preview_content": "プレビュー内容",
+    "is_featured": false
+}
+```
+
+#### 記事更新（認証必要・作成者のみ）
+```bash
+PUT /api/articles/{id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+    "title": "更新後タイトル",
+    "content": "更新後本文",
+    "status": "published"
+}
+```
+
+#### 記事削除（認証必要・作成者のみ）
+```bash
+DELETE /api/articles/{id}
 Authorization: Bearer {token}
 ```
 
