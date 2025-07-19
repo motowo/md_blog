@@ -1,10 +1,10 @@
+/* Import Design System */
+@import './styles/design-system.css';
+
 /* Tailwind Base Styles */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import Design System */
-@import './styles/design-system.css';
 
 /* Base App Styles */
 .App {

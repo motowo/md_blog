@@ -93,7 +93,7 @@ export function Button({
 
   const renderIcon = (icon: React.ReactNode) => {
     if (React.isValidElement(icon)) {
-      return React.cloneElement(icon as React.ReactElement<unknown>, {
+      return React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
         className: cn(
           iconSizeClasses[size],
           (icon as React.ReactElement<{ className?: string }>).props?.className
