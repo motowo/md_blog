@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface AlertProps {
   type?: 'success' | 'error' | 'warning' | 'info';
   title?: string;
@@ -11,17 +9,20 @@ export function Alert({ type = 'info', title, children, className = '' }: AlertP
   const baseClasses = 'rounded-md p-4 border';
 
   const typeClasses = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
+    success:
+      'bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-700 text-success-800 dark:text-success-200',
+    error:
+      'bg-danger-50 dark:bg-danger-900/20 border-danger-200 dark:border-danger-700 text-danger-800 dark:text-danger-200',
+    warning:
+      'bg-warning-50 dark:bg-warning-900/20 border-warning-200 dark:border-warning-700 text-warning-800 dark:text-warning-200',
+    info: 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700 text-primary-800 dark:text-primary-200',
   };
 
   const iconClasses = {
-    success: 'text-green-400',
-    error: 'text-red-400',
-    warning: 'text-yellow-400',
-    info: 'text-blue-400',
+    success: 'text-success-400 dark:text-success-300',
+    error: 'text-danger-400 dark:text-danger-300',
+    warning: 'text-warning-400 dark:text-warning-300',
+    info: 'text-primary-400 dark:text-primary-300',
   };
 
   const Icon = () => {
