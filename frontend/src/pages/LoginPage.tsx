@@ -1,31 +1,26 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Alert } from '../components/ui/Alert';
+import { Card, CardBody } from '../components/ui/Card';
 import type { LoginRequest } from '../types/auth';
 
 export function LoginPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { login, loading } = useAuth();
-
   const [formData, setFormData] = useState<LoginRequest>({
     email: '',
     password: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string>('');
-
-  // ログイン後のリダイレクト先
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // エラーをクリア
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
@@ -40,7 +35,7 @@ export function LoginPage() {
     if (!formData.email) {
       newErrors.email = 'メールアドレスは必須です';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'メールアドレスの形式が正しくありません';
+      newErrors.email = '有効なメールアドレスを入力してください';
     }
 
     if (!formData.password) {
@@ -58,69 +53,113 @@ export function LoginPage() {
       return;
     }
 
+    setLoading(true);
     try {
       await login(formData);
-      navigate(from, { replace: true });
+      navigate('/');
     } catch (error) {
       if (error instanceof Error) {
-        setGeneralError(error.message);
+        // API エラーレスポンスの処理
+        if (error.message.includes('credentials')) {
+          setGeneralError('メールアドレスまたはパスワードが正しくありません。');
+        } else {
+          setGeneralError(error.message || 'ログインに失敗しました。');
+        }
       } else {
-        setGeneralError('ログインに失敗しました');
+        setGeneralError('ログインに失敗しました。しばらく後にもう一度お試しください。');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            ログイン
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            まだアカウントをお持ちでない方は{' '}
-            <Link
-              to="/register"
-              className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300"
-            >
-              こちらから登録
-            </Link>
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-purple-50 to-pink-50 dark:from-dark-100 dark:via-dark-50 dark:to-dark-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* 背景装飾 */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-bounce-soft"></div>
+        <div
+          className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-bounce-soft"
+          style={{ animationDelay: '2s' }}
+        ></div>
+        <div
+          className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-bounce-soft"
+          style={{ animationDelay: '4s' }}
+        ></div>
+      </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {generalError && <Alert type="error">{generalError}</Alert>}
+      <div className="relative max-w-md w-full animate-fade-in">
+        <Card className="bg-white/80 dark:bg-dark-100/80 backdrop-blur-md shadow-2xl border-0">
+          <CardBody className="p-8">
+            <div className="text-center mb-8">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-primary-500 to-purple-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg animate-bounce-soft">
+                <svg className="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2M11 7H13V9H11V7M11 11H13V17H11V11Z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                ログイン
+              </h2>
+              <p className="mt-3 text-gray-600 dark:text-gray-400">
+                まだアカウントをお持ちでない方は{' '}
+                <Link
+                  to="/register"
+                  className="font-semibold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent hover:from-primary-700 hover:to-purple-700 transition-all duration-300"
+                >
+                  こちらから登録
+                </Link>
+              </p>
+            </div>
 
-          <div className="space-y-4">
-            <Input
-              label="メールアドレス"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              required
-              autoComplete="email"
-            />
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {generalError && <Alert type="error">{generalError}</Alert>}
 
-            <Input
-              label="パスワード"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              required
-              autoComplete="current-password"
-            />
-          </div>
+              <div className="space-y-5">
+                <Input
+                  label="メールアドレス"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  error={errors.email}
+                  required
+                  autoComplete="email"
+                  className="transition-all duration-300 focus:scale-[1.02]"
+                />
 
-          <div>
-            <Button type="submit" loading={loading} className="w-full">
-              ログイン
-            </Button>
-          </div>
-        </form>
+                <Input
+                  label="パスワード"
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  error={errors.password}
+                  required
+                  autoComplete="current-password"
+                  className="transition-all duration-300 focus:scale-[1.02]"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                loading={loading}
+                size="lg"
+                className="w-full bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 shadow-lg transform hover:scale-[1.02] transition-all duration-300"
+              >
+                {loading ? 'ログイン中...' : 'ログイン'}
+              </Button>
+            </form>
+
+            {/* フッター情報 */}
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-dark-200">
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                セキュアな認証システムで
+                <br />
+                あなたの情報を保護しています 🔒
+              </p>
+            </div>
+          </CardBody>
+        </Card>
       </div>
     </div>
   );
