@@ -53,36 +53,36 @@ jobs:
 
       - name: Build frontend Docker image
         run: |
-          docker-compose build frontend
+          docker compose build frontend
         env:
           BUILDX_CACHE_FROM: type=local,src=/tmp/.buildx-cache
           BUILDX_CACHE_TO: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
       - name: Start services
         run: |
-          docker-compose up -d frontend
+          docker compose up -d frontend
           sleep 10
 
       - name: Install dependencies
         run: |
-          docker-compose exec -T frontend npm ci
+          docker compose exec -T frontend npm ci
 
       - name: Run ESLint
         run: |
-          docker-compose exec -T frontend npm run lint
+          docker compose exec -T frontend npm run lint
 
       - name: Run Prettier (check)
         run: |
-          docker-compose exec -T frontend npm run format:check || echo "NEEDS_FORMAT=true" >> $GITHUB_ENV
+          docker compose exec -T frontend npm run format:check || echo "NEEDS_FORMAT=true" >> $GITHUB_ENV
 
       - name: Run Prettier (format)
         if: env.NEEDS_FORMAT == 'true'
         run: |
-          docker-compose exec -T frontend npm run format
+          docker compose exec -T frontend npm run format
 
       - name: Run tests
         run: |
-          docker-compose exec -T frontend npm run test
+          docker compose exec -T frontend npm run test
 
       - name: Commit formatted files
         if: env.NEEDS_FORMAT == 'true'
@@ -166,27 +166,27 @@ jobs:
 
       - name: Build backend Docker image
         run: |
-          docker-compose build backend
+          docker compose build backend
         env:
           BUILDX_CACHE_FROM: type=local,src=/tmp/.buildx-cache
           BUILDX_CACHE_TO: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
       - name: Start backend service
         run: |
-          docker-compose up -d backend
+          docker compose up -d backend
           sleep 15
 
       - name: Install dependencies
         run: |
-          docker-compose exec -T backend composer install --no-interaction --prefer-dist
+          docker compose exec -T backend composer install --no-interaction --prefer-dist
 
       - name: Generate application key
         run: |
-          docker-compose exec -T backend php artisan key:generate
+          docker compose exec -T backend php artisan key:generate
 
       - name: Run database migrations
         run: |
-          docker-compose exec -T backend php artisan migrate --force
+          docker compose exec -T backend php artisan migrate --force
         env:
           DB_HOST: 127.0.0.1
           DB_DATABASE: md_blog_test
@@ -195,16 +195,16 @@ jobs:
 
       - name: Run Laravel Pint (check)
         run: |
-          docker-compose exec -T backend ./vendor/bin/pint --test || echo "NEEDS_FORMAT=true" >> $GITHUB_ENV
+          docker compose exec -T backend ./vendor/bin/pint --test || echo "NEEDS_FORMAT=true" >> $GITHUB_ENV
 
       - name: Run Laravel Pint (format)
         if: env.NEEDS_FORMAT == 'true'
         run: |
-          docker-compose exec -T backend ./vendor/bin/pint
+          docker compose exec -T backend ./vendor/bin/pint
 
       - name: Run tests
         run: |
-          docker-compose exec -T backend php artisan test
+          docker compose exec -T backend php artisan test
         env:
           DB_HOST: 127.0.0.1
           DB_DATABASE: md_blog_test
@@ -261,7 +261,7 @@ jobs:
 
       - name: Start all services
         run: |
-          docker-compose up -d
+          docker compose up -d
           sleep 30
 
       - name: Wait for services to be ready
@@ -277,4 +277,4 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          docker-compose down -v
+          docker compose down -v
