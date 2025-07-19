@@ -1,0 +1,104 @@
+name: Auto Format Code
+
+on:
+  push:
+    branches: [ 'feature/**' ]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+
+permissions:
+  contents: write
+
+jobs:
+  auto-format:
+    name: Auto Format & Commit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            backend:
+              - 'backend/**'
+
+      - name: Set up Node.js
+        if: steps.changes.outputs.frontend == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        if: steps.changes.outputs.frontend == 'true'
+        working-directory: frontend
+        run: npm ci
+
+      - name: Format frontend code
+        if: steps.changes.outputs.frontend == 'true'
+        working-directory: frontend
+        run: |
+          npm run format
+          if [[ `git diff --name-only` ]]; then
+            echo "FRONTEND_FORMATTED=true" >> $GITHUB_ENV
+          fi
+
+      - name: Set up PHP
+        if: steps.changes.outputs.backend == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, iconv, json, mbstring, pdo
+
+      - name: Cache Composer dependencies
+        if: steps.changes.outputs.backend == 'true'
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install backend dependencies
+        if: steps.changes.outputs.backend == 'true'
+        working-directory: backend
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Format backend code
+        if: steps.changes.outputs.backend == 'true'
+        working-directory: backend
+        run: |
+          ./vendor/bin/pint
+          if [[ `git diff --name-only` ]]; then
+            echo "BACKEND_FORMATTED=true" >> $GITHUB_ENV
+          fi
+
+      - name: Commit formatted files
+        if: env.FRONTEND_FORMATTED == 'true' || env.BACKEND_FORMATTED == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "style: auto-format code
+
+          🤖 Generated with [Claude Code](https://claude.ai/code)
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+
+      - name: Push changes
+        if: env.FRONTEND_FORMATTED == 'true' || env.BACKEND_FORMATTED == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
