@@ -132,10 +132,11 @@ jobs:
       - name: Create environment file
         working-directory: backend
         run: |
-          cat > .env << 'EOF'
+          APP_KEY="base64:$(openssl rand -base64 32)"
+          cat > .env << EOF
           APP_NAME=Laravel
           APP_ENV=testing
-          APP_KEY=base64:$(openssl rand -base64 32)
+          APP_KEY=${APP_KEY}
           APP_DEBUG=true
           APP_TIMEZONE=Asia/Tokyo
           APP_URL=http://localhost
