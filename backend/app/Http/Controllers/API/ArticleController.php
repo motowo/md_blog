@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,9 +13,18 @@ class ArticleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $articles = Article::with('user')->latest()->get();
+        $query = Article::with('user', 'tags');
+
+        // タグによる絞り込み
+        if ($request->has('tag')) {
+            $query->whereHas('tags', function ($q) use ($request) {
+                $q->where('slug', $request->tag);
+            });
+        }
+
+        $articles = $query->latest()->get();
 
         return response()->json([
             'data' => $articles,
@@ -114,6 +124,45 @@ class ArticleController extends Controller
         }
 
         $article->delete();
+
+        return response()->json(null, 204);
+    }
+
+    /**
+     * Attach tags to an article.
+     */
+    public function attachTags(Request $request, Article $article)
+    {
+        if ($article->user_id !== Auth::id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
+        $request->validate([
+            'tag_ids' => 'required|array',
+            'tag_ids.*' => 'exists:tags,id',
+        ]);
+
+        $article->tags()->syncWithoutDetaching($request->tag_ids);
+
+        return response()->json([
+            'data' => $article->load('tags'),
+        ]);
+    }
+
+    /**
+     * Detach a tag from an article.
+     */
+    public function detachTag(Article $article, Tag $tag)
+    {
+        if ($article->user_id !== Auth::id()) {
+            return response()->json([
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
+        $article->tags()->detach($tag->id);
 
         return response()->json(null, 204);
     }

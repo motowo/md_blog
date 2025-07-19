@@ -3,24 +3,26 @@
 ## 概要
 ITエンジニアが技術記事を投稿し、有料コンテンツとして販売できるプラットフォームです。
 
-## 実装状況（記事CRUD APIフェーズ完了）
+## 実装状況（タグ管理API + CI/CDフェーズ完了）
 
 ### ✅ 完了機能
 - **Docker環境構築**: フロントエンド、バックエンド、データベースのコンテナ化
 - **フロントエンド基盤**: React 19 + TypeScript + Vite + Tailwind CSS v4
-- **Laravel基盤**: Laravel 11.x完全初期化、全依存関係設定
+- **Laravel基盤**: Laravel 11.x完全初期化、全依存関係設定、日本語ロケール対応
 - **データベース設計**: 7テーブル完全構築（users, articles, tags, article_tags, payments, comments, payouts）
 - **認証システム**: Laravel Sanctum実装、トークンベース認証API完成
 - **API基盤**: 認証関連エンドポイント（登録・ログイン・ログアウト・ユーザー情報取得）
 - **記事CRUD API**: 記事の作成・読取・更新・削除の完全実装、権限制御、バリデーション
+- **タグ管理API**: タグCRUD、記事タグ付け、タグ検索機能、管理者権限制御
+- **CI/CD環境**: GitHub Actions（自動Lint/Format/Test、PR品質チェック、Dependabot）
 - **開発環境**: ESLint + Prettier設定、Laravel Pint対応、テスト環境整備、TDD実践
 
 ### 🚧 次期実装予定（MVP機能開発）
-- タグ管理API（記事へのタグ付け機能）
 - フロントエンド認証画面（ログイン・登録）
-- 記事一覧・詳細画面
-- 記事投稿・編集画面
+- 記事一覧・詳細画面（タグフィルター付き）
+- 記事投稿・編集画面（タグ選択機能付き）
 - ダークモード実装
+- 記事検索機能
 
 ## 技術スタック
 - **フロントエンド**: React.js (v19.x), TypeScript (v5.x), Tailwind CSS (v4.x), Vite
@@ -185,6 +187,70 @@ DELETE /api/articles/{id}
 Authorization: Bearer {token}
 ```
 
+#### タグによる記事絞り込み
+```bash
+GET /api/articles?tag={slug}
+```
+
+### タグAPI
+
+#### タグ一覧取得
+```bash
+GET /api/tags
+```
+
+#### タグ詳細取得
+```bash
+GET /api/tags/{id}
+```
+
+#### タグ作成（認証必要・管理者のみ）
+```bash
+POST /api/tags
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+    "name": "Laravel",
+    "slug": "laravel"
+}
+```
+
+#### タグ更新（認証必要・管理者のみ）
+```bash
+PUT /api/tags/{id}
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+    "name": "Laravel Framework",
+    "slug": "laravel-framework"
+}
+```
+
+#### タグ削除（認証必要・管理者のみ）
+```bash
+DELETE /api/tags/{id}
+Authorization: Bearer {token}
+```
+
+#### 記事へのタグ付け（認証必要・記事作成者のみ）
+```bash
+POST /api/articles/{id}/tags
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+    "tag_ids": [1, 2, 3]
+}
+```
+
+#### 記事からのタグ削除（認証必要・記事作成者のみ）
+```bash
+DELETE /api/articles/{id}/tags/{tag_id}
+Authorization: Bearer {token}
+```
+
 ### Docker環境の管理
 
 ```bash
@@ -201,13 +267,40 @@ docker-compose logs -f [service-name]
 docker-compose down -v
 ```
 
+## CI/CD環境
+
+### GitHub Actions
+本プロジェクトでは以下のGitHub Actionsワークフローが設定されています：
+
+#### 1. プルリクエスト品質チェック (`.github/workflows/pr-check.yml`)
+- feature/**ブランチからmainへのPR時に自動実行
+- フロントエンド・バックエンドの変更を自動検出
+- ESLint、Prettier、Laravel Pint、PHPUnitを実行
+- セキュリティスキャン（Trivy）を含む
+
+#### 2. 自動フォーマット (`.github/workflows/format-auto.yml`)
+- feature/**ブランチへのpush時に自動実行
+- コードを自動フォーマットして自動コミット・プッシュ
+- フロントエンド（Prettier）とバックエンド（Laravel Pint）両対応
+
+#### 3. 依存関係自動更新 (`.github/dependabot.yml`)
+- npm、Composer、Docker、GitHub Actionsの週次更新
+- 自動PRによる依存関係管理
+
+### 品質管理
+- **テストカバレッジ**: 26テスト（138アサーション）すべて成功
+- **コード品質**: ESLint + Prettier（フロントエンド）、Laravel Pint（バックエンド）
+- **セキュリティ**: Trivy脆弱性スキャン
+- **依存関係**: Dependabot自動更新
+
 ## 開発フロー
 
 1. mainブランチから新しいブランチを作成
 2. Docker環境を起動して開発
 3. テストを作成・実行（TDD）
-4. コードをフォーマット
-5. Git にコミット
+4. GitHub Actionsで自動品質チェック
+5. Git にコミット（自動フォーマット実行）
 6. プルリクエストを作成
+7. CI/CDパイプラインで品質確認後マージ
 
 詳細は `CLAUDE.md` を参照してください。
