@@ -30,8 +30,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     // HTMLのクラスを更新してTailwindのダークモードを有効化
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      console.log('Dark mode activated - class added to html element');
     } else {
       document.documentElement.classList.remove('dark');
+      console.log('Light mode activated - class removed from html element');
     }
 
     // ローカルストレージに保存

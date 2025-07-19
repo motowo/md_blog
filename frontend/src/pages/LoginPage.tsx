@@ -97,14 +97,12 @@ export function LoginPage() {
                   <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2M11 7H13V9H11V7M11 11H13V17H11V11Z" />
                 </svg>
               </div>
-              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                ログイン
-              </h2>
-              <p className="mt-3 text-gray-600 dark:text-gray-400">
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">ログイン</h2>
+              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                 まだアカウントをお持ちでない方は{' '}
                 <Link
                   to="/register"
-                  className="font-semibold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent hover:from-primary-700 hover:to-purple-700 transition-all duration-300"
+                  className="font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300 transition-colors"
                 >
                   こちらから登録
                 </Link>
@@ -151,8 +149,8 @@ export function LoginPage() {
             </form>
 
             {/* フッター情報 */}
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-dark-200">
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+              <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
                 セキュアな認証システムで
                 <br />
                 あなたの情報を保護しています 🔒

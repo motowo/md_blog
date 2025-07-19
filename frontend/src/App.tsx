@@ -12,7 +12,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-white dark:bg-dark-50 text-gray-900 dark:text-gray-100 transition-colors">
+          <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
             <Navigation />
             <main>
               <Routes>

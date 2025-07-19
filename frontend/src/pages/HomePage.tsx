@@ -1,373 +1,311 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Button } from '../components/ui/Button';
-import { Card, CardBody } from '../components/ui/Card';
+import { Button, Card, CardBody, Container, Section } from '../components/ui';
 
 export function HomePage() {
   const { user, isAuthenticated } = useAuth();
 
   return (
-    <div className="relative min-h-screen">
-      {/* ヒーローセクション */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary-50 via-purple-50 to-pink-50 dark:from-dark-100 dark:via-dark-50 dark:to-dark-100">
-        {/* 背景装飾 */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce-soft"></div>
-          <div
-            className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce-soft"
-            style={{ animationDelay: '2s' }}
-          ></div>
-          <div
-            className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce-soft"
-            style={{ animationDelay: '4s' }}
-          ></div>
-        </div>
-
-        <div className="relative max-w-7xl mx-auto py-24 sm:py-32 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white dark:bg-zinc-950">
+      {/* Hero Section */}
+      <Section className="py-24 sm:py-32">
+        <Container>
           <div className="text-center">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight animate-fade-in">
-              <span className="block text-gray-900 dark:text-white">ITエンジニア向け</span>
-              <span className="block bg-gradient-to-r from-primary-600 via-purple-600 to-pink-600 dark:from-primary-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                技術記事プラットフォーム
-              </span>
-            </h1>
-            <p
-              className="mt-8 max-w-2xl mx-auto text-xl sm:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed animate-fade-in"
-              style={{ animationDelay: '0.2s' }}
-            >
-              高品質な技術記事を投稿・購読できるプラットフォームです。
+            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-6xl">
+              エンジニアのための
               <br />
-              <span className="text-primary-600 dark:text-primary-400 font-semibold">
-                専門知識を共有し、学習を促進しましょう。
-              </span>
+              <span className="text-zinc-700 dark:text-zinc-300">技術記事プラットフォーム</span>
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-zinc-700 dark:text-zinc-300 max-w-2xl mx-auto">
+              高品質な技術記事を投稿・購読できるプラットフォーム。専門知識を共有し、学習を促進しましょう。
             </p>
-
             {!isAuthenticated && (
-              <div
-                className="mt-12 flex justify-center space-x-6 animate-fade-in"
-                style={{ animationDelay: '0.4s' }}
-              >
+              <div className="mt-10 flex items-center justify-center gap-x-6">
                 <Link to="/register">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 shadow-xl transform hover:scale-105 transition-all duration-300"
-                  >
-                    🚀 今すぐ始める
-                  </Button>
+                  <Button size="lg">今すぐ始める</Button>
                 </Link>
                 <Link to="/login">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="border-2 hover:bg-gradient-to-r hover:from-primary-50 hover:to-purple-50 dark:hover:from-primary-900/20 dark:hover:to-purple-900/20 transform hover:scale-105 transition-all duration-300"
-                  >
+                  <Button variant="outline" size="lg">
                     ログイン
                   </Button>
                 </Link>
               </div>
             )}
+          </div>
+        </Container>
+      </Section>
 
-            {/* 統計情報 */}
-            <div
-              className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 animate-fade-in"
-              style={{ animationDelay: '0.6s' }}
-            >
-              <div className="text-center">
-                <div className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">
-                  1000+
-                </div>
-                <div className="text-gray-600 dark:text-gray-400 mt-2">技術記事</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  500+
-                </div>
-                <div className="text-gray-600 dark:text-gray-400 mt-2">エンジニア</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-primary-600 bg-clip-text text-transparent">
-                  50+
-                </div>
-                <div className="text-gray-600 dark:text-gray-400 mt-2">技術分野</div>
-              </div>
+      {/* Stats Section */}
+      <Section className="border-t border-zinc-200 dark:border-zinc-800 py-24 sm:py-32">
+        <Container>
+          <div className="grid grid-cols-1 gap-x-8 gap-y-16 text-center lg:grid-cols-3">
+            <div className="mx-auto flex max-w-xs flex-col gap-y-4">
+              <dt className="text-base leading-7 text-zinc-700 dark:text-zinc-300">技術記事</dt>
+              <dd className="order-first text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-5xl">
+                1,000+
+              </dd>
+            </div>
+            <div className="mx-auto flex max-w-xs flex-col gap-y-4">
+              <dt className="text-base leading-7 text-zinc-700 dark:text-zinc-300">エンジニア</dt>
+              <dd className="order-first text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-5xl">
+                500+
+              </dd>
+            </div>
+            <div className="mx-auto flex max-w-xs flex-col gap-y-4">
+              <dt className="text-base leading-7 text-zinc-700 dark:text-zinc-300">技術分野</dt>
+              <dd className="order-first text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white sm:text-5xl">
+                50+
+              </dd>
             </div>
           </div>
-        </div>
-      </div>
+        </Container>
+      </Section>
 
-      {/* ユーザー情報（認証済みの場合） */}
+      {/* User Info Section (for authenticated users) */}
       {isAuthenticated && (
-        <div className="bg-white dark:bg-dark-50 py-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Card className="bg-gradient-to-r from-white to-gray-50 dark:from-dark-100 dark:to-dark-200 border-0 shadow-2xl">
+        <Section className="border-t border-zinc-200 dark:border-zinc-800 py-16">
+          <Container size="md">
+            <Card variant="elevated">
               <CardBody className="p-8">
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-r from-primary-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                    {user?.username?.charAt(0).toUpperCase()}
+                <div className="flex items-center gap-x-6">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
+                    <span className="text-xl font-semibold">
+                      {user?.username?.charAt(0).toUpperCase()}
+                    </span>
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <h3 className="text-xl font-semibold text-zinc-900 dark:text-white">
                       ようこそ、{user?.name || user?.username}さん
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {user?.role === 'admin' ? '🛡️ 管理者' : '✍️ 投稿者'}
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                      {user?.role === 'admin' ? '管理者' : '投稿者'}
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        ユーザー名
-                      </span>
-                      <p className="text-lg text-gray-900 dark:text-gray-100">{user?.username}</p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        メールアドレス
-                      </span>
-                      <p className="text-lg text-gray-900 dark:text-gray-100">{user?.email}</p>
-                    </div>
+                <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                      ユーザー名
+                    </dt>
+                    <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+                      {user?.username}
+                    </dd>
                   </div>
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        表示名
-                      </span>
-                      <p className="text-lg text-gray-900 dark:text-gray-100">
-                        {user?.name || '未設定'}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        登録日
-                      </span>
-                      <p className="text-lg text-gray-900 dark:text-gray-100">
-                        {user?.created_at
-                          ? new Date(user.created_at).toLocaleDateString('ja-JP')
-                          : '不明'}
-                      </p>
-                    </div>
+                  <div>
+                    <dt className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                      メールアドレス
+                    </dt>
+                    <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">{user?.email}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-zinc-600 dark:text-zinc-400">表示名</dt>
+                    <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+                      {user?.name || '未設定'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-zinc-600 dark:text-zinc-400">登録日</dt>
+                    <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-100">
+                      {user?.created_at
+                        ? new Date(user.created_at).toLocaleDateString('ja-JP')
+                        : '不明'}
+                    </dd>
                   </div>
                 </div>
               </CardBody>
             </Card>
-          </div>
-        </div>
+          </Container>
+        </Section>
       )}
 
-      {/* 機能紹介セクション */}
-      <div className="bg-white dark:bg-dark-50 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
+      {/* Features Section */}
+      <Section className="border-t border-zinc-200 dark:border-zinc-800 py-24 sm:py-32">
+        <Container>
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
               豊富な機能でエンジニアをサポート
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              MD Blogは現代のエンジニアに必要な機能を全て備えています
+            <p className="mt-6 text-lg leading-8 text-zinc-700 dark:text-zinc-300">
+              現代のエンジニアに必要な機能を全て備えています
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* 記事投稿 */}
-            <Card
-              hover
-              className="group bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-700"
-            >
-              <CardBody className="p-8">
-                <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
+            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
+              <div className="flex flex-col">
+                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-zinc-900 dark:text-white">
+                  <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-100">
+                    <svg
+                      className="h-5 w-5 text-white dark:text-zinc-900"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                      />
+                    </svg>
+                  </div>
                   Markdown投稿
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  リアルタイムプレビュー付きのMarkdownエディタで、美しい技術記事を簡単に作成できます。
-                </p>
-              </CardBody>
-            </Card>
-
-            {/* タグ管理 */}
-            <Card
-              hover
-              className="group bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-700"
-            >
-              <CardBody className="p-8">
-                <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                </dt>
+                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-zinc-700 dark:text-zinc-300">
+                  <p className="flex-auto">
+                    リアルタイムプレビュー付きのMarkdownエディタで、美しい技術記事を簡単に作成できます。
+                  </p>
+                </dd>
+              </div>
+              <div className="flex flex-col">
+                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-zinc-900 dark:text-white">
+                  <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-100">
+                    <svg
+                      className="h-5 w-5 text-white dark:text-zinc-900"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z"
+                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
+                    </svg>
+                  </div>
                   スマートタグ
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  記事を技術分野やレベル別にタグ付けして、読者が求める情報を素早く見つけられます。
-                </p>
-              </CardBody>
-            </Card>
-
-            {/* ダークモード */}
-            <Card
-              hover
-              className="group bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-700"
-            >
-              <CardBody className="p-8">
-                <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                </dt>
+                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-zinc-700 dark:text-zinc-300">
+                  <p className="flex-auto">
+                    記事を技術分野やレベル別にタグ付けして、読者が求める情報を素早く見つけられます。
+                  </p>
+                </dd>
+              </div>
+              <div className="flex flex-col">
+                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-zinc-900 dark:text-white">
+                  <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-100">
+                    <svg
+                      className="h-5 w-5 text-white dark:text-zinc-900"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"
+                      />
+                    </svg>
+                  </div>
                   ダークモード
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  目に優しいダークモードで、長時間の読書やコーディングも快適に行えます。
-                </p>
-              </CardBody>
-            </Card>
-
-            {/* 検索機能 */}
-            <Card
-              hover
-              className="group bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-200 dark:border-yellow-700"
-            >
-              <CardBody className="p-8">
-                <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">高度な検索</h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  キーワード、タグ、著者など複数の条件で記事を検索して、欲しい情報を瞬時に見つけられます。
-                </p>
-              </CardBody>
-            </Card>
-
-            {/* コミュニティ */}
-            <Card
-              hover
-              className="group bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 border-red-200 dark:border-red-700"
-            >
-              <CardBody className="p-8">
-                <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-red-500 to-pink-500 rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                </dt>
+                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-zinc-700 dark:text-zinc-300">
+                  <p className="flex-auto">
+                    目に優しいダークモードで、長時間の読書やコーディングも快適に行えます。
+                  </p>
+                </dd>
+              </div>
+              <div className="flex flex-col">
+                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-zinc-900 dark:text-white">
+                  <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-100">
+                    <svg
+                      className="h-5 w-5 text-white dark:text-zinc-900"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                      />
+                    </svg>
+                  </div>
+                  高度な検索
+                </dt>
+                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-zinc-700 dark:text-zinc-300">
+                  <p className="flex-auto">
+                    キーワード、タグ、著者など複数の条件で記事を検索して、欲しい情報を瞬時に見つけられます。
+                  </p>
+                </dd>
+              </div>
+              <div className="flex flex-col">
+                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-zinc-900 dark:text-white">
+                  <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-100">
+                    <svg
+                      className="h-5 w-5 text-white dark:text-zinc-900"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
+                      />
+                    </svg>
+                  </div>
                   エンジニアコミュニティ
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  同じ技術に興味を持つエンジニア同士でコメントや議論を通して知識を深め合えます。
-                </p>
-              </CardBody>
-            </Card>
-
-            {/* 収益化 */}
-            <Card
-              hover
-              className="group bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border-cyan-200 dark:border-cyan-700"
-            >
-              <CardBody className="p-8">
-                <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <svg
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">記事収益化</h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  質の高いコンテンツを有料記事として販売し、知識を価値に変換できます。
-                </p>
-              </CardBody>
-            </Card>
+                </dt>
+                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-zinc-700 dark:text-zinc-300">
+                  <p className="flex-auto">
+                    同じ技術に興味を持つエンジニア同士でコメントや議論を通して知識を深め合えます。
+                  </p>
+                </dd>
+              </div>
+              <div className="flex flex-col">
+                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-zinc-900 dark:text-white">
+                  <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-100">
+                    <svg
+                      className="h-5 w-5 text-white dark:text-zinc-900"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12s-1.536.219-2.121.659c-1.172.879-1.172 2.303 0 3.182l.879.659ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      />
+                    </svg>
+                  </div>
+                  記事収益化
+                </dt>
+                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-zinc-700 dark:text-zinc-300">
+                  <p className="flex-auto">
+                    質の高いコンテンツを有料記事として販売し、知識を価値に変換できます。
+                  </p>
+                </dd>
+              </div>
+            </dl>
           </div>
-        </div>
-      </div>
+        </Container>
+      </Section>
 
-      {/* CTA セクション */}
+      {/* CTA Section */}
       {!isAuthenticated && (
-        <div className="bg-gradient-to-r from-primary-600 via-purple-600 to-pink-600 py-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              今すぐ技術記事の執筆を始めませんか？
-            </h2>
-            <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
-              無料でアカウントを作成して、あなたの技術知識を世界中のエンジニアと共有しましょう。
-            </p>
-            <Link to="/register">
-              <Button
-                size="lg"
-                className="bg-white text-primary-600 hover:bg-gray-100 transform hover:scale-105 transition-all duration-300 shadow-xl"
-              >
-                🚀 無料で始める
-              </Button>
-            </Link>
-          </div>
-        </div>
+        <Section className="border-t border-zinc-200 dark:border-zinc-800 py-24 sm:py-32">
+          <Container>
+            <div className="text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
+                今すぐ技術記事の執筆を始めませんか？
+              </h2>
+              <p className="mt-6 text-lg leading-8 text-zinc-700 dark:text-zinc-300">
+                無料でアカウントを作成して、あなたの技術知識を世界中のエンジニアと共有しましょう。
+              </p>
+              <div className="mt-10 flex items-center justify-center gap-x-6">
+                <Link to="/register">
+                  <Button size="lg">無料で始める</Button>
+                </Link>
+              </div>
+            </div>
+          </Container>
+        </Section>
       )}
     </div>
   );

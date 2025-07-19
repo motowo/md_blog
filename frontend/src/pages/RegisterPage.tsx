@@ -126,14 +126,14 @@ export function RegisterPage() {
                   />
                 </svg>
               </div>
-              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                 アカウント作成
               </h2>
-              <p className="mt-3 text-gray-600 dark:text-gray-400">
+              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                 すでにアカウントをお持ちの方は{' '}
                 <Link
                   to="/login"
-                  className="font-semibold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent hover:from-primary-700 hover:to-purple-700 transition-all duration-300"
+                  className="font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300 transition-colors"
                 >
                   こちらからログイン
                 </Link>
@@ -154,7 +154,7 @@ export function RegisterPage() {
                   required
                   autoComplete="username"
                   className="transition-all duration-300 focus:scale-[1.02]"
-                  helpText="3文字以上で入力してください"
+                  description="3文字以上で入力してください"
                 />
 
                 <Input
@@ -178,7 +178,7 @@ export function RegisterPage() {
                   error={errors.name}
                   autoComplete="name"
                   className="transition-all duration-300 focus:scale-[1.02]"
-                  helpText="公開プロフィールに表示される名前です"
+                  description="公開プロフィールに表示される名前です"
                 />
 
                 <Input
@@ -191,7 +191,7 @@ export function RegisterPage() {
                   required
                   autoComplete="new-password"
                   className="transition-all duration-300 focus:scale-[1.02]"
-                  helpText="6文字以上で入力してください"
+                  description="6文字以上で入力してください"
                 />
 
                 <Input
@@ -218,12 +218,12 @@ export function RegisterPage() {
             </form>
 
             {/* 利用規約等 */}
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-dark-200">
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+              <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
                 アカウント作成により、
                 <br />
-                <span className="text-primary-600 dark:text-primary-400">利用規約</span>と
-                <span className="text-primary-600 dark:text-primary-400">プライバシーポリシー</span>
+                <span className="text-zinc-900 dark:text-zinc-100">利用規約</span>と
+                <span className="text-zinc-900 dark:text-zinc-100">プライバシーポリシー</span>
                 に同意したものとみなされます
               </p>
             </div>

@@ -1,92 +1,106 @@
-import type { ReactNode } from 'react';
+import React from 'react';
+import { cn } from '../../utils/cn';
 
-interface CardProps {
-  children: ReactNode;
-  className?: string;
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'elevated' | 'outline' | 'ghost';
   padding?: 'none' | 'sm' | 'md' | 'lg';
-  shadow?: 'none' | 'sm' | 'md' | 'lg';
-  hover?: boolean;
   rounded?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
-interface CardHeaderProps {
-  children: ReactNode;
-  className?: string;
+interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  border?: boolean;
 }
 
-interface CardBodyProps {
-  children: ReactNode;
-  className?: string;
-}
+type CardBodyProps = React.HTMLAttributes<HTMLDivElement>;
 
-interface CardFooterProps {
-  children: ReactNode;
-  className?: string;
+interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+  border?: boolean;
 }
 
 export function Card({
   children,
-  className = '',
+  variant = 'default',
   padding = 'md',
-  shadow = 'md',
-  hover = false,
   rounded = 'lg',
+  className = '',
+  ...props
 }: CardProps) {
-  const baseClasses = 'bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-200';
+  const baseClasses = cn('overflow-hidden transition-colors duration-200');
+
+  const variantClasses = {
+    default: cn('bg-white border border-zinc-200', 'dark:bg-zinc-900 dark:border-zinc-800'),
+    elevated: cn(
+      'bg-white shadow-sm border border-zinc-200',
+      'dark:bg-zinc-900 dark:border-zinc-800'
+    ),
+    outline: cn('border-2 border-zinc-300 bg-transparent', 'dark:border-zinc-600'),
+    ghost: cn('bg-zinc-50 border border-transparent', 'dark:bg-zinc-800/50'),
+  };
 
   const paddingClasses = {
     none: '',
     sm: 'p-3',
-    md: 'p-4',
-    lg: 'p-6',
-  };
-
-  const shadowClasses = {
-    none: '',
-    sm: 'shadow-sm',
-    md: 'shadow-md',
-    lg: 'shadow-lg',
+    md: 'p-6',
+    lg: 'p-8',
   };
 
   const roundedClasses = {
-    none: '',
+    none: 'rounded-none',
     sm: 'rounded-sm',
     md: 'rounded-md',
     lg: 'rounded-lg',
     xl: 'rounded-xl',
   };
 
-  const hoverClasses = hover
-    ? 'transition-shadow duration-200 hover:shadow-lg dark:hover:shadow-2xl cursor-pointer'
-    : '';
+  const classes = cn(
+    baseClasses,
+    variantClasses[variant],
+    paddingClasses[padding],
+    roundedClasses[rounded],
+    className
+  );
 
   return (
-    <div
-      className={`
-        ${baseClasses} ${paddingClasses[padding]} ${shadowClasses[shadow]} 
-        ${roundedClasses[rounded]} ${hoverClasses} ${className}
-      `}
-    >
+    <div className={classes} {...props}>
       {children}
     </div>
   );
 }
 
-export function CardHeader({ children, className = '' }: CardHeaderProps) {
+export function CardHeader({ children, border = true, className = '', ...props }: CardHeaderProps) {
+  const classes = cn(
+    'px-6 py-4',
+    border && 'border-b border-zinc-200 dark:border-zinc-800',
+    className
+  );
+
   return (
-    <div className={`border-b border-gray-200 dark:border-dark-200 pb-3 mb-4 ${className}`}>
+    <div className={classes} {...props}>
       {children}
     </div>
   );
 }
 
-export function CardBody({ children, className = '' }: CardBodyProps) {
-  return <div className={className}>{children}</div>;
+export function CardBody({ children, className = '', ...props }: CardBodyProps) {
+  const classes = cn('px-6 py-4', className);
+
+  return (
+    <div className={classes} {...props}>
+      {children}
+    </div>
+  );
 }
 
-export function CardFooter({ children, className = '' }: CardFooterProps) {
+export function CardFooter({ children, border = true, className = '', ...props }: CardFooterProps) {
+  const classes = cn(
+    'px-6 py-4',
+    border && 'border-t border-zinc-200 dark:border-zinc-800',
+    'bg-zinc-50 dark:bg-zinc-800/50',
+    className
+  );
+
   return (
-    <div className={`border-t border-gray-200 dark:border-dark-200 pt-3 mt-4 ${className}`}>
+    <div className={classes} {...props}>
       {children}
     </div>
   );

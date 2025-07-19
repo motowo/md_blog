@@ -1,68 +1,66 @@
+import { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface ThemeToggleProps {
-  size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
 
-export function ThemeToggle({ size = 'md', className = '' }: ThemeToggleProps) {
+export function ThemeToggle({ className = '' }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const sizeClasses = {
-    sm: 'w-10 h-5',
-    md: 'w-12 h-6',
-    lg: 'w-14 h-7',
-  };
-
-  const thumbSizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-5 h-5',
-    lg: 'w-6 h-6',
-  };
-
-  const translateClasses = {
-    sm: theme === 'dark' ? 'translate-x-5' : 'translate-x-0',
-    md: theme === 'dark' ? 'translate-x-6' : 'translate-x-0',
-    lg: theme === 'dark' ? 'translate-x-7' : 'translate-x-0',
+  const handleToggle = () => {
+    setIsAnimating(true);
+    toggleTheme();
+    setTimeout(() => setIsAnimating(false), 500);
   };
 
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-        {theme === 'light' ? '🌞' : '🌙'}
-      </span>
-      <button
-        type="button"
-        onClick={toggleTheme}
-        className={`
-          relative inline-flex items-center justify-center rounded-full border-2 border-transparent 
-          focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 
-          dark:focus:ring-offset-gray-800 transition-colors duration-200 ease-in-out
-          ${sizeClasses[size]}
-          ${
-            theme === 'dark'
-              ? 'bg-primary-600 hover:bg-primary-700'
-              : 'bg-gray-200 hover:bg-gray-300'
-          }
-        `}
-        aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-      >
-        <span
-          className={`
-            ${thumbSizeClasses[size]} ${translateClasses[size]}
-            pointer-events-none inline-block rounded-full bg-white shadow-lg transform 
-            transition duration-200 ease-in-out relative
-          `}
+    <button
+      type="button"
+      onClick={handleToggle}
+      className={`
+        relative inline-flex h-10 w-10 items-center justify-center rounded-md p-2
+        text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900
+        dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100
+        focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2
+        dark:focus:ring-offset-zinc-950 transition-all duration-200
+        ${isAnimating ? 'theme-toggle-animate' : ''}
+        ${className}
+      `}
+      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+    >
+      <span className="sr-only">テーマを切り替える</span>
+      {theme === 'light' ? (
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
         >
-          <span className="absolute inset-0 flex items-center justify-center text-xs">
-            {theme === 'light' ? '☀️' : '🌙'}
-          </span>
-        </span>
-      </button>
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-        {theme === 'light' ? 'ライト' : 'ダーク'}
-      </span>
-    </div>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"
+          />
+        </svg>
+      ) : (
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+          />
+        </svg>
+      )}
+    </button>
   );
 }
