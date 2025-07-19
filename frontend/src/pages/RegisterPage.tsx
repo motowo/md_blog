@@ -11,11 +11,11 @@ export function RegisterPage() {
   const { register, loading } = useAuth();
   
   const [formData, setFormData] = useState<RegisterRequest>({
-    name: '',
     username: '',
     email: '',
     password: '',
     password_confirmation: '',
+    name: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string>('');
@@ -35,10 +35,6 @@ export function RegisterPage() {
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
-    if (!formData.name) {
-      newErrors.name = '名前は必須です';
-    }
     
     if (!formData.username) {
       newErrors.username = 'ユーザー名は必須です';
@@ -114,26 +110,26 @@ export function RegisterPage() {
           
           <div className="space-y-4">
             <Input
-              label="名前"
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              error={errors.name}
-              required
-              autoComplete="name"
-            />
-            
-            <Input
               label="ユーザー名"
               type="text"
               name="username"
               value={formData.username}
               onChange={handleChange}
               error={errors.username}
-              helpText="3文字以上の英数字とアンダースコア"
+              helpText="3文字以上の英数字とアンダースコア（表示名として使用されます）"
               required
               autoComplete="username"
+            />
+            
+            <Input
+              label="名前（任意）"
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              error={errors.name}
+              helpText="本名やニックネームなど、お好きな名前を入力してください"
+              autoComplete="name"
             />
             
             <Input

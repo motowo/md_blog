@@ -14,11 +14,11 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  name: string;
   username: string;
   email: string;
   password: string;
   password_confirmation: string;
+  name?: string;
 }
 
 export interface AuthResponse {

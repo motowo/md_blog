@@ -95,12 +95,12 @@ export function HomePage() {
                   </h3>
                   <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">名前</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{user?.name}</dd>
-                    </div>
-                    <div>
                       <dt className="text-sm font-medium text-gray-500">ユーザー名</dt>
                       <dd className="mt-1 text-sm text-gray-900">{user?.username}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">表示名</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{user?.name}</dd>
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-gray-500">メールアドレス</dt>
