@@ -65,7 +65,7 @@ const LoginPage: React.FC = () => {
 
     try {
       await login(formData);
-      navigate("/"); // ログイン成功後はホームページへ
+      navigate("/mypage"); // ログイン成功後はマイページへ
     } catch (error) {
       console.error("Login failed:", error);
       const apiError = error as ApiError;

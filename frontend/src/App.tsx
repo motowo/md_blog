@@ -9,6 +9,7 @@ import { ArticleListPage } from "./pages/ArticleListPage";
 import { ArticleDetailPage } from "./pages/ArticleDetailPage";
 import ArticleCreatePage from "./pages/ArticleCreatePage";
 import ArticleEditPage from "./pages/ArticleEditPage";
+import UserMyPage from "./pages/UserMyPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
@@ -63,6 +64,18 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <ArticleEditPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ユーザーマイページ（認証が必要） */}
+            <Route
+              path="/mypage"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <UserMyPage />
                   </Layout>
                 </ProtectedRoute>
               }
