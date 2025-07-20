@@ -55,14 +55,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               ) : (
                 <div className="flex items-center space-x-4">
                   <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">
+                    <Link
+                      to="/mypage"
+                      className="font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
                       {user?.username}
                       {user?.role === "admin" && (
                         <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
                           管理者
                         </span>
                       )}
-                    </span>
+                    </Link>
                   </div>
                   <Button variant="outline" size="sm" onClick={handleLogout}>
                     ログアウト
