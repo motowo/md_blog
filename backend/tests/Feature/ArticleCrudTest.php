@@ -95,7 +95,7 @@ class ArticleCrudTest extends TestCase
     {
         $article = Article::factory()->create([
             'user_id' => $this->user->id,
-            'status' => 'published'
+            'status' => 'published',
         ]);
 
         $response = $this->getJson("/api/articles/{$article->id}");
