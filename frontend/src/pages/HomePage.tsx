@@ -26,17 +26,24 @@ const HomePage: React.FC = () => {
         </p>
 
         {!isAuthenticated ? (
-          <div className="space-x-4">
-            <Link to="/login">
-              <Button variant="primary" size="lg">
-                ログイン
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button variant="outline" size="lg">
-                新規登録
-              </Button>
-            </Link>
+          <div className="space-y-4">
+            <div className="space-x-4">
+              <Link to="/articles">
+                <Button variant="primary" size="lg">
+                  記事を読む
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button variant="outline" size="lg">
+                  ログイン
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button variant="outline" size="lg">
+                  新規登録
+                </Button>
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 mb-8">
@@ -49,6 +56,11 @@ const HomePage: React.FC = () => {
               <p>役割: {user?.role === "admin" ? "管理者" : "投稿者"}</p>
             </div>
             <div className="space-x-4">
+              <Link to="/articles">
+                <Button variant="outline" size="lg">
+                  記事を読む
+                </Button>
+              </Link>
               <Button variant="primary" size="lg">
                 記事を書く
               </Button>
