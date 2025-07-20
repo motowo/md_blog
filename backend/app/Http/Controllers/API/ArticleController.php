@@ -7,6 +7,7 @@ use App\Models\Article;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ArticleController extends Controller
 {
@@ -96,7 +97,16 @@ class ArticleController extends Controller
 
         // 有料記事の場合、購入チェック（作成者と管理者は除く）
         if ($article->is_paid) {
-            $user = Auth::user();
+            // オプション認証：Sanctumトークンがあれば認証を試行
+            $user = null;
+            if (request()->bearerToken()) {
+                try {
+                    // Sanctumガードで認証を試行
+                    $user = Auth::guard('sanctum')->user();
+                } catch (\Exception $e) {
+                    Log::warning('Sanctum認証エラー', ['error' => $e->getMessage()]);
+                }
+            }
 
             // 未ログインの場合はプレビューのみ
             if (! $user) {
@@ -107,25 +117,23 @@ class ArticleController extends Controller
                     'data' => $articleData,
                     'is_preview' => true,
                 ]);
-            }
-
-            // 作成者または管理者の場合は全文表示
-            if ($user->id === $article->user_id || $user->role === 'admin') {
+            } elseif ($user->id === $article->user_id || $user->role === 'admin') {
+                // 作成者または管理者の場合は全文表示
                 return response()->json([
                     'data' => $article->load('user', 'tags'),
                     'is_preview' => false,
                 ]);
+            } else {
+                // TODO: 実際の購入チェックロジック（現在はMock）
+                // 未購入の場合はプレビューのみ
+                $articleData = $article->load('user', 'tags');
+                $articleData->content = substr($article->content, 0, 300).'...';
+
+                return response()->json([
+                    'data' => $articleData,
+                    'is_preview' => true,
+                ]);
             }
-
-            // TODO: 実際の購入チェックロジック（現在はMock）
-            // 未購入の場合はプレビューのみ
-            $articleData = $article->load('user', 'tags');
-            $articleData->content = substr($article->content, 0, 300).'...';
-
-            return response()->json([
-                'data' => $articleData,
-                'is_preview' => true,
-            ]);
         }
 
         // 無料記事の場合は全文表示

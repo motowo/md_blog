@@ -30,19 +30,34 @@ export class ArticleService {
   }
 
   // 記事詳細取得
-  static async getArticle(
-    id: number,
-  ): Promise<Article | { data: Article; is_preview: boolean }> {
-    const response = await apiClient.get<
-      Article | { data: Article; is_preview: boolean }
-    >(`/articles/${id}`);
-    return response.data;
+  static async getArticle(id: number): Promise<Article> {
+    const response = await apiClient.get<Article>(`/articles/${id}`);
+    // Laravel API の場合、data フィールドでラップされている場合がある
+    if (
+      response.data &&
+      typeof response.data === "object" &&
+      "data" in response.data
+    ) {
+      return (response.data as { data: Article }).data;
+    }
+    return response.data as Article;
   }
 
   // 記事作成（認証必要）
   static async createArticle(data: ArticleCreateRequest): Promise<Article> {
-    const response = await apiClient.post<Article>("/articles", data);
-    return response.data;
+    const response = await apiClient.post<{ data?: Article } | Article>(
+      "/articles",
+      data,
+    );
+    // Laravel API の場合、data フィールドでラップされている場合がある
+    if (
+      response.data &&
+      typeof response.data === "object" &&
+      "data" in response.data
+    ) {
+      return response.data.data as Article;
+    }
+    return response.data as Article;
   }
 
   // 記事更新（認証必要・作成者のみ）
@@ -50,8 +65,19 @@ export class ArticleService {
     id: number,
     data: Partial<ArticleUpdateRequest>,
   ): Promise<Article> {
-    const response = await apiClient.put<Article>(`/articles/${id}`, data);
-    return response.data;
+    const response = await apiClient.put<{ data?: Article } | Article>(
+      `/articles/${id}`,
+      data,
+    );
+    // Laravel API の場合、data フィールドでラップされている場合がある
+    if (
+      response.data &&
+      typeof response.data === "object" &&
+      "data" in response.data
+    ) {
+      return response.data.data as Article;
+    }
+    return response.data as Article;
   }
 
   // 記事削除（認証必要・作成者のみ）
@@ -102,5 +128,21 @@ export class ArticleService {
       `/articles/recent?limit=${limit}`,
     );
     return response.data.data;
+  }
+
+  // 記事にタグを付ける（認証必要・記事作成者のみ）
+  static async updateArticleTags(
+    articleId: number,
+    tagIds: number[],
+  ): Promise<void> {
+    await apiClient.post(`/articles/${articleId}/tags`, { tag_ids: tagIds });
+  }
+
+  // 記事からタグを削除（認証必要・記事作成者のみ）
+  static async removeArticleTag(
+    articleId: number,
+    tagId: number,
+  ): Promise<void> {
+    await apiClient.delete(`/articles/${articleId}/tags/${tagId}`);
   }
 }

@@ -93,7 +93,10 @@ class ArticleCrudTest extends TestCase
 
     public function test_can_get_single_article(): void
     {
-        $article = Article::factory()->create(['user_id' => $this->user->id]);
+        $article = Article::factory()->create([
+            'user_id' => $this->user->id,
+            'status' => 'published',
+        ]);
 
         $response = $this->getJson("/api/articles/{$article->id}");
 

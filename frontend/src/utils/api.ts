@@ -20,9 +20,37 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("auth_token");
+
+    // 認証トークンを強制的に設定
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      // 追加の認証ヘッダーも設定
+      config.headers["X-Auth-Token"] = token;
     }
+
+    // API記事取得時は必要なヘッダーを強制設定
+    if (config.url?.includes("/articles/")) {
+      config.headers["X-Requested-With"] = "XMLHttpRequest";
+      config.headers["Accept"] = "application/json";
+      config.headers["Content-Type"] = "application/json";
+
+      console.log("🚀 API Request:", {
+        url: config.url,
+        method: config.method,
+        hasAuthToken: !!token,
+        tokenPreview: token ? `${token.substring(0, 10)}...` : "none",
+        headers: {
+          Authorization: config.headers.Authorization,
+          "X-Auth-Token": config.headers["X-Auth-Token"]
+            ? "present"
+            : "missing",
+          "X-Requested-With": config.headers["X-Requested-With"],
+          Accept: config.headers.Accept,
+        },
+        params: config.params,
+      });
+    }
+
     return config;
   },
   (error) => {
@@ -33,6 +61,22 @@ apiClient.interceptors.request.use(
 // レスポンスインターセプター（エラーハンドリング）
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
+    // 記事取得APIのレスポンスをログ出力
+    if (response.config.url?.includes("/articles/")) {
+      const data = response.data;
+      const article =
+        data && typeof data === "object" && "data" in data ? data.data : data;
+
+      console.log("📨 API Response:", {
+        url: response.config.url,
+        status: response.status,
+        statusText: response.statusText,
+        contentLength: article?.content?.length,
+        isPaid: article?.is_paid,
+        hasFullContent: article?.content && article.content.length > 200,
+        responseSize: JSON.stringify(response.data).length,
+      });
+    }
     return response;
   },
   (error: AxiosError) => {

@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { ArticleService } from "../utils/articleApi";
+import { useAuth } from "../contexts/AuthContextDefinition";
 import Button from "../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import type { Article } from "../types/article";
@@ -30,12 +31,20 @@ const loadPrismLanguage = async (language: string): Promise<void> => {
         break;
       case "typescript":
       case "ts":
+        // TypeScriptはJavaScriptに依存するため、先にJavaScriptを読み込む
+        await import("prismjs/components/prism-javascript");
         await import("prismjs/components/prism-typescript");
         break;
       case "jsx":
+        // JSXはJavaScriptに依存するため、先にJavaScriptを読み込む
+        await import("prismjs/components/prism-javascript");
         await import("prismjs/components/prism-jsx");
         break;
       case "tsx":
+        // TSXはTypeScriptとJSXに依存するため、必要な依存関係を先に読み込む
+        await import("prismjs/components/prism-javascript");
+        await import("prismjs/components/prism-typescript");
+        await import("prismjs/components/prism-jsx");
         await import("prismjs/components/prism-tsx");
         break;
       case "php":
@@ -205,20 +214,31 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children, className }) => {
           // 言語ファイルを動的にロード
           await loadPrismLanguage(language);
 
-          // PrismJSでハイライト
-          if (Prism.languages[language]) {
-            const highlightedCode = Prism.highlight(
-              codeText,
-              Prism.languages[language],
-              language,
-            );
-            setHighlighted(highlightedCode);
-          } else {
-            setHighlighted(codeText);
-          }
+          // 少し待ってから言語が利用可能かチェック
+          setTimeout(() => {
+            if (Prism.languages[language]) {
+              try {
+                const highlightedCode = Prism.highlight(
+                  codeText,
+                  Prism.languages[language],
+                  language,
+                );
+                setHighlighted(highlightedCode);
+              } catch (highlightError) {
+                console.warn(
+                  `Failed to apply syntax highlighting for ${language}:`,
+                  highlightError,
+                );
+                setHighlighted(codeText);
+              }
+            } else {
+              console.warn(`Language ${language} not available in Prism`);
+              setHighlighted(codeText);
+            }
+          }, 100);
         } catch (error) {
           console.warn(
-            `Failed to highlight code for language: ${language}`,
+            `Failed to load language support for: ${language}`,
             error,
           );
           setHighlighted(codeText);
@@ -282,10 +302,10 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children, className }) => {
 
 export const ArticleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isPreview, setIsPreview] = useState(false);
   const [viewMode, setViewMode] = useState<"preview" | "markdown">("preview");
 
   useEffect(() => {
@@ -299,17 +319,11 @@ export const ArticleDetailPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await ArticleService.getArticle(parseInt(id));
 
-        // レスポンスがAPIの新しい形式の場合
-        if (typeof response === "object" && "data" in response) {
-          setArticle(response.data);
-          setIsPreview(response.is_preview || false);
-        } else {
-          // 従来の形式との互換性
-          setArticle(response);
-          setIsPreview(false);
-        }
+        // 記事詳細を取得
+        const article = await ArticleService.getArticle(parseInt(id));
+
+        setArticle(article);
       } catch (err) {
         console.error("Failed to fetch article:", err);
         setError("記事の取得に失敗しました");
@@ -368,9 +382,15 @@ export const ArticleDetailPage: React.FC = () => {
     );
   }
 
-  // プレビュー表示かどうかはAPIレスポンスで判定
-  const shouldShowFullContent = !isPreview;
-  const contentToShow = article.content; // APIがすでに適切にカットしている
+  // 投稿者本人または管理者かどうかをチェック
+  const isAuthorOrAdmin =
+    user && (user.id === article.user_id || user.role === "admin");
+
+  // 購入済み判定: 無料記事、投稿者本人、管理者、または実際に購入済みの場合
+  // TODO: 購入情報取得APIを実装後、実際の購入状況を反映
+  const isPurchased = !article.is_paid || isAuthorOrAdmin;
+
+  const contentToShow = article.content;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -418,6 +438,15 @@ export const ArticleDetailPage: React.FC = () => {
                       />
                     </svg>
                     <span className="font-medium">{article.user.username}</span>
+                    {/* 自分の記事の場合はアイコンを表示 */}
+                    {user && user.id === article.user_id && (
+                      <span
+                        className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                        title="あなたの記事"
+                      >
+                        ✏️ 投稿者
+                      </span>
+                    )}
                   </div>
                 )}
                 <div className="flex items-center">
@@ -446,6 +475,16 @@ export const ArticleDetailPage: React.FC = () => {
                     無料
                   </span>
                 )}
+
+                {/* 編集ボタン（作成者または管理者のみ） */}
+                {user &&
+                  (user.id === article.user_id || user.role === "admin") && (
+                    <Link to={`/articles/${article.id}/edit`}>
+                      <Button variant="outline" size="sm">
+                        ✏️ 編集
+                      </Button>
+                    </Link>
+                  )}
               </div>
             </div>
 
@@ -469,8 +508,8 @@ export const ArticleDetailPage: React.FC = () => {
         {/* 記事本文 */}
         <Card>
           <CardBody>
-            {/* 有料記事で未購入の場合の購入促進 */}
-            {article.is_paid && isPreview && (
+            {/* 有料記事で未購入かつ投稿者以外の場合の購入促進 */}
+            {article.is_paid && !isPurchased && (
               <div className="mb-8 p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
                 <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
                   この記事は有料コンテンツです
@@ -677,8 +716,8 @@ export const ArticleDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* 有料記事でプレビューのみの場合の続きを読むボタン */}
-            {article.is_paid && !shouldShowFullContent && (
+            {/* 有料記事で未購入の場合の続きを読むボタン */}
+            {article.is_paid && !isPurchased && (
               <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
                 <div className="text-center">
                   <p className="text-gray-600 dark:text-gray-400 mb-4">

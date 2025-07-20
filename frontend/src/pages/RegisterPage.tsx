@@ -4,7 +4,7 @@ import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { useTheme } from "../contexts/ThemeContext";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../contexts/AuthContextDefinition";
 import type { RegisterRequest, ApiError } from "../types/auth";
 
 const RegisterPage: React.FC = () => {

@@ -4,7 +4,7 @@ import { ArticleCard } from "../components/ArticleCard";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { ArticleService } from "../utils/articleApi";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../contexts/AuthContextDefinition";
 import type { Article, ArticlesResponse } from "../types/article";
 
 export const ArticleListPage: React.FC = () => {
@@ -194,9 +194,18 @@ export const ArticleListPage: React.FC = () => {
 
       {/* ヘッダー */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-          記事一覧
-        </h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            記事一覧
+          </h1>
+          {user && (
+            <Link to="/articles/new">
+              <Button variant="primary" size="md">
+                ✏️ 新しい記事を書く
+              </Button>
+            </Link>
+          )}
+        </div>
         <p className="text-gray-600 dark:text-gray-400">
           {pagination.total}件の記事が見つかりました
         </p>
@@ -261,7 +270,7 @@ export const ArticleListPage: React.FC = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {articles.map((article) => {
-              // 無料記事、自分の記事、管理者は常に購入済みとして扱う
+              // 購入済み判定: 無料記事、投稿者本人、管理者、または実際に購入済みの場合
               const isPurchased =
                 !article.is_paid ||
                 article.user_id === user?.id ||

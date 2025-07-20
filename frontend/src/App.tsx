@@ -7,6 +7,8 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import { ArticleListPage } from "./pages/ArticleListPage";
 import { ArticleDetailPage } from "./pages/ArticleDetailPage";
+import ArticleCreatePage from "./pages/ArticleCreatePage";
+import ArticleEditPage from "./pages/ArticleEditPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
@@ -41,6 +43,28 @@ function App() {
                 <Layout>
                   <ArticleDetailPage />
                 </Layout>
+              }
+            />
+
+            {/* 記事作成・編集ルート（認証が必要） */}
+            <Route
+              path="/articles/new"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ArticleCreatePage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/articles/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ArticleEditPage />
+                  </Layout>
+                </ProtectedRoute>
               }
             />
 

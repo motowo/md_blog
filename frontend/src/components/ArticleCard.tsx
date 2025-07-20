@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { generatePreviewText, generateBlurredText } from "../utils/markdown";
+import { useAuth } from "../contexts/AuthContextDefinition";
 import type { Article } from "../types/article";
 
 interface ArticleCardProps {
@@ -15,6 +16,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   showAuthor = true,
   isPurchased = false,
 }) => {
+  const { user } = useAuth();
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ja-JP", {
       year: "numeric",
@@ -98,7 +100,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <div className="flex items-center space-x-4">
             {showAuthor && article.user && (
-              <span className="flex items-center">
+              <div className="flex items-center">
                 <svg
                   className="w-4 h-4 mr-1"
                   fill="currentColor"
@@ -110,8 +112,17 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
                     clipRule="evenodd"
                   />
                 </svg>
-                {article.user.username}
-              </span>
+                <span>{article.user.username}</span>
+                {/* 自分の記事の場合はアイコンを表示 */}
+                {user && user.id === article.user_id && (
+                  <span
+                    className="ml-1 text-blue-600 dark:text-blue-400"
+                    title="あなたの記事"
+                  >
+                    ✏️
+                  </span>
+                )}
+              </div>
             )}
             <span className="flex items-center">
               <svg
