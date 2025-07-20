@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import { ArticleCard } from "../components/ArticleCard";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../contexts/AuthContextDefinition";
 import { ArticleService } from "../utils/articleApi";
 import type { Article } from "../types/article";
 
@@ -86,9 +86,11 @@ const HomePage: React.FC = () => {
                   記事を読む
                 </Button>
               </Link>
-              <Button variant="primary" size="lg">
-                記事を書く
-              </Button>
+              <Link to="/articles/new">
+                <Button variant="primary" size="lg">
+                  記事を書く
+                </Button>
+              </Link>
               <Button variant="outline" size="lg" onClick={handleLogout}>
                 ログアウト
               </Button>

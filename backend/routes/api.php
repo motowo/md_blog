@@ -14,9 +14,11 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('tags', [TagController::class, 'index']);
 Route::get('tags/{tag}', [TagController::class, 'show']);
 
-// 記事関連のルート（認証不要：一覧・詳細）
+// 記事関連のルート（認証不要：一覧）
 Route::get('articles', [ArticleController::class, 'index']);
 Route::get('articles/recent', [ArticleController::class, 'recent']);
+
+// 記事詳細（オプション認証：ログイン済みの場合は認証情報を取得）
 Route::get('articles/{article}', [ArticleController::class, 'show']);
 
 // タグ関連のルート（認証必要・管理者のみ：作成・更新・削除）
