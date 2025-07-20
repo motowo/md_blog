@@ -5,7 +5,9 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import { ArticleService } from "../utils/articleApi";
+import { UserService } from "../utils/userApi";
 import type { Article } from "../types/article";
+import type { ApiError } from "../types/auth";
 
 const UserMyPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -26,9 +28,9 @@ const UserMyPage: React.FC = () => {
 
   // パスワード変更用の状態
   const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+    current_password: "",
+    new_password: "",
+    new_password_confirmation: "",
   });
 
   // ユーザーの記事を取得
@@ -57,13 +59,17 @@ const UserMyPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      // TODO: プロフィール更新API実装後に有効化
-      // await UserService.updateProfile(profileData);
-      console.log("プロフィール更新:", profileData);
-      alert("プロフィールを更新しました（モック）");
+      await UserService.updateProfile(profileData);
+      alert("プロフィールを更新しました");
     } catch (err) {
       console.error("Profile update failed:", err);
-      setError("プロフィールの更新に失敗しました");
+      const apiError = err as ApiError;
+      if (apiError.errors) {
+        const errorMessages = Object.values(apiError.errors).flat();
+        setError(errorMessages.join(", "));
+      } else {
+        setError(apiError.message || "プロフィールの更新に失敗しました");
+      }
     } finally {
       setLoading(false);
     }
@@ -71,31 +77,40 @@ const UserMyPage: React.FC = () => {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
+    if (passwordData.new_password !== passwordData.new_password_confirmation) {
       setError("新しいパスワードが一致しません");
       return;
     }
     try {
       setLoading(true);
       setError(null);
-      // TODO: パスワード変更API実装後に有効化
-      // await UserService.changePassword(passwordData);
-      console.log("パスワード変更:", passwordData);
-      alert("パスワードを変更しました（モック）");
+      await UserService.changePassword(passwordData);
+      alert("パスワードを変更しました");
       setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
+        current_password: "",
+        new_password: "",
+        new_password_confirmation: "",
       });
     } catch (err) {
       console.error("Password change failed:", err);
-      setError("パスワードの変更に失敗しました");
+      const apiError = err as ApiError;
+      if (apiError.errors) {
+        const errorMessages = Object.values(apiError.errors).flat();
+        setError(errorMessages.join(", "));
+      } else {
+        setError(apiError.message || "パスワードの変更に失敗しました");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleAccountDelete = async () => {
+    const password = prompt(
+      "アカウントを削除するには、現在のパスワードを入力してください:",
+    );
+    if (!password) return;
+
     if (
       window.confirm(
         "本当にアカウントを削除しますか？この操作は取り消せません。",
@@ -103,15 +118,20 @@ const UserMyPage: React.FC = () => {
     ) {
       try {
         setLoading(true);
-        // TODO: アカウント削除API実装後に有効化
-        // await UserService.deleteAccount();
-        console.log("アカウント削除");
-        alert("アカウントを削除しました（モック）");
+        setError(null);
+        await UserService.deleteAccount({ password });
+        alert("アカウントを削除しました");
         await logout();
         navigate("/");
       } catch (err) {
         console.error("Account delete failed:", err);
-        setError("アカウントの削除に失敗しました");
+        const apiError = err as ApiError;
+        if (apiError.errors) {
+          const errorMessages = Object.values(apiError.errors).flat();
+          setError(errorMessages.join(", "));
+        } else {
+          setError(apiError.message || "アカウントの削除に失敗しました");
+        }
       } finally {
         setLoading(false);
       }
@@ -368,11 +388,11 @@ const UserMyPage: React.FC = () => {
                 <Input
                   label="現在のパスワード"
                   type="password"
-                  value={passwordData.currentPassword}
+                  value={passwordData.current_password}
                   onChange={(e) =>
                     setPasswordData({
                       ...passwordData,
-                      currentPassword: e.target.value,
+                      current_password: e.target.value,
                     })
                   }
                   required
@@ -380,11 +400,11 @@ const UserMyPage: React.FC = () => {
                 <Input
                   label="新しいパスワード"
                   type="password"
-                  value={passwordData.newPassword}
+                  value={passwordData.new_password}
                   onChange={(e) =>
                     setPasswordData({
                       ...passwordData,
-                      newPassword: e.target.value,
+                      new_password: e.target.value,
                     })
                   }
                   required
@@ -392,11 +412,11 @@ const UserMyPage: React.FC = () => {
                 <Input
                   label="新しいパスワード（確認）"
                   type="password"
-                  value={passwordData.confirmPassword}
+                  value={passwordData.new_password_confirmation}
                   onChange={(e) =>
                     setPasswordData({
                       ...passwordData,
-                      confirmPassword: e.target.value,
+                      new_password_confirmation: e.target.value,
                     })
                   }
                   required
