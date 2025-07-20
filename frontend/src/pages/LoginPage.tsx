@@ -1,17 +1,22 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../hooks/useAuth";
+import type { LoginRequest, ApiError } from "../types/auth";
 
 const LoginPage: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
-  const [formData, setFormData] = useState({
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState<LoginRequest>({
     email: "",
     password: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [generalError, setGeneralError] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,13 +31,12 @@ const LoginPage: React.FC = () => {
         [name]: "",
       }));
     }
+    if (generalError) {
+      setGeneralError("");
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrors({});
-
+  const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
     if (!formData.email) {
@@ -45,19 +49,42 @@ const LoginPage: React.FC = () => {
       newErrors.password = "パスワードを入力してください";
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setLoading(false);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
       return;
     }
 
+    setLoading(true);
+    setGeneralError("");
+
     try {
-      console.log("Login attempt:", formData);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert("ログイン機能は準備中です");
+      await login(formData);
+      navigate("/"); // ログイン成功後はホームページへ
     } catch (error) {
-      console.error("Login error:", error);
-      setErrors({ submit: "ログインに失敗しました" });
+      console.error("Login failed:", error);
+      const apiError = error as ApiError;
+
+      if (apiError.errors && Object.keys(apiError.errors).length > 0) {
+        // フィールド別エラーがある場合
+        setErrors(
+          Object.entries(apiError.errors).reduce(
+            (acc, [field, messages]) => {
+              acc[field] = messages[0]; // 最初のエラーメッセージを使用
+              return acc;
+            },
+            {} as { [key: string]: string },
+          ),
+        );
+      } else {
+        // 一般的なエラーメッセージ（日本語に変換済み）
+        setGeneralError(apiError.message || "ログインに失敗しました");
+      }
     } finally {
       setLoading(false);
     }
@@ -118,11 +145,19 @@ const LoginPage: React.FC = () => {
                 required
               />
 
-              {errors.submit && (
-                <div className="text-sm text-red-600 dark:text-red-400">
-                  {errors.submit}
+              {generalError && (
+                <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
+                  {generalError}
                 </div>
               )}
+
+              <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
+                <div className="font-medium mb-1">
+                  テスト用管理者アカウント:
+                </div>
+                <div>Email: admin@md-blog.local</div>
+                <div>Password: password123</div>
+              </div>
 
               <Button
                 type="submit"
