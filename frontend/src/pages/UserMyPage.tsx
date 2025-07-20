@@ -138,15 +138,6 @@ const UserMyPage: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       published: {
@@ -300,16 +291,31 @@ const UserMyPage: React.FC = () => {
           ) : userArticles.length === 0 ? (
             <Card>
               <CardBody>
-                <div className="text-center py-8">
+                <div className="text-center py-12">
+                  <div className="text-gray-400 dark:text-gray-500 mb-4">
+                    <svg
+                      className="mx-auto h-12 w-12"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    記事がありません
+                  </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    まだ記事を作成していません
+                    上の「新しい記事を作成」ボタンから最初の記事を書いてみましょう！
                   </p>
-                  <Button
-                    variant="primary"
-                    onClick={() => navigate("/articles/new")}
-                  >
-                    最初の記事を作成
-                  </Button>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    マークダウン形式で簡単に美しい記事が作成できます
+                  </p>
                 </div>
               </CardBody>
             </Card>
@@ -432,44 +438,26 @@ const UserMyPage: React.FC = () => {
           <Card>
             <CardHeader>
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                その他の設定
+                危険な操作
               </h2>
             </CardHeader>
             <CardBody>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-medium text-gray-900 dark:text-white">
-                      ログアウト
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      現在のセッションからログアウトします
-                    </p>
-                  </div>
-                  <Button variant="outline" onClick={handleLogout}>
-                    ログアウト
-                  </Button>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-medium text-red-600 dark:text-red-400">
+                    アカウント削除
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    アカウントとすべてのデータを完全に削除します。この操作は取り消せません。
+                  </p>
                 </div>
-
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium text-red-600 dark:text-red-400">
-                        アカウント削除
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        アカウントとすべてのデータを完全に削除します。この操作は取り消せません。
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={handleAccountDelete}
-                      className="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900/20"
-                    >
-                      削除
-                    </Button>
-                  </div>
-                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleAccountDelete}
+                  className="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900/20"
+                >
+                  削除
+                </Button>
               </div>
             </CardBody>
           </Card>
