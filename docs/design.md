@@ -126,12 +126,9 @@ erDiagram
         int user_id FK
         varchar title
         text content
-        varchar thumbnail_url
         enum status
         boolean is_paid
         decimal price
-        text preview_content
-        boolean is_featured
         timestamp created_at
         timestamp updated_at
     }

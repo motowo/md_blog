@@ -21,22 +21,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        setIsLoading(true);
+
+        // ローカルストレージから認証情報を取得（内部で不正データはクリーンアップされる）
         const storedUser = AuthService.getStoredUser();
         const storedToken = AuthService.getStoredToken();
 
         if (storedUser && storedToken) {
-          // トークンが有効か確認するため、最新のユーザー情報を取得
+          // ローカルストレージのデータが有効な場合、サーバーでトークンを検証
           try {
             const currentUser = await AuthService.getCurrentUser();
             setUser(currentUser);
           } catch (error) {
-            // トークンが無効な場合は認証状態をクリア
-            console.error("Failed to verify token:", error);
-            await logout();
+            // トークンが無効または期限切れの場合は認証状態をクリア
+            console.warn(
+              "Token verification failed, clearing auth state:",
+              error,
+            );
+            try {
+              await AuthService.logout(); // ローカルストレージをクリア
+            } catch (logoutError) {
+              console.error("Failed to clear auth state:", logoutError);
+            }
+            setUser(null);
           }
+        } else {
+          // ローカルストレージに有効な認証情報がない場合
+          setUser(null);
         }
       } catch (error) {
         console.error("Failed to initialize auth:", error);
+        // 初期化エラーの場合も認証状態をクリア
+        setUser(null);
+        try {
+          await AuthService.logout();
+        } catch (logoutError) {
+          console.error(
+            "Failed to clear auth state after init error:",
+            logoutError,
+          );
+        }
       } finally {
         setIsLoading(false);
       }

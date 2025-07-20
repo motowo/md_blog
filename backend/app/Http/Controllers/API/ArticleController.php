@@ -17,6 +17,11 @@ class ArticleController extends Controller
     {
         $query = Article::with('user', 'tags');
 
+        // 公開記事のみに絞り込み
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
         // タグによる絞り込み
         if ($request->has('tag')) {
             $query->whereHas('tags', function ($q) use ($request) {
@@ -24,10 +29,20 @@ class ArticleController extends Controller
             });
         }
 
-        $articles = $query->latest()->get();
+        // ページネーション設定
+        $perPage = $request->get('per_page', 12);
+        $perPage = min($perPage, 50); // 最大50件まで
+
+        $articles = $query->latest()->paginate($perPage);
 
         return response()->json([
-            'data' => $articles,
+            'data' => $articles->items(),
+            'current_page' => $articles->currentPage(),
+            'last_page' => $articles->lastPage(),
+            'per_page' => $articles->perPage(),
+            'total' => $articles->total(),
+            'from' => $articles->firstItem(),
+            'to' => $articles->lastItem(),
         ]);
     }
 
@@ -69,8 +84,54 @@ class ArticleController extends Controller
      */
     public function show(Article $article)
     {
+        // 公開されていない記事はアクセス拒否（作成者と管理者は除く）
+        if ($article->status !== 'published') {
+            $user = Auth::user();
+            if (! $user || ($user->id !== $article->user_id && $user->role !== 'admin')) {
+                return response()->json([
+                    'message' => 'この記事にはアクセスできません。',
+                ], 403);
+            }
+        }
+
+        // 有料記事の場合、購入チェック（作成者と管理者は除く）
+        if ($article->is_paid) {
+            $user = Auth::user();
+
+            // 未ログインの場合はプレビューのみ
+            if (! $user) {
+                $articleData = $article->load('user', 'tags');
+                $articleData->content = substr($article->content, 0, 300).'...';
+
+                return response()->json([
+                    'data' => $articleData,
+                    'is_preview' => true,
+                ]);
+            }
+
+            // 作成者または管理者の場合は全文表示
+            if ($user->id === $article->user_id || $user->role === 'admin') {
+                return response()->json([
+                    'data' => $article->load('user', 'tags'),
+                    'is_preview' => false,
+                ]);
+            }
+
+            // TODO: 実際の購入チェックロジック（現在はMock）
+            // 未購入の場合はプレビューのみ
+            $articleData = $article->load('user', 'tags');
+            $articleData->content = substr($article->content, 0, 300).'...';
+
+            return response()->json([
+                'data' => $articleData,
+                'is_preview' => true,
+            ]);
+        }
+
+        // 無料記事の場合は全文表示
         return response()->json([
             'data' => $article->load('user', 'tags'),
+            'is_preview' => false,
         ]);
     }
 
@@ -165,5 +226,24 @@ class ArticleController extends Controller
         $article->tags()->detach($tag->id);
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Get recent articles for homepage.
+     */
+    public function recent(Request $request)
+    {
+        $limit = $request->get('limit', 3);
+        $limit = min($limit, 10); // 最大10件まで
+
+        $articles = Article::with('user', 'tags')
+            ->where('status', 'published')
+            ->latest('updated_at') // 更新日時の降順
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'data' => $articles,
+        ]);
     }
 }

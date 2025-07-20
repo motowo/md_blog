@@ -1,0 +1,437 @@
+/* マークダウンコンテンツのカスタムスタイル */
+
+/* ダークモード対応のコードブロック */
+.dark .markdown-content pre {
+  background-color: #1a1a1a !important;
+  border: 1px solid #333 !important;
+}
+
+.dark .markdown-content pre code {
+  background-color: transparent !important;
+  color: #e5e7eb !important;
+}
+
+.dark .markdown-content code:not(pre code) {
+  background-color: #374151 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #4b5563 !important;
+}
+
+/* ライトモードのコードブロック */
+.markdown-content pre {
+  background-color: #f8f9fa !important;
+  border: 1px solid #e1e5e9 !important;
+  border-radius: 8px !important;
+  padding: 16px !important;
+  margin: 16px 0 !important;
+  overflow-x: auto !important;
+}
+
+.markdown-content pre code {
+  background-color: transparent !important;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.markdown-content code:not(pre code) {
+  background-color: #f1f3f4 !important;
+  color: #d73a49 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  border: 1px solid #e1e5e9 !important;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace !important;
+  font-size: 0.9em !important;
+}
+
+/* 見出しのスタイル改善 */
+.markdown-content h1 {
+  font-size: 2.25rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  margin-top: 2rem !important;
+  margin-bottom: 1rem !important;
+  border-bottom: 2px solid #e5e7eb !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.dark .markdown-content h1 {
+  border-bottom-color: #374151 !important;
+}
+
+.markdown-content h2 {
+  font-size: 1.875rem !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  margin-top: 2rem !important;
+  margin-bottom: 1rem !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  padding-bottom: 0.25rem !important;
+}
+
+.dark .markdown-content h2 {
+  border-bottom-color: #374151 !important;
+}
+
+.markdown-content h3 {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.markdown-content h4 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.markdown-content h5 {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.markdown-content h6 {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.5rem !important;
+  color: #6b7280 !important;
+}
+
+.dark .markdown-content h6 {
+  color: #9ca3af !important;
+}
+
+/* 段落のスタイル */
+.markdown-content p {
+  margin-bottom: 1rem !important;
+  line-height: 1.7 !important;
+}
+
+/* リストのスタイル改善 */
+.markdown-content ul {
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.markdown-content ol {
+  margin: 1rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.markdown-content li {
+  margin-bottom: 0.5rem !important;
+  line-height: 1.6 !important;
+}
+
+.markdown-content ul li {
+  list-style-type: disc !important;
+}
+
+.markdown-content ol li {
+  list-style-type: decimal !important;
+}
+
+/* ネストしたリスト */
+.markdown-content ul ul li {
+  list-style-type: circle !important;
+}
+
+.markdown-content ul ul ul li {
+  list-style-type: square !important;
+}
+
+/* 引用ブロックのスタイル */
+.markdown-content blockquote {
+  border-left: 4px solid #3b82f6 !important;
+  padding-left: 1rem !important;
+  margin: 1.5rem 0 !important;
+  background-color: #f8fafc !important;
+  padding: 1rem !important;
+  border-radius: 0 8px 8px 0 !important;
+  font-style: italic !important;
+}
+
+.dark .markdown-content blockquote {
+  background-color: #1f2937 !important;
+  border-left-color: #60a5fa !important;
+}
+
+.markdown-content blockquote p {
+  margin-bottom: 0 !important;
+}
+
+/* テーブルのスタイル */
+.markdown-content table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 1.5rem 0 !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.dark .markdown-content table {
+  border-color: #374151 !important;
+}
+
+.markdown-content thead {
+  background-color: #f9fafb !important;
+}
+
+.dark .markdown-content thead {
+  background-color: #374151 !important;
+}
+
+.markdown-content th {
+  padding: 12px !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.dark .markdown-content th {
+  border-bottom-color: #4b5563 !important;
+}
+
+.markdown-content td {
+  padding: 12px !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.dark .markdown-content td {
+  border-bottom-color: #374151 !important;
+}
+
+.markdown-content tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.markdown-content tbody tr:hover {
+  background-color: #f9fafb !important;
+}
+
+.dark .markdown-content tbody tr:hover {
+  background-color: #1f2937 !important;
+}
+
+/* リンクのスタイル */
+.markdown-content a {
+  color: #3b82f6 !important;
+  text-decoration: underline !important;
+  text-decoration-color: transparent !important;
+  transition: all 0.2s ease !important;
+}
+
+.markdown-content a:hover {
+  color: #1d4ed8 !important;
+  text-decoration-color: currentColor !important;
+}
+
+.dark .markdown-content a {
+  color: #60a5fa !important;
+}
+
+.dark .markdown-content a:hover {
+  color: #93c5fd !important;
+}
+
+/* 水平線のスタイル */
+.markdown-content hr {
+  border: none !important;
+  height: 1px !important;
+  background-color: #e5e7eb !important;
+  margin: 2rem 0 !important;
+}
+
+.dark .markdown-content hr {
+  background-color: #374151 !important;
+}
+
+/* 画像のスタイル */
+.markdown-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 8px !important;
+  margin: 1rem 0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark .markdown-content img {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* コードブロックの改善されたスタイル */
+.code-block-container {
+  position: relative;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  border: 1px solid #e1e5e9;
+}
+
+.dark .code-block-container {
+  background-color: #1a1a1a;
+  border-color: #333;
+}
+
+/* 右上のコントロールエリア（言語ラベル + コピーボタン） */
+.code-block-container .absolute.top-2.right-2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+/* 言語ラベルとコピーボタンの共通スタイル */
+.code-block-container .absolute.top-2.right-2 > * {
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  user-select: none;
+}
+
+/* 古いコピーボタンスタイル（互換性のため残す） */
+.code-copy-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  opacity: 0 !important;
+  transition: opacity 0.2s ease !important;
+  z-index: 10 !important;
+}
+
+.dark .code-copy-button {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.code-block-container:hover .code-copy-button {
+  opacity: 1 !important;
+}
+
+.code-copy-button:hover {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.dark .code-copy-button:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* インデント保持とシンタックスハイライト用のコードブロック */
+.code-block-container pre {
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 16px !important;
+  margin: 0 !important;
+  overflow-x: auto !important;
+  font-family:
+    "Monaco", "Menlo", "Ubuntu Mono", "Consolas", monospace !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  white-space: pre !important;
+  tab-size: 4 !important;
+  -moz-tab-size: 4 !important;
+  -webkit-tab-size: 4 !important;
+}
+
+.code-block-container pre code {
+  background-color: transparent !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  white-space: inherit !important;
+  tab-size: inherit !important;
+  -moz-tab-size: inherit !important;
+  -webkit-tab-size: inherit !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* 言語ラベルのスタイル */
+.code-block-container .language-label {
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  z-index: 5;
+  user-select: none;
+}
+
+.dark .code-block-container .language-label {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* PrismJSテーマとの統合 */
+.code-block-container pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 16px !important;
+  border-radius: 8px !important;
+  font-family:
+    "Monaco", "Menlo", "Ubuntu Mono", "Consolas", monospace !important;
+}
+
+.code-block-container code[class*="language-"] {
+  font-family: inherit !important;
+  white-space: pre !important;
+  tab-size: 4 !important;
+  -moz-tab-size: 4 !important;
+  -webkit-tab-size: 4 !important;
+}
+
+/* ダークモード用のシンタックスハイライト調整 */
+.dark .code-block-container pre[class*="language-"] {
+  background-color: #1a1a1a !important;
+  color: #e5e7eb !important;
+}
+
+.dark .code-block-container .token.comment {
+  color: #6b7280 !important;
+}
+
+.dark .code-block-container .token.string {
+  color: #34d399 !important;
+}
+
+.dark .code-block-container .token.number {
+  color: #f59e0b !important;
+}
+
+.dark .code-block-container .token.keyword {
+  color: #8b5cf6 !important;
+}
+
+.dark .code-block-container .token.function {
+  color: #60a5fa !important;
+}
+
+.dark .code-block-container .token.operator {
+  color: #f97316 !important;
+}
+
+/* チェックボックスリスト */
+.markdown-content input[type="checkbox"] {
+  margin-right: 0.5rem !important;
+}
+
+.markdown-content li input[type="checkbox"] {
+  margin-right: 0.5rem !important;
+}

@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import { ArticleListPage } from "./pages/ArticleListPage";
+import { ArticleDetailPage } from "./pages/ArticleDetailPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
@@ -31,6 +32,14 @@ function App() {
               element={
                 <Layout>
                   <ArticleListPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/articles/:id"
+              element={
+                <Layout>
+                  <ArticleDetailPage />
                 </Layout>
               }
             />
