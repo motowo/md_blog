@@ -1,230 +1,193 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Alert } from '../components/ui/Alert';
-import { Card, CardBody } from '../components/ui/Card';
-import type { RegisterRequest } from '../types/auth';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Card, CardBody, CardHeader } from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import { useTheme } from "../contexts/ThemeContext";
 
-export function RegisterPage() {
-  const [formData, setFormData] = useState<RegisterRequest>({
-    username: '',
-    email: '',
-    password: '',
-    password_confirmation: '',
-    name: '',
+const RegisterPage: React.FC = () => {
+  const { isDark, toggleTheme } = useTheme();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    passwordConfirm: "",
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [generalError, setGeneralError] = useState<string>('');
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
-  const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
     }
-    if (generalError) {
-      setGeneralError('');
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.username) {
-      newErrors.username = 'ユーザー名は必須です';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'ユーザー名は3文字以上で入力してください';
-    }
-
-    if (!formData.email) {
-      newErrors.email = 'メールアドレスは必須です';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = '有効なメールアドレスを入力してください';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'パスワードは必須です';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'パスワードは6文字以上で入力してください';
-    }
-
-    if (!formData.password_confirmation) {
-      newErrors.password_confirmation = 'パスワード確認は必須です';
-    } else if (formData.password !== formData.password_confirmation) {
-      newErrors.password_confirmation = 'パスワードが一致しません';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setErrors({});
 
-    if (!validateForm()) {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "名前を入力してください";
+    }
+
+    if (!formData.email) {
+      newErrors.email = "メールアドレスを入力してください";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "有効なメールアドレスを入力してください";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "パスワードを入力してください";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "パスワードは8文字以上で入力してください";
+    }
+
+    if (!formData.passwordConfirm) {
+      newErrors.passwordConfirm = "パスワード確認を入力してください";
+    } else if (formData.password !== formData.passwordConfirm) {
+      newErrors.passwordConfirm = "パスワードが一致しません";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
     try {
-      await register(formData);
-      navigate('/');
+      console.log("Register attempt:", formData);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      alert("ユーザー登録機能は準備中です");
     } catch (error) {
-      if (error instanceof Error) {
-        // API エラーレスポンスの処理
-        if (error.message.includes('email')) {
-          setGeneralError('このメールアドレスは既に使用されています。');
-        } else if (error.message.includes('username')) {
-          setGeneralError('このユーザー名は既に使用されています。');
-        } else {
-          setGeneralError(error.message || 'アカウント作成に失敗しました。');
-        }
-      } else {
-        setGeneralError('アカウント作成に失敗しました。しばらく後にもう一度お試しください。');
-      }
+      console.error("Register error:", error);
+      setErrors({ submit: "ユーザー登録に失敗しました" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-purple-50 to-pink-50 dark:from-dark-100 dark:via-dark-50 dark:to-dark-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* 背景装飾 */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-bounce-soft"></div>
-        <div
-          className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-bounce-soft"
-          style={{ animationDelay: '2s' }}
-        ></div>
-        <div
-          className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-bounce-soft"
-          style={{ animationDelay: '4s' }}
-        ></div>
-      </div>
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-md w-full">
+        <div className="absolute top-4 right-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleTheme}
+            className="flex items-center space-x-2"
+          >
+            <span>{isDark ? "☀️" : "🌙"}</span>
+            <span className="hidden sm:inline">
+              {isDark ? "ライト" : "ダーク"}
+            </span>
+          </Button>
+        </div>
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            新規登録
+          </h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            アカウントを作成してください
+          </p>
+        </div>
 
-      <div className="relative max-w-md w-full animate-fade-in">
-        <Card className="bg-white/80 dark:bg-dark-100/80 backdrop-blur-md shadow-2xl border-0">
-          <CardBody className="p-8">
-            <div className="text-center mb-8">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg animate-bounce-soft">
-                <svg
-                  className="h-8 w-8 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                アカウント作成
-              </h2>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                すでにアカウントをお持ちの方は{' '}
-                <Link
-                  to="/login"
-                  className="font-medium text-zinc-900 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300 transition-colors"
-                >
-                  こちらからログイン
-                </Link>
-              </p>
-            </div>
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              ユーザー情報を入力
+            </h3>
+          </CardHeader>
+          <CardBody>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                label="名前"
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                error={errors.name}
+                placeholder="田中太郎"
+                required
+              />
 
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              {generalError && <Alert type="error">{generalError}</Alert>}
+              <Input
+                label="メールアドレス"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                error={errors.email}
+                placeholder="your@email.com"
+                required
+              />
 
-              <div className="space-y-5">
-                <Input
-                  label="ユーザー名"
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  error={errors.username}
-                  required
-                  autoComplete="username"
-                  className="transition-all duration-300 focus:scale-[1.02]"
-                  description="3文字以上で入力してください"
-                />
+              <Input
+                label="パスワード"
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                error={errors.password}
+                placeholder="8文字以上のパスワード"
+                required
+              />
 
-                <Input
-                  label="メールアドレス"
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  error={errors.email}
-                  required
-                  autoComplete="email"
-                  className="transition-all duration-300 focus:scale-[1.02]"
-                />
+              <Input
+                label="パスワード確認"
+                type="password"
+                name="passwordConfirm"
+                value={formData.passwordConfirm}
+                onChange={handleInputChange}
+                error={errors.passwordConfirm}
+                placeholder="パスワードを再入力"
+                required
+              />
 
-                <Input
-                  label="表示名（任意）"
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  error={errors.name}
-                  autoComplete="name"
-                  className="transition-all duration-300 focus:scale-[1.02]"
-                  description="公開プロフィールに表示される名前です"
-                />
-
-                <Input
-                  label="パスワード"
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  error={errors.password}
-                  required
-                  autoComplete="new-password"
-                  className="transition-all duration-300 focus:scale-[1.02]"
-                  description="6文字以上で入力してください"
-                />
-
-                <Input
-                  label="パスワード確認"
-                  type="password"
-                  name="password_confirmation"
-                  value={formData.password_confirmation}
-                  onChange={handleChange}
-                  error={errors.password_confirmation}
-                  required
-                  autoComplete="new-password"
-                  className="transition-all duration-300 focus:scale-[1.02]"
-                />
-              </div>
+              {errors.submit && (
+                <div className="text-sm text-red-600 dark:text-red-400">
+                  {errors.submit}
+                </div>
+              )}
 
               <Button
                 type="submit"
-                loading={loading}
+                variant="primary"
                 size="lg"
-                className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 shadow-lg transform hover:scale-[1.02] transition-all duration-300"
+                loading={loading}
+                className="w-full"
               >
-                {loading ? 'アカウント作成中...' : '🚀 アカウント作成'}
+                アカウント作成
               </Button>
             </form>
 
-            {/* 利用規約等 */}
-            <div className="mt-6 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-              <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-                アカウント作成により、
-                <br />
-                <span className="text-zinc-900 dark:text-zinc-100">利用規約</span>と
-                <span className="text-zinc-900 dark:text-zinc-100">プライバシーポリシー</span>
-                に同意したものとみなされます
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                すでにアカウントをお持ちの方は{" "}
+                <Link
+                  to="/login"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  ログイン
+                </Link>
+              </p>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                <Link
+                  to="/"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  ホームに戻る
+                </Link>
               </p>
             </div>
           </CardBody>
@@ -232,4 +195,6 @@ export function RegisterPage() {
       </div>
     </div>
   );
-}
+};
+
+export default RegisterPage;

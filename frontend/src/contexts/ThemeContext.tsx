@@ -1,79 +1,62 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
-
-type Theme = 'light' | 'dark';
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface ThemeContextType {
-  theme: Theme;
+  isDark: boolean;
   toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-interface ThemeProviderProps {
-  children: ReactNode;
-}
-
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    // ローカルストレージから保存されたテーマを取得
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    // システムの設定を確認
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
-    return savedTheme || systemTheme;
-  });
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // HTMLのクラスを更新してTailwindのダークモードを有効化
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      console.log('Dark mode activated - class added to html element');
-    } else {
-      document.documentElement.classList.remove('dark');
-      console.log('Light mode activated - class removed from html element');
-    }
+    // Initialize theme on mount
+    const saved = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+    const shouldBeDark = saved === "dark" || (!saved && prefersDark);
 
-    // ローカルストレージに保存
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  // システムテーマの変更を監視
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      // 手動設定がない場合のみシステム設定を適用
-      if (!localStorage.getItem('theme')) {
-        setThemeState(e.matches ? 'dark' : 'light');
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    setIsDark(shouldBeDark);
   }, []);
 
-  const toggleTheme = () => {
-    setThemeState((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
+  useEffect(() => {
+    const root = document.documentElement;
 
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
+    // Always remove first, then add if needed
+    root.classList.remove("dark");
+
+    if (isDark) {
+      root.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+      console.log("Applied dark mode");
+    } else {
+      localStorage.setItem("theme", "light");
+      console.log("Applied light mode");
+    }
+
+    console.log("HTML classes:", root.className);
+  }, [isDark]);
+
+  const toggleTheme = () => {
+    setIsDark((prev) => !prev);
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
-}
+};
 
 // eslint-disable-next-line react-refresh/only-export-components
-export function useTheme(): ThemeContextType {
+export const useTheme = () => {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+  if (!context) {
+    throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
-}
+};

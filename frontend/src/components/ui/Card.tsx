@@ -1,107 +1,64 @@
-import React from 'react';
-import { cn } from '../../utils/cn';
+import React from "react";
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'elevated' | 'outline' | 'ghost';
-  padding?: 'none' | 'sm' | 'md' | 'lg';
-  rounded?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
-}
+type CardProps = React.HTMLAttributes<HTMLDivElement>;
 
-interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
-  border?: boolean;
-}
+const Card: React.FC<CardProps> = ({ children, className = "", ...props }) => {
+  return (
+    <div
+      className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm ${className}`}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
+
+type CardHeaderProps = React.HTMLAttributes<HTMLDivElement>;
+
+const CardHeader: React.FC<CardHeaderProps> = ({
+  children,
+  className = "",
+  ...props
+}) => {
+  return (
+    <div
+      className={`px-6 py-4 border-b border-gray-200 dark:border-gray-700 ${className}`}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
 
 type CardBodyProps = React.HTMLAttributes<HTMLDivElement>;
 
-interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
-  border?: boolean;
-}
-
-export function Card({
+const CardBody: React.FC<CardBodyProps> = ({
   children,
-  variant = 'default',
-  padding = 'md',
-  rounded = 'lg',
-  className = '',
+  className = "",
   ...props
-}: CardProps) {
-  const baseClasses = cn('overflow-hidden transition-colors duration-200');
-
-  const variantClasses = {
-    default: cn('bg-white border border-zinc-200', 'dark:bg-zinc-900 dark:border-zinc-800'),
-    elevated: cn(
-      'bg-white shadow-sm border border-zinc-200',
-      'dark:bg-zinc-900 dark:border-zinc-800'
-    ),
-    outline: cn('border-2 border-zinc-300 bg-transparent', 'dark:border-zinc-600'),
-    ghost: cn('bg-zinc-50 border border-transparent', 'dark:bg-zinc-800/50'),
-  };
-
-  const paddingClasses = {
-    none: '',
-    sm: 'p-3',
-    md: 'p-6',
-    lg: 'p-8',
-  };
-
-  const roundedClasses = {
-    none: 'rounded-none',
-    sm: 'rounded-sm',
-    md: 'rounded-md',
-    lg: 'rounded-lg',
-    xl: 'rounded-xl',
-  };
-
-  const classes = cn(
-    baseClasses,
-    variantClasses[variant],
-    paddingClasses[padding],
-    roundedClasses[rounded],
-    className
-  );
-
+}) => {
   return (
-    <div className={classes} {...props}>
+    <div className={`px-6 py-4 ${className}`} {...props}>
       {children}
     </div>
   );
-}
+};
 
-export function CardHeader({ children, border = true, className = '', ...props }: CardHeaderProps) {
-  const classes = cn(
-    'px-6 py-4',
-    border && 'border-b border-zinc-200 dark:border-zinc-800',
-    className
-  );
+type CardFooterProps = React.HTMLAttributes<HTMLDivElement>;
 
+const CardFooter: React.FC<CardFooterProps> = ({
+  children,
+  className = "",
+  ...props
+}) => {
   return (
-    <div className={classes} {...props}>
+    <div
+      className={`px-6 py-4 border-t border-gray-200 dark:border-gray-700 ${className}`}
+      {...props}
+    >
       {children}
     </div>
   );
-}
+};
 
-export function CardBody({ children, className = '', ...props }: CardBodyProps) {
-  const classes = cn('px-6 py-4', className);
-
-  return (
-    <div className={classes} {...props}>
-      {children}
-    </div>
-  );
-}
-
-export function CardFooter({ children, border = true, className = '', ...props }: CardFooterProps) {
-  const classes = cn(
-    'px-6 py-4',
-    border && 'border-t border-zinc-200 dark:border-zinc-800',
-    'bg-zinc-50 dark:bg-zinc-800/50',
-    className
-  );
-
-  return (
-    <div className={classes} {...props}>
-      {children}
-    </div>
-  );
-}
+export { Card, CardHeader, CardBody, CardFooter };
