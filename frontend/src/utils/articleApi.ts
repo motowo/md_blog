@@ -30,8 +30,12 @@ export class ArticleService {
   }
 
   // 記事詳細取得
-  static async getArticle(id: number): Promise<Article> {
-    const response = await apiClient.get<Article>(`/articles/${id}`);
+  static async getArticle(
+    id: number,
+  ): Promise<Article | { data: Article; is_preview: boolean }> {
+    const response = await apiClient.get<
+      Article | { data: Article; is_preview: boolean }
+    >(`/articles/${id}`);
     return response.data;
   }
 
@@ -90,5 +94,13 @@ export class ArticleService {
       : "/user/articles";
     const response = await apiClient.get<ArticlesResponse>(url);
     return response.data;
+  }
+
+  // 新着記事取得（ホームページ用）
+  static async getRecentArticles(limit: number = 3): Promise<Article[]> {
+    const response = await apiClient.get<{ data: Article[] }>(
+      `/articles/recent?limit=${limit}`,
+    );
+    return response.data.data;
   }
 }

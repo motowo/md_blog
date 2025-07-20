@@ -15,15 +15,22 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.10.0",
+    "prismjs": "^1.30.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.7.0",
     "rehype-highlight": "^7.0.2",
+    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
-    "tailwindcss": "^4.1.11"
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "strip-markdown": "^6.0.0",
+    "tailwindcss": "^4.1.11",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
