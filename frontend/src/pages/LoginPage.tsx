@@ -151,7 +151,6 @@ const LoginPage: React.FC = () => {
                 </div>
               )}
 
-
               <Button
                 type="submit"
                 variant="primary"
