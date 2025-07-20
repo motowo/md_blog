@@ -125,8 +125,14 @@ export class ArticleService {
   // ユーザーの記事一覧取得（マイページ用）
   static async getUserArticles(): Promise<Article[]> {
     try {
-      const response = await this.getMyArticles();
-      return response.data || [];
+      const response = await apiClient.get<{
+        data: Article[];
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+      }>("/user/articles");
+      return response.data.data || [];
     } catch (error) {
       console.error("Failed to fetch user articles:", error);
       return [];
