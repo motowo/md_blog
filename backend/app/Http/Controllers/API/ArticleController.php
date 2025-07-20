@@ -87,7 +87,7 @@ class ArticleController extends Controller
         // 公開されていない記事はアクセス拒否（作成者と管理者は除く）
         if ($article->status !== 'published') {
             $user = Auth::user();
-            if (!$user || ($user->id !== $article->user_id && $user->role !== 'admin')) {
+            if (! $user || ($user->id !== $article->user_id && $user->role !== 'admin')) {
                 return response()->json([
                     'message' => 'この記事にはアクセスできません。',
                 ], 403);
@@ -97,18 +97,18 @@ class ArticleController extends Controller
         // 有料記事の場合、購入チェック（作成者と管理者は除く）
         if ($article->is_paid) {
             $user = Auth::user();
-            
+
             // 未ログインの場合はプレビューのみ
-            if (!$user) {
+            if (! $user) {
                 $articleData = $article->load('user', 'tags');
-                $articleData->content = substr($article->content, 0, 300) . '...';
-                
+                $articleData->content = substr($article->content, 0, 300).'...';
+
                 return response()->json([
                     'data' => $articleData,
                     'is_preview' => true,
                 ]);
             }
-            
+
             // 作成者または管理者の場合は全文表示
             if ($user->id === $article->user_id || $user->role === 'admin') {
                 return response()->json([
@@ -116,12 +116,12 @@ class ArticleController extends Controller
                     'is_preview' => false,
                 ]);
             }
-            
+
             // TODO: 実際の購入チェックロジック（現在はMock）
             // 未購入の場合はプレビューのみ
             $articleData = $article->load('user', 'tags');
-            $articleData->content = substr($article->content, 0, 300) . '...';
-            
+            $articleData->content = substr($article->content, 0, 300).'...';
+
             return response()->json([
                 'data' => $articleData,
                 'is_preview' => true,

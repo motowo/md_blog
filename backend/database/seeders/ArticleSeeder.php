@@ -2,18 +2,19 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Article;
-use App\Models\User;
 use App\Models\Tag;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class ArticleSeeder extends Seeder
 {
     public function run(): void
     {
         $admin = User::where('email', 'admin@md-blog.local')->first();
-        if (!$admin) {
+        if (! $admin) {
             $this->command->error('Admin user not found. Please run UserSeeder first.');
+
             return;
         }
 
@@ -23,7 +24,7 @@ class ArticleSeeder extends Seeder
                 'content' => $this->getReactHooksContent(),
                 'status' => 'published',
                 'is_paid' => false,
-                'tags' => ['react', 'javascript', 'typescript']
+                'tags' => ['react', 'javascript', 'typescript'],
             ],
             [
                 'title' => 'Laravel 11の新機能とアップグレード手順',
@@ -31,7 +32,7 @@ class ArticleSeeder extends Seeder
                 'status' => 'published',
                 'is_paid' => true,
                 'price' => 1500,
-                'tags' => ['laravel', 'php']
+                'tags' => ['laravel', 'php'],
             ],
             [
                 'title' => 'TypeScriptでのAPI型安全性の実現',
@@ -39,14 +40,14 @@ class ArticleSeeder extends Seeder
                 'status' => 'published',
                 'is_paid' => true,
                 'price' => 2000,
-                'tags' => ['typescript', 'api-design', 'javascript']
+                'tags' => ['typescript', 'api-design', 'javascript'],
             ],
             [
                 'title' => 'Dockerを使った開発環境構築のベストプラクティス',
                 'content' => $this->getDockerContent(),
                 'status' => 'published',
                 'is_paid' => false,
-                'tags' => ['docker', 'nodejs', 'php']
+                'tags' => ['docker', 'nodejs', 'php'],
             ],
             [
                 'title' => 'Next.js App Routerの完全ガイド',
@@ -54,7 +55,7 @@ class ArticleSeeder extends Seeder
                 'status' => 'published',
                 'is_paid' => true,
                 'price' => 2500,
-                'tags' => ['nextjs', 'react', 'typescript']
+                'tags' => ['nextjs', 'react', 'typescript'],
             ],
             [
                 'title' => 'AWS Lambda + Node.jsでサーバーレス開発',
@@ -62,14 +63,14 @@ class ArticleSeeder extends Seeder
                 'status' => 'published',
                 'is_paid' => true,
                 'price' => 3000,
-                'tags' => ['aws', 'nodejs', 'api-design']
+                'tags' => ['aws', 'nodejs', 'api-design'],
             ],
             [
                 'title' => 'Vue.js 3 Composition APIの実践的活用法',
                 'content' => $this->getVueCompositionContent(),
                 'status' => 'published',
                 'is_paid' => false,
-                'tags' => ['vuejs', 'javascript', 'typescript']
+                'tags' => ['vuejs', 'javascript', 'typescript'],
             ],
             [
                 'title' => 'Python Django REST APIの設計パターン',
@@ -77,7 +78,7 @@ class ArticleSeeder extends Seeder
                 'status' => 'published',
                 'is_paid' => true,
                 'price' => 2200,
-                'tags' => ['python', 'django', 'api-design']
+                'tags' => ['python', 'django', 'api-design'],
             ],
             [
                 'title' => 'Go言語でのマイクロサービス設計',
@@ -85,14 +86,14 @@ class ArticleSeeder extends Seeder
                 'status' => 'published',
                 'is_paid' => true,
                 'price' => 3500,
-                'tags' => ['go', 'api-design', 'docker']
+                'tags' => ['go', 'api-design', 'docker'],
             ],
             [
                 'title' => 'MySQL パフォーマンスチューニング入門',
                 'content' => $this->getMySQLContent(),
                 'status' => 'published',
                 'is_paid' => false,
-                'tags' => ['mysql', 'php', 'python']
+                'tags' => ['mysql', 'php', 'python'],
             ],
             [
                 'title' => 'React Native + Expo開発環境の構築',
@@ -100,7 +101,7 @@ class ArticleSeeder extends Seeder
                 'status' => 'published',
                 'is_paid' => true,
                 'price' => 1800,
-                'tags' => ['react', 'javascript', 'typescript']
+                'tags' => ['react', 'javascript', 'typescript'],
             ],
             [
                 'title' => 'GraphQL APIの設計と実装パターン',
@@ -108,17 +109,17 @@ class ArticleSeeder extends Seeder
                 'status' => 'published',
                 'is_paid' => true,
                 'price' => 2800,
-                'tags' => ['api-design', 'nodejs', 'typescript']
-            ]
+                'tags' => ['api-design', 'nodejs', 'typescript'],
+            ],
         ];
 
         foreach ($articles as $articleData) {
             $tags = $articleData['tags'];
             unset($articleData['tags']);
-            
+
             $article = Article::create([
                 'user_id' => $admin->id,
-                ...$articleData
+                ...$articleData,
             ]);
 
             // タグを関連付け
@@ -553,7 +554,7 @@ App Routerで効率的なアプリケーションを構築できます。
 MD;
     }
 
-    private function getAwsLambdaContent(): string 
+    private function getAwsLambdaContent(): string
     {
         return <<<'MD'
 # AWS Lambda + Node.jsでサーバーレス開発
