@@ -1,5 +1,7 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContextDefinition";
 import Button from "./ui/Button";
 
 interface LayoutProps {
@@ -8,6 +10,15 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { isDark, toggleTheme } = useTheme();
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -15,9 +26,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              <Link
+                to="/"
+                className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
                 MD Blog
-              </h1>
+              </Link>
             </div>
             <div className="flex items-center space-x-4">
               <Button
@@ -31,6 +45,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   {isDark ? "ライト" : "ダーク"}
                 </span>
               </Button>
+
+              {!isAuthenticated ? (
+                <Link to="/login">
+                  <Button variant="primary" size="sm">
+                    ログイン
+                  </Button>
+                </Link>
+              ) : (
+                <div className="flex items-center space-x-4">
+                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                    <span className="font-medium">
+                      {user?.username}
+                      {user?.role === "admin" && (
+                        <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                          管理者
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleLogout}>
+                    ログアウト
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

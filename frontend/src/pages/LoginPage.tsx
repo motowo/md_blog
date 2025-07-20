@@ -151,14 +151,6 @@ const LoginPage: React.FC = () => {
                 </div>
               )}
 
-              <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
-                <div className="font-medium mb-1">
-                  テスト用管理者アカウント:
-                </div>
-                <div>Email: admin@md-blog.local</div>
-                <div>Password: password123</div>
-              </div>
-
               <Button
                 type="submit"
                 variant="primary"

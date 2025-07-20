@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import { ArticleCard } from "../components/ArticleCard";
 import { useAuth } from "../contexts/AuthContextDefinition";
@@ -8,18 +7,10 @@ import { ArticleService } from "../utils/articleApi";
 import type { Article } from "../types/article";
 
 const HomePage: React.FC = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user } = useAuth();
   const [recentArticles, setRecentArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
 
   // 新着記事を取得
   useEffect(() => {
@@ -49,95 +40,6 @@ const HomePage: React.FC = () => {
         <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
           マークダウンで記事を投稿・管理できるブログプラットフォーム
         </p>
-
-        {!isAuthenticated ? (
-          <div className="space-y-4">
-            <div className="space-x-4">
-              <Link to="/articles">
-                <Button variant="primary" size="lg">
-                  記事を読む
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button variant="outline" size="lg">
-                  ログイン
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button variant="outline" size="lg">
-                  新規登録
-                </Button>
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              ようこそ、{user?.name || user?.username}さん！
-            </h2>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              <p>ユーザー名: {user?.username}</p>
-              <p>メールアドレス: {user?.email}</p>
-              <p>役割: {user?.role === "admin" ? "管理者" : "投稿者"}</p>
-            </div>
-            <div className="space-x-4">
-              <Link to="/articles">
-                <Button variant="outline" size="lg">
-                  記事を読む
-                </Button>
-              </Link>
-              <Link to="/articles/new">
-                <Button variant="primary" size="lg">
-                  記事を書く
-                </Button>
-              </Link>
-              <Button variant="outline" size="lg" onClick={handleLogout}>
-                ログアウト
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-8">
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              マークダウン対応
-            </h3>
-          </CardHeader>
-          <CardBody>
-            <p className="text-gray-600 dark:text-gray-400">
-              マークダウン記法で簡単に記事を作成・編集できます。
-            </p>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              タグ管理
-            </h3>
-          </CardHeader>
-          <CardBody>
-            <p className="text-gray-600 dark:text-gray-400">
-              記事にタグを付けて、カテゴリ別に整理できます。
-            </p>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              レスポンシブデザイン
-            </h3>
-          </CardHeader>
-          <CardBody>
-            <p className="text-gray-600 dark:text-gray-400">
-              モバイル・デスクトップどちらでも快適に利用できます。
-            </p>
-          </CardBody>
-        </Card>
       </div>
 
       <div className="mt-16">
