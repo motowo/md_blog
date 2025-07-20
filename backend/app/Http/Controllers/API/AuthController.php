@@ -16,6 +16,14 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
+        // JSONリクエストを手動でパース
+        if ($request->isJson()) {
+            $jsonData = json_decode($request->getContent(), true);
+            if ($jsonData) {
+                $request->merge($jsonData);
+            }
+        }
+
         $request->validate([
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
@@ -45,6 +53,14 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
+        // JSONリクエストを手動でパース
+        if ($request->isJson()) {
+            $jsonData = json_decode($request->getContent(), true);
+            if ($jsonData && is_array($jsonData)) {
+                $request->merge($jsonData);
+            }
+        }
+
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',

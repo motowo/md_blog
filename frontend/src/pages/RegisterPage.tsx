@@ -1,19 +1,25 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../hooks/useAuth";
+import type { RegisterRequest, ApiError } from "../types/auth";
 
 const RegisterPage: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
-  const [formData, setFormData] = useState({
-    name: "",
+  const { register } = useAuth();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState<RegisterRequest>({
+    username: "",
     email: "",
     password: "",
-    passwordConfirm: "",
+    password_confirmation: "",
+    name: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [generalError, setGeneralError] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,17 +34,18 @@ const RegisterPage: React.FC = () => {
         [name]: "",
       }));
     }
+    if (generalError) {
+      setGeneralError("");
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrors({});
-
+  const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = "名前を入力してください";
+    if (!formData.username.trim()) {
+      newErrors.username = "ユーザー名を入力してください";
+    } else if (formData.username.length < 3) {
+      newErrors.username = "ユーザー名は3文字以上で入力してください";
     }
 
     if (!formData.email) {
@@ -49,29 +56,52 @@ const RegisterPage: React.FC = () => {
 
     if (!formData.password) {
       newErrors.password = "パスワードを入力してください";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "パスワードは8文字以上で入力してください";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "パスワードは6文字以上で入力してください";
     }
 
-    if (!formData.passwordConfirm) {
-      newErrors.passwordConfirm = "パスワード確認を入力してください";
-    } else if (formData.password !== formData.passwordConfirm) {
-      newErrors.passwordConfirm = "パスワードが一致しません";
+    if (!formData.password_confirmation) {
+      newErrors.password_confirmation = "パスワード確認を入力してください";
+    } else if (formData.password !== formData.password_confirmation) {
+      newErrors.password_confirmation = "パスワードが一致しません";
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setLoading(false);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
       return;
     }
 
+    setLoading(true);
+    setGeneralError("");
+
     try {
-      console.log("Register attempt:", formData);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert("ユーザー登録機能は準備中です");
+      await register(formData);
+      navigate("/"); // 登録成功後はホームページへ
     } catch (error) {
-      console.error("Register error:", error);
-      setErrors({ submit: "ユーザー登録に失敗しました" });
+      console.error("Registration failed:", error);
+      const apiError = error as ApiError;
+
+      if (apiError.errors && Object.keys(apiError.errors).length > 0) {
+        // フィールド別エラーがある場合
+        setErrors(
+          Object.entries(apiError.errors).reduce(
+            (acc, [field, messages]) => {
+              acc[field] = messages[0]; // 最初のエラーメッセージを使用
+              return acc;
+            },
+            {} as { [key: string]: string },
+          ),
+        );
+      } else {
+        // 一般的なエラーメッセージ（日本語に変換済み）
+        setGeneralError(apiError.message || "ユーザー登録に失敗しました");
+      }
     } finally {
       setLoading(false);
     }
@@ -111,14 +141,24 @@ const RegisterPage: React.FC = () => {
           <CardBody>
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
-                label="名前"
+                label="ユーザー名"
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                error={errors.username}
+                placeholder="username123"
+                required
+              />
+
+              <Input
+                label="表示名（任意）"
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
                 error={errors.name}
                 placeholder="田中太郎"
-                required
               />
 
               <Input
@@ -146,17 +186,17 @@ const RegisterPage: React.FC = () => {
               <Input
                 label="パスワード確認"
                 type="password"
-                name="passwordConfirm"
-                value={formData.passwordConfirm}
+                name="password_confirmation"
+                value={formData.password_confirmation}
                 onChange={handleInputChange}
-                error={errors.passwordConfirm}
+                error={errors.password_confirmation}
                 placeholder="パスワードを再入力"
                 required
               />
 
-              {errors.submit && (
-                <div className="text-sm text-red-600 dark:text-red-400">
-                  {errors.submit}
+              {generalError && (
+                <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
+                  {generalError}
                 </div>
               )}
 

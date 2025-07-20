@@ -1,27 +1,69 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
   return (
     <ThemeProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route
-            path="/"
-            element={
-              <Layout>
-                <HomePage />
-              </Layout>
-            }
-          />
-        </Routes>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/"
+              element={
+                <Layout>
+                  <HomePage />
+                </Layout>
+              }
+            />
+
+            {/* 保護されたルート（認証が必要） */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                        ダッシュボード
+                      </h1>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        認証済みユーザー専用のページです。
+                      </p>
+                    </div>
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 管理者専用ルート */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireRole="admin">
+                  <Layout>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                        管理者ダッシュボード
+                      </h1>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        管理者専用のページです。
+                      </p>
+                    </div>
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
