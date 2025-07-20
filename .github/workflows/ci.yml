@@ -12,6 +12,10 @@ on:
       - 'frontend/**'
       - '.github/workflows/**'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 env:
   DOCKER_BUILDKIT: 1
   COMPOSE_DOCKER_CLI_BUILD: 1
@@ -74,10 +78,8 @@ jobs:
 
       - name: Push changes
         if: env.NEEDS_FORMAT == 'true'
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.head_ref }}
+        run: |
+          git push origin HEAD:${{ github.head_ref || github.ref_name }}
 
 
   summary:

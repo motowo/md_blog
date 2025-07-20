@@ -41,12 +41,9 @@
 | `user_id`        | INT          | FK (User)      | 投稿ユーザーID                     |
 | `title`          | VARCHAR(255) | Not Null       | 記事タイトル                       |
 | `content`        | TEXT         | Not Null       | 記事本文 (Markdown)                |
-| `thumbnail_url`  | VARCHAR(255) | Nullable       | サムネイル画像URL                  |
 | `status`         | ENUM         | Not Null       | 公開ステータス (公開, 非公開)      |
 | `is_paid`        | BOOLEAN      | Not Null       | 有料/無料 (True: 有料, False: 無料) |
 | `price`          | DECIMAL(10,2)| Nullable       | 価格 (有料の場合)                  |
-| `preview_content`| TEXT         | Nullable       | プレビュー用コンテンツ             |
-| `is_featured`    | BOOLEAN      | Not Null, Default: False | 特集記事フラグ (True: 特集)        |
 | `created_at`     | TIMESTAMP    | Not Null       | 投稿日時                           |
 | `updated_at`     | TIMESTAMP    | Not Null       | 更新日時                           |
 

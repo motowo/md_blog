@@ -5,6 +5,7 @@ import Layout from "./components/Layout";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import { ArticleListPage } from "./pages/ArticleListPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
@@ -20,6 +21,16 @@ function App() {
               element={
                 <Layout>
                   <HomePage />
+                </Layout>
+              }
+            />
+
+            {/* 記事関連ルート */}
+            <Route
+              path="/articles"
+              element={
+                <Layout>
+                  <ArticleListPage />
                 </Layout>
               }
             />

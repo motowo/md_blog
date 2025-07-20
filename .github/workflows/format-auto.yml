@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   auto-format:
@@ -98,7 +99,5 @@ jobs:
 
       - name: Push changes
         if: env.FRONTEND_FORMATTED == 'true' || env.BACKEND_FORMATTED == 'true'
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+        run: |
+          git push origin HEAD:${{ github.ref_name }}
