@@ -59,4 +59,23 @@ class User extends Authenticatable
     {
         return $this->hasMany(Article::class);
     }
+
+    /**
+     * Get the payments for the user.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Check if the user has purchased the given article.
+     */
+    public function hasPurchased(Article $article): bool
+    {
+        return $this->payments()
+            ->where('article_id', $article->id)
+            ->where('status', 'success')
+            ->exists();
+    }
 }

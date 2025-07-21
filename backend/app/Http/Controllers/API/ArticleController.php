@@ -124,15 +124,27 @@ class ArticleController extends Controller
                     'is_preview' => false,
                 ]);
             } else {
-                // TODO: 実際の購入チェックロジック（現在はMock）
-                // 未購入の場合はプレビューのみ
-                $articleData = $article->load('user', 'tags');
-                $articleData->content = substr($article->content, 0, 300).'...';
+                // 購入チェック
+                $hasPurchased = $user->hasPurchased($article);
 
-                return response()->json([
-                    'data' => $articleData,
-                    'is_preview' => true,
-                ]);
+                if ($hasPurchased) {
+                    // 購入済みの場合は全文表示
+                    return response()->json([
+                        'data' => $article->load('user', 'tags'),
+                        'is_preview' => false,
+                        'has_purchased' => true,
+                    ]);
+                } else {
+                    // 未購入の場合はプレビューのみ
+                    $articleData = $article->load('user', 'tags');
+                    $articleData->content = substr($article->content, 0, 300).'...';
+
+                    return response()->json([
+                        'data' => $articleData,
+                        'is_preview' => true,
+                        'has_purchased' => false,
+                    ]);
+                }
             }
         }
 

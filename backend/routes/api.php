@@ -4,6 +4,7 @@ use App\Http\Controllers\API\ArticleController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\TagController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -53,4 +54,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/password', [UserController::class, 'changePassword']);
     Route::delete('/user/account', [UserController::class, 'deleteAccount']);
     Route::get('/user/articles', [UserController::class, 'articles']);
+
+    // 決済関連のルート
+    Route::post('/payments', [PaymentController::class, 'store']);
+    Route::get('/payments', [PaymentController::class, 'index']);
 });

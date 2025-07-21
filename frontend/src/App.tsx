@@ -10,6 +10,7 @@ import { ArticleDetailPage } from "./pages/ArticleDetailPage";
 import ArticleCreatePage from "./pages/ArticleCreatePage";
 import ArticleEditPage from "./pages/ArticleEditPage";
 import UserMyPage from "./pages/UserMyPage";
+import PaymentHistoryPage from "./pages/PaymentHistoryPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
@@ -76,6 +77,18 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <UserMyPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 購入履歴ページ（認証が必要） */}
+            <Route
+              path="/payment-history"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PaymentHistoryPage />
                   </Layout>
                 </ProtectedRoute>
               }

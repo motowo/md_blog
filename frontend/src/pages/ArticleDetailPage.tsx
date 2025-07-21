@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
@@ -7,6 +7,9 @@ import { ArticleService } from "../utils/articleApi";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import Button from "../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
+import PaymentForm from "../components/PaymentForm";
+import Alert from "../components/Alert";
+import { paymentApi } from "../api/payment";
 import type { Article } from "../types/article";
 
 // PrismJS core - 必ず最初にインポート
@@ -307,6 +310,10 @@ export const ArticleDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"preview" | "markdown">("preview");
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [isPurchased, setIsPurchased] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -321,9 +328,18 @@ export const ArticleDetailPage: React.FC = () => {
         setError(null);
 
         // 記事詳細を取得
-        const article = await ArticleService.getArticle(parseInt(id));
+        const response = await ArticleService.getArticle(parseInt(id));
+        const articleData = response.data;
 
-        setArticle(article);
+        setArticle(articleData);
+
+        // 購入済み判定
+        if (response.has_purchased !== undefined) {
+          setIsPurchased(response.has_purchased);
+        } else {
+          // 無料記事、投稿者本人、管理者の場合
+          setIsPurchased(!articleData.is_paid || !response.is_preview);
+        }
       } catch (err) {
         console.error("Failed to fetch article:", err);
         setError("記事の取得に失敗しました");
@@ -345,9 +361,20 @@ export const ArticleDetailPage: React.FC = () => {
     });
   };
 
-  const handlePurchase = async () => {
-    // TODO: Mock決済処理を実装
-    alert("Mock決済機能は未実装です");
+  const handlePurchase = async (paymentData: any) => {
+    setPaymentError(null);
+    try {
+      await paymentApi.purchaseArticle(paymentData);
+      // 購入成功後、ページをリロードして最新の状態を取得
+      window.location.reload();
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        setPaymentError(error.response.data.message);
+      } else {
+        setPaymentError("決済処理中にエラーが発生しました");
+      }
+      throw error;
+    }
   };
 
   if (loading) {
@@ -385,10 +412,6 @@ export const ArticleDetailPage: React.FC = () => {
   // 投稿者本人または管理者かどうかをチェック
   const isAuthorOrAdmin =
     user && (user.id === article.user_id || user.role === "admin");
-
-  // 購入済み判定: 無料記事、投稿者本人、管理者、または実際に購入済みの場合
-  // TODO: 購入情報取得APIを実装後、実際の購入状況を反映
-  const isPurchased = !article.is_paid || isAuthorOrAdmin;
 
   const contentToShow = article.content;
 
@@ -521,7 +544,16 @@ export const ArticleDetailPage: React.FC = () => {
                   <span className="text-2xl font-bold text-yellow-800 dark:text-yellow-200">
                     ¥{Math.floor(article.price || 0).toLocaleString()}
                   </span>
-                  <Button variant="primary" onClick={handlePurchase}>
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      if (!user) {
+                        navigate("/login");
+                      } else {
+                        setShowPaymentForm(true);
+                      }
+                    }}
+                  >
                     記事を購入する
                   </Button>
                 </div>
@@ -723,7 +755,16 @@ export const ArticleDetailPage: React.FC = () => {
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
                     続きを読むには記事を購入してください
                   </p>
-                  <Button variant="primary" onClick={handlePurchase}>
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      if (!user) {
+                        navigate("/login");
+                      } else {
+                        setShowPaymentForm(true);
+                      }
+                    }}
+                  >
                     ¥{Math.floor(article.price || 0).toLocaleString()}で購入する
                   </Button>
                 </div>
@@ -741,6 +782,35 @@ export const ArticleDetailPage: React.FC = () => {
           {/* TODO: 関連記事、コメント機能などを追加 */}
         </div>
       </article>
+
+      {/* 決済フォームモーダル */}
+      {showPaymentForm && article && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+                記事を購入
+              </h2>
+
+              {paymentError && (
+                <Alert variant="error" className="mb-4">
+                  {paymentError}
+                </Alert>
+              )}
+
+              <PaymentForm
+                articleId={article.id}
+                price={article.price || 0}
+                onSubmit={handlePurchase}
+                onCancel={() => {
+                  setShowPaymentForm(false);
+                  setPaymentError(null);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
