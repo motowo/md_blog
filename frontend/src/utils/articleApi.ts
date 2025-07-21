@@ -30,17 +30,17 @@ export class ArticleService {
   }
 
   // 記事詳細取得
-  static async getArticle(id: number): Promise<Article> {
-    const response = await apiClient.get<Article>(`/articles/${id}`);
-    // Laravel API の場合、data フィールドでラップされている場合がある
-    if (
-      response.data &&
-      typeof response.data === "object" &&
-      "data" in response.data
-    ) {
-      return (response.data as { data: Article }).data;
-    }
-    return response.data as Article;
+  static async getArticle(id: number): Promise<{
+    data: Article;
+    is_preview?: boolean;
+    has_purchased?: boolean;
+  }> {
+    const response = await apiClient.get<{
+      data: Article;
+      is_preview?: boolean;
+      has_purchased?: boolean;
+    }>(`/articles/${id}`);
+    return response.data;
   }
 
   // 記事作成（認証必要）

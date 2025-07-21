@@ -54,6 +54,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Link>
               ) : (
                 <div className="flex items-center space-x-4">
+                  <Link
+                    to="/payment-history"
+                    className="text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  >
+                    購入履歴
+                  </Link>
                   <div className="text-sm text-gray-700 dark:text-gray-300">
                     <Link
                       to="/mypage"
