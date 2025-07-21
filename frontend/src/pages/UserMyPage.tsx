@@ -4,16 +4,25 @@ import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { useAuth } from "../contexts/AuthContextDefinition";
+import { useTheme } from "../contexts/ThemeContext";
 import { ArticleService } from "../utils/articleApi";
-import { UserService } from "../utils/userApi";
+import {
+  UserService,
+  type ActivityData,
+  type CropData,
+} from "../utils/userApi";
+import { paymentApi, type PaymentHistoryItem } from "../api/payment";
+import ActivityHeatmap from "../components/ActivityHeatmap";
+import AvatarUpload from "../components/AvatarUpload";
 import type { Article } from "../types/article";
 import type { ApiError } from "../types/auth";
 
 const UserMyPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
-    "profile" | "articles" | "settings"
+    "profile" | "articles" | "purchases" | "settings"
   >("profile");
   const [userArticles, setUserArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +33,17 @@ const UserMyPage: React.FC = () => {
     name: user?.name || "",
     username: user?.username || "",
     email: user?.email || "",
+    bio: user?.bio || "",
+    career_description: user?.career_description || "",
+    x_url: user?.x_url || "",
+    github_url: user?.github_url || "",
+    profile_public: user?.profile_public ?? true,
   });
+
+  // アクティビティ関連の状態
+  const [activityData, setActivityData] = useState<ActivityData>({});
+  const [purchases, setPurchases] = useState<PaymentHistoryItem[]>([]);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   // パスワード変更用の状態
   const [passwordData, setPasswordData] = useState({
@@ -37,8 +56,15 @@ const UserMyPage: React.FC = () => {
   useEffect(() => {
     if (activeTab === "articles") {
       fetchUserArticles();
+    } else if (activeTab === "purchases") {
+      fetchPurchases();
     }
   }, [activeTab]);
+
+  // アクティビティデータを取得
+  useEffect(() => {
+    fetchActivityData();
+  }, []);
 
   const fetchUserArticles = async () => {
     try {
@@ -51,6 +77,123 @@ const UserMyPage: React.FC = () => {
       setError("記事の取得に失敗しました");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchActivityData = async () => {
+    try {
+      const activities = await UserService.getArticleActivity();
+      setActivityData(activities);
+    } catch (err) {
+      console.error("Failed to fetch activity data:", err);
+    }
+  };
+
+  const fetchPurchases = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await paymentApi.getPaymentHistory();
+      setPurchases(response.data);
+    } catch (err) {
+      console.error("Failed to fetch purchases:", err);
+      setError("購入履歴の取得に失敗しました");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (file: File, cropData?: CropData) => {
+    console.log("🔵 UserMyPage.handleAvatarUpload: Starting", {
+      fileName: file.name,
+    });
+    try {
+      setAvatarUploading(true);
+      setError(null);
+
+      // アバターをアップロードしてレスポンスを取得
+      console.log(
+        "🔵 UserMyPage.handleAvatarUpload: Calling UserService.uploadAvatar",
+      );
+      const response = await UserService.uploadAvatar(file, cropData);
+      console.log("✅ UserMyPage.handleAvatarUpload: Upload successful", {
+        hasUser: !!response.user,
+      });
+
+      // 成功メッセージを表示
+      alert("アバター画像をアップロードしました");
+
+      // レスポンスから直接ユーザー情報を更新（APIコールなしで安全）
+      if (response.user) {
+        console.log(
+          "🔵 UserMyPage.handleAvatarUpload: Updating user via AuthContext.updateUser",
+        );
+        // AuthContextを直接更新（APIコールなしで安全）
+        updateUser(response.user);
+        console.log(
+          "✅ UserMyPage.handleAvatarUpload: User updated successfully without API calls",
+        );
+      }
+
+      // プロフィールデータの状態も更新
+      setProfileData((prev) => ({
+        ...prev,
+        // レスポンスからユーザー情報を反映
+      }));
+    } catch (err) {
+      console.error("❌ UserMyPage.handleAvatarUpload: Error", err);
+      const apiError = err as ApiError;
+      if (apiError.message) {
+        setError(apiError.message);
+      } else {
+        setError("アバター画像のアップロードに失敗しました");
+      }
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    try {
+      setAvatarUploading(true);
+      setError(null);
+
+      // Get user's avatar files to find the active one
+      const avatarFiles = await UserService.getAvatarFiles();
+      const activeAvatar = avatarFiles.find((file) => file.is_active);
+
+      if (activeAvatar) {
+        await UserService.deleteAvatar(activeAvatar.id);
+        alert("アバター画像を削除しました");
+
+        // ユーザー情報を更新（avatar_pathをクリア）
+        if (user) {
+          console.log(
+            "🔵 UserMyPage.handleAvatarDelete: Updating user via AuthContext.updateUser",
+          );
+          const updatedUser = { ...user, avatar_path: null };
+          updateUser(updatedUser);
+          console.log(
+            "✅ UserMyPage.handleAvatarDelete: User updated successfully without API calls",
+          );
+        }
+
+        // プロフィールデータの状態も更新
+        setProfileData((prev) => ({
+          ...prev,
+          // アバター削除を反映
+        }));
+      }
+    } catch (err) {
+      console.error("Avatar delete failed:", err);
+      const apiError = err as ApiError;
+      if (apiError.message) {
+        setError(apiError.message);
+      } else {
+        setError("アバター画像の削除に失敗しました");
+      }
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
@@ -172,9 +315,6 @@ const UserMyPage: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
           マイページ
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          ようこそ、{user?.name || user?.username}さん
-        </p>
       </div>
 
       {/* タブナビゲーション */}
@@ -201,6 +341,16 @@ const UserMyPage: React.FC = () => {
             記事管理
           </button>
           <button
+            onClick={() => setActiveTab("purchases")}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "purchases"
+                ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            購入履歴
+          </button>
+          <button
             onClick={() => setActiveTab("settings")}
             className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === "settings"
@@ -221,50 +371,284 @@ const UserMyPage: React.FC = () => {
 
       {/* プロフィールタブ */}
       {activeTab === "profile" && (
+        <div className="space-y-6">
+          {/* アクティビティヒートマップとプロフィール写真 */}
+          <Card>
+            <CardBody>
+              <div className="flex flex-col lg:flex-row lg:space-x-6 space-y-6 lg:space-y-0">
+                {/* ヒートマップエリア (3/4) */}
+                <div className="flex-1 lg:w-3/4">
+                  <ActivityHeatmap activities={activityData} />
+                </div>
+
+                {/* プロフィール写真エリア (1/4) */}
+                <div className="lg:w-1/4">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      プロフィール画像
+                    </h3>
+                    <AvatarUpload
+                      currentAvatar={
+                        user?.avatar_path || user?.profile_image_url
+                      }
+                      onUpload={handleAvatarUpload}
+                      onDelete={handleAvatarDelete}
+                      loading={avatarUploading}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* プロフィール編集 */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                プロフィール編集
+              </h2>
+            </CardHeader>
+            <CardBody>
+              <form onSubmit={handleProfileUpdate} className="space-y-6">
+                <Input
+                  label="名前（必須）"
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, name: e.target.value })
+                  }
+                  placeholder="表示名を入力"
+                  required
+                />
+
+                <Input
+                  label="ユーザー名（必須）"
+                  type="text"
+                  value={profileData.username}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, username: e.target.value })
+                  }
+                  placeholder="ユーザー名を入力"
+                  required
+                />
+
+                <Input
+                  label="メールアドレス（必須）"
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, email: e.target.value })
+                  }
+                  placeholder="メールアドレスを入力"
+                  required
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    自己紹介（任意）
+                  </label>
+                  <textarea
+                    value={profileData.bio}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, bio: e.target.value })
+                    }
+                    placeholder="自己紹介文を入力してください"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    経歴・キャリア（任意）
+                  </label>
+                  <textarea
+                    value={profileData.career_description}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        career_description: e.target.value,
+                      })
+                    }
+                    placeholder="経歴やキャリアについて詳しく記載してください"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={4}
+                  />
+                </div>
+
+                <Input
+                  label="X URL（任意）"
+                  type="url"
+                  value={profileData.x_url}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      x_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://x.com/username"
+                />
+
+                <Input
+                  label="GitHub URL（任意）"
+                  type="url"
+                  value={profileData.github_url}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      github_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://github.com/username"
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    プロフィール公開設定（任意）
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      非公開
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setProfileData({
+                          ...profileData,
+                          profile_public: !profileData.profile_public,
+                        })
+                      }
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        profileData.profile_public
+                          ? "bg-blue-600"
+                          : "bg-gray-200 dark:bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          profileData.profile_public
+                            ? "translate-x-6"
+                            : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      公開
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    {profileData.profile_public
+                      ? "✅ プロフィールが他のユーザーに表示されます"
+                      : "🔒 プロフィールは非公開です"}
+                  </p>
+                </div>
+
+                <div className="pt-4">
+                  <Button type="submit" variant="primary" loading={loading}>
+                    プロフィールを更新
+                  </Button>
+                </div>
+              </form>
+            </CardBody>
+          </Card>
+        </div>
+      )}
+
+      {/* 購入履歴タブ */}
+      {activeTab === "purchases" && (
         <Card>
           <CardHeader>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              プロフィール編集
+              購入履歴
             </h2>
           </CardHeader>
           <CardBody>
-            <form onSubmit={handleProfileUpdate} className="space-y-6">
-              <Input
-                label="名前"
-                type="text"
-                value={profileData.name}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, name: e.target.value })
-                }
-                placeholder="表示名を入力"
-              />
-
-              <Input
-                label="ユーザー名"
-                type="text"
-                value={profileData.username}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, username: e.target.value })
-                }
-                placeholder="ユーザー名を入力"
-              />
-
-              <Input
-                label="メールアドレス"
-                type="email"
-                value={profileData.email}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, email: e.target.value })
-                }
-                placeholder="メールアドレスを入力"
-              />
-
-              <div className="pt-4">
-                <Button type="submit" variant="primary" loading={loading}>
-                  プロフィールを更新
-                </Button>
+            {loading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600 dark:text-gray-400">
+                  読み込み中...
+                </span>
               </div>
-            </form>
+            ) : purchases.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 dark:text-gray-500 mb-4">
+                  <svg
+                    className="mx-auto h-12 w-12"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1}
+                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  購入履歴がありません
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  有料記事を購入すると、ここに履歴が表示されます。
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {purchases.map((purchase) => (
+                  <div
+                    key={purchase.id}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+                          {purchase.article?.title || "記事タイトル不明"}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          購入日:{" "}
+                          {new Date(purchase.paid_at).toLocaleDateString(
+                            "ja-JP",
+                          )}
+                        </p>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg font-semibold text-green-600 dark:text-green-400">
+                            ¥{purchase.amount.toLocaleString()}
+                          </span>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              purchase.status === "success"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : purchase.status === "failed"
+                                  ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                            }`}
+                          >
+                            {purchase.status === "success"
+                              ? "完了"
+                              : purchase.status === "failed"
+                                ? "失敗"
+                                : "処理中"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            navigate(`/articles/${purchase.article_id}`)
+                          }
+                        >
+                          記事を読む
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardBody>
         </Card>
       )}
@@ -382,6 +766,68 @@ const UserMyPage: React.FC = () => {
       {/* アカウント設定タブ */}
       {activeTab === "settings" && (
         <div className="space-y-6">
+          {/* テーマ設定 */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                表示設定
+              </h2>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    テーマ設定
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      ライトモード
+                    </span>
+                    <button
+                      type="button"
+                      onClick={toggleTheme}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        isDark ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-600"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          isDark ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                      </svg>
+                      ダークモード
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    {isDark
+                      ? "🌙 ダークモードが有効です"
+                      : "☀️ ライトモードが有効です"}
+                  </p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
           {/* パスワード変更 */}
           <Card>
             <CardHeader>

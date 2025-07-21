@@ -3,7 +3,8 @@
 use App\Http\Controllers\API\ArticleController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\TagController;
-use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\UserController as APIUserController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -49,11 +50,16 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ユーザー関連のルート
-    Route::get('/user/profile', [UserController::class, 'show']);
+    Route::get('/user/profile', [UserController::class, 'profile']);
     Route::put('/user/profile', [UserController::class, 'updateProfile']);
+    Route::post('/user/avatar', [UserController::class, 'uploadAvatar']);
+    Route::get('/user/avatars', [UserController::class, 'getAvatarFiles']);
+    Route::put('/user/avatars/{avatarFile}/crop', [UserController::class, 'updateAvatarCrop']);
+    Route::delete('/user/avatars/{avatarFile}', [UserController::class, 'deleteAvatar']);
+    Route::get('/user/activity', [UserController::class, 'getArticleActivity']);
     Route::put('/user/password', [UserController::class, 'changePassword']);
     Route::delete('/user/account', [UserController::class, 'deleteAccount']);
-    Route::get('/user/articles', [UserController::class, 'articles']);
+    Route::get('/user/articles', [APIUserController::class, 'articles']);
 
     // 決済関連のルート
     Route::post('/payments', [PaymentController::class, 'store']);

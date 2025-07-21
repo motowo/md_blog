@@ -26,7 +26,12 @@ class User extends Authenticatable
         'password',
         'role',
         'profile_image_url',
+        'avatar_path',
         'bio',
+        'career_description',
+        'x_url',
+        'github_url',
+        'profile_public',
     ];
 
     /**
@@ -49,6 +54,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'profile_public' => 'boolean',
         ];
     }
 
@@ -69,6 +75,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the avatar files for the user.
+     */
+    public function avatarFiles(): HasMany
+    {
+        return $this->hasMany(AvatarFile::class);
+    }
+
+    /**
+     * Get the active avatar file for the user.
+     */
+    public function activeAvatar()
+    {
+        return $this->avatarFiles()->active()->latest()->first();
+    }
+
+    /**
      * Check if the user has purchased the given article.
      */
     public function hasPurchased(Article $article): bool
@@ -77,5 +99,21 @@ class User extends Authenticatable
             ->where('article_id', $article->id)
             ->where('status', 'success')
             ->exists();
+    }
+
+    /**
+     * Get article posting activity for heatmap.
+     */
+    public function getArticleActivity(): array
+    {
+        $activities = $this->articles()
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->where('created_at', '>=', now()->subYear())
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('count', 'date')
+            ->toArray();
+
+        return $activities;
     }
 }
