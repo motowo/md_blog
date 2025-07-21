@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import Button from "./ui/Button";
 
@@ -9,7 +8,6 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { isDark, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
 
   const handleLogout = async () => {
@@ -19,6 +17,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       console.error("Logout failed:", error);
     }
   };
+
+  const avatarUrl = user?.avatar_path?.startsWith("http")
+    ? user.avatar_path
+    : user?.avatar_path
+      ? `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/storage/${user.avatar_path}`
+      : null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -34,18 +38,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleTheme}
-                className="flex items-center space-x-2"
-              >
-                <span>{isDark ? "☀️" : "🌙"}</span>
-                <span className="hidden sm:inline">
-                  {isDark ? "ライト" : "ダーク"}
-                </span>
-              </Button>
-
               {!isAuthenticated ? (
                 <Link to="/login">
                   <Button variant="primary" size="sm">
@@ -55,24 +47,44 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               ) : (
                 <div className="flex items-center space-x-4">
                   <Link
-                    to="/payment-history"
-                    className="text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    to="/mypage"
+                    className="flex items-center space-x-3 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                   >
-                    購入履歴
-                  </Link>
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <Link
-                      to="/mypage"
-                      className="font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    >
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt="アバター"
+                        className="w-8 h-8 rounded-full object-cover border border-gray-300 dark:border-gray-600"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-gray-400 dark:text-gray-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="font-medium">
                       {user?.username}
                       {user?.role === "admin" && (
                         <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
                           管理者
                         </span>
                       )}
-                    </Link>
-                  </div>
+                    </div>
+                  </Link>
                   <Button variant="outline" size="sm" onClick={handleLogout}>
                     ログアウト
                   </Button>

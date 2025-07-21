@@ -35,7 +35,7 @@ export const paymentApi = {
     const response = await apiClient.post<{
       data: PaymentResponse;
       message: string;
-    }>("/api/payments", data);
+    }>("/payments", data);
     return response.data;
   },
 
@@ -51,7 +51,7 @@ export const paymentApi = {
         per_page: number;
         total: number;
       };
-    }>(`/api/payments?page=${page}`);
+    }>(`/payments?page=${page}`);
     return response.data;
   },
 };

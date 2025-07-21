@@ -100,15 +100,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refreshUser = async (): Promise<void> => {
+    console.log("🔵 AuthContext.refreshUser: Starting refresh");
     try {
-      if (AuthService.isAuthenticated()) {
+      const isAuth = AuthService.isAuthenticated();
+      console.log("🔵 AuthContext.refreshUser: isAuthenticated =", isAuth);
+
+      if (isAuth) {
+        console.log("🔵 AuthContext.refreshUser: Calling getCurrentUser");
         const currentUser = await AuthService.getCurrentUser();
+        console.log("✅ AuthContext.refreshUser: Got user", {
+          username: currentUser.username,
+          hasAvatar: !!currentUser.avatar_path,
+        });
         setUser(currentUser);
+        console.log("✅ AuthContext.refreshUser: User updated in context");
       }
     } catch (error) {
-      console.error("Failed to refresh user:", error);
-      await logout();
+      console.error("❌ AuthContext.refreshUser: Error occurred", error);
+
+      // エラーの詳細を確認
+      const apiError = error as {
+        response?: { status?: number };
+        message?: string;
+      };
+      const status = apiError?.response?.status;
+
+      console.log("🔍 AuthContext.refreshUser: Error details", {
+        status,
+        message: apiError.message,
+        hasResponse: !!apiError.response,
+      });
+
+      // 401エラー（認証失効）の場合のみログアウト
+      // その他のエラー（ネットワークエラーなど）では現在の状態を維持
+      if (status === 401) {
+        console.warn(
+          "🚪 AuthContext.refreshUser: Authentication expired, logging out",
+        );
+        await logout();
+      } else {
+        console.warn(
+          "⚠️ AuthContext.refreshUser: Failed but maintaining auth state:",
+          status,
+          apiError.message,
+        );
+        // ユーザー情報の更新に失敗したが、現在のログイン状態は維持する
+      }
     }
+  };
+
+  const updateUser = (newUser: User): void => {
+    console.log("🔵 AuthContext.updateUser: Updating user directly", {
+      username: newUser.username,
+      hasAvatar: !!newUser.avatar_path,
+    });
+    setUser(newUser);
+    localStorage.setItem("user", JSON.stringify(newUser));
   };
 
   const value: AuthContextType = {
@@ -119,6 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     refreshUser,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

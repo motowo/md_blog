@@ -80,11 +80,52 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    // 401エラー（認証エラー）の場合、トークンを削除してログイン画面へ
+    console.log("🔍 API Interceptor: Error occurred", {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+    });
+
+    // 401エラー（認証エラー）の場合の処理
     if (error.response?.status === 401) {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("user");
-      // ログイン画面へのリダイレクトは呼び出し元で処理
+      // 自動認証確認系のAPI以外では、自動的にローカルストレージをクリアしない
+      // ユーザーアクション系のAPIエラーは呼び出し元でハンドリングする
+      const isAutoAuthRequest =
+        (error.config?.url?.includes("/user/profile") &&
+          error.config?.method?.toLowerCase() === "get") ||
+        error.config?.url?.includes("/user/activity");
+
+      // アバターアップロード等のユーザーアクションでは自動ログアウトしない
+      const isUserAction =
+        error.config?.url?.includes("/user/avatar") ||
+        error.config?.url?.includes("/user/avatars") ||
+        error.config?.url?.includes("/user/profile") ||
+        error.config?.url === "/user" || // getCurrentUser API
+        (error.config?.method?.toLowerCase() === "post" &&
+          error.config?.url?.includes("/user/")) ||
+        (error.config?.method?.toLowerCase() === "put" &&
+          error.config?.url?.includes("/user/")) ||
+        (error.config?.method?.toLowerCase() === "delete" &&
+          error.config?.url?.includes("/user/"));
+
+      console.log("🔍 API Interceptor: 401 error classification", {
+        url: error.config?.url,
+        method: error.config?.method,
+        isAutoAuthRequest,
+        isUserAction,
+        willClearAuth: isAutoAuthRequest && !isUserAction,
+      });
+
+      if (isAutoAuthRequest && !isUserAction) {
+        console.warn("🚪 API Interceptor: Clearing auth data due to 401");
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user");
+      } else {
+        console.log(
+          "✅ API Interceptor: 401 error but NOT clearing auth (user action or not auto-auth)",
+        );
+      }
     }
 
     // API エラーレスポンスを統一フォーマットに変換

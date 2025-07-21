@@ -4,6 +4,13 @@ export interface User {
   email: string;
   name?: string;
   role: "author" | "admin";
+  profile_image_url?: string;
+  avatar_path?: string;
+  bio?: string;
+  career_description?: string;
+  x_url?: string;
+  github_url?: string;
+  profile_public?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -40,4 +47,5 @@ export interface AuthContextType {
   register: (userData: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (user: User) => void;
 }
