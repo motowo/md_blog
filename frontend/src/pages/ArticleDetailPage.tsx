@@ -9,7 +9,8 @@ import Button from "../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import PaymentForm from "../components/PaymentForm";
 import Alert from "../components/Alert";
-import { paymentApi, PaymentData } from "../api/payment";
+import { paymentApi } from "../api/payment";
+import type { PaymentData } from "../api/payment";
 import type { Article } from "../types/article";
 
 // PrismJS core - 必ず最初にインポート

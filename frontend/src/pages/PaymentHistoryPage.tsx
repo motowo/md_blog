@@ -12,10 +12,6 @@ const PaymentHistoryPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    fetchPaymentHistory();
-  }, [currentPage, fetchPaymentHistory]);
-
   const fetchPaymentHistory = useCallback(async () => {
     try {
       setLoading(true);
@@ -30,6 +26,10 @@ const PaymentHistoryPage: React.FC = () => {
       setLoading(false);
     }
   }, [currentPage]);
+
+  useEffect(() => {
+    fetchPaymentHistory();
+  }, [currentPage, fetchPaymentHistory]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ja-JP", {

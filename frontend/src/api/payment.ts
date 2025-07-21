@@ -1,5 +1,6 @@
 import apiClient from "../utils/api";
 
+// 決済データの型定義
 export interface PaymentData {
   article_id: number;
   card_number: string;
