@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { paymentApi, PaymentHistoryItem } from "../api/payment";
 import Button from "../components/ui/Button";
-import { Card, CardBody, CardHeader } from "../components/ui/Card";
+import { Card, CardBody } from "../components/ui/Card";
 import Alert from "../components/Alert";
 
 const PaymentHistoryPage: React.FC = () => {
@@ -14,9 +14,9 @@ const PaymentHistoryPage: React.FC = () => {
 
   useEffect(() => {
     fetchPaymentHistory();
-  }, [currentPage]);
+  }, [currentPage, fetchPaymentHistory]);
 
-  const fetchPaymentHistory = async () => {
+  const fetchPaymentHistory = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -29,7 +29,7 @@ const PaymentHistoryPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ja-JP", {

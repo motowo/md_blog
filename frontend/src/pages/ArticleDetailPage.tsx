@@ -9,7 +9,7 @@ import Button from "../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import PaymentForm from "../components/PaymentForm";
 import Alert from "../components/Alert";
-import { paymentApi } from "../api/payment";
+import { paymentApi, PaymentData } from "../api/payment";
 import type { Article } from "../types/article";
 
 // PrismJS core - 必ず最初にインポート
@@ -361,15 +361,22 @@ export const ArticleDetailPage: React.FC = () => {
     });
   };
 
-  const handlePurchase = async (paymentData: any) => {
+  const handlePurchase = async (paymentData: PaymentData) => {
     setPaymentError(null);
     try {
       await paymentApi.purchaseArticle(paymentData);
       // 購入成功後、ページをリロードして最新の状態を取得
       window.location.reload();
-    } catch (error: any) {
-      if (error.response?.data?.message) {
-        setPaymentError(error.response.data.message);
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: { data?: { message?: string } };
+        };
+        if (axiosError.response?.data?.message) {
+          setPaymentError(axiosError.response.data.message);
+        } else {
+          setPaymentError("決済処理中にエラーが発生しました");
+        }
       } else {
         setPaymentError("決済処理中にエラーが発生しました");
       }
@@ -409,9 +416,9 @@ export const ArticleDetailPage: React.FC = () => {
     );
   }
 
-  // 投稿者本人または管理者かどうかをチェック
-  const isAuthorOrAdmin =
-    user && (user.id === article.user_id || user.role === "admin");
+  // 投稿者本人または管理者かどうかをチェック (現在は未使用だが将来的に使用予定)
+  // const isAuthorOrAdmin =
+  //   user && (user.id === article.user_id || user.role === "admin");
 
   const contentToShow = article.content;
 
