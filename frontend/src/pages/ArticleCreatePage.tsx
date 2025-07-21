@@ -4,9 +4,12 @@ import MarkdownEditor from "../components/MarkdownEditor";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
+import SaveStatusIndicator from "../components/SaveStatusIndicator";
+import DraftRecovery from "../components/DraftRecovery";
 import { ArticleService } from "../utils/articleApi";
 import { TagService } from "../utils/tagApi";
 import { useAuth } from "../contexts/AuthContextDefinition";
+import { useAutoSave } from "../hooks/useAutoSave";
 import type { Tag } from "../types/tag";
 
 interface ArticleFormData {
@@ -24,6 +27,7 @@ const ArticleCreatePage: React.FC = () => {
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [showDraftRecovery, setShowDraftRecovery] = useState(false);
 
   const [formData, setFormData] = useState<ArticleFormData>({
     title: "",
@@ -32,6 +36,23 @@ const ArticleCreatePage: React.FC = () => {
     price: 0,
     tag_ids: [],
   });
+
+  // 自動保存機能
+  const {
+    saveStatus,
+    lastSaved,
+    forceSave,
+    restoreFromStorage,
+    clearStorage,
+    hasUnsavedChanges,
+  } = useAutoSave(
+    { ...formData, selectedTags },
+    {
+      storageKey: "article-create-autosave",
+      interval: 5000, // 5秒間隔
+      disabled: isSubmitting,
+    },
+  );
 
   // タグ一覧を取得
   useEffect(() => {
@@ -53,6 +74,45 @@ const ArticleCreatePage: React.FC = () => {
 
     fetchTags();
   }, []);
+
+  // 下書き復元チェック
+  useEffect(() => {
+    const checkForDraft = () => {
+      const draftData = restoreFromStorage();
+      if (draftData) {
+        // データが存在し、かつ空でない場合にのみ復元オプションを表示
+        const hasContent = draftData.title?.trim() || draftData.content?.trim();
+        if (hasContent) {
+          setShowDraftRecovery(true);
+        }
+      }
+    };
+
+    checkForDraft();
+  }, [restoreFromStorage]);
+
+  // 下書き復元ハンドラー
+  const handleDraftRestore = (
+    draftData: Partial<ArticleFormData & { selectedTags: number[] }>,
+  ) => {
+    if (draftData.title !== undefined)
+      setFormData((prev) => ({ ...prev, title: draftData.title }));
+    if (draftData.content !== undefined)
+      setFormData((prev) => ({ ...prev, content: draftData.content }));
+    if (draftData.is_paid !== undefined)
+      setFormData((prev) => ({ ...prev, is_paid: draftData.is_paid }));
+    if (draftData.price !== undefined)
+      setFormData((prev) => ({ ...prev, price: draftData.price }));
+    if (draftData.selectedTags && Array.isArray(draftData.selectedTags)) {
+      setSelectedTags(draftData.selectedTags);
+      setFormData((prev) => ({ ...prev, tag_ids: draftData.selectedTags }));
+    }
+  };
+
+  // 下書き破棄ハンドラー
+  const handleDraftDiscard = () => {
+    clearStorage();
+  };
 
   const handleInputChange =
     (field: keyof ArticleFormData) =>
@@ -141,6 +201,9 @@ const ArticleCreatePage: React.FC = () => {
         );
       }
 
+      // 記事作成成功時に自動保存をクリア
+      clearStorage();
+
       navigate(`/articles/${article.id}`, {
         state: {
           message: `記事が${status === "draft" ? "下書きとして保存" : "作成・公開"}されました。`,
@@ -183,16 +246,64 @@ const ArticleCreatePage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          新しい記事を作成
-        </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Markdownを使って記事を書くことができます。リアルタイムでプレビューも確認できます。
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            新しい記事を作成
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Markdownを使って記事を書くことができます。リアルタイムでプレビューも確認できます。
+          </p>
+        </div>
+
+        {/* 保存状態表示 */}
+        <div className="flex items-center space-x-4">
+          <SaveStatusIndicator status={saveStatus} lastSaved={lastSaved} />
+          {hasUnsavedChanges && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={forceSave}
+              disabled={isSubmitting}
+            >
+              手動保存
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-6">
+        {/* 下書き復元 */}
+        {showDraftRecovery &&
+          (() => {
+            const stored = localStorage.getItem("article-create-autosave");
+            let draftData = { data: {}, timestamp: new Date().toISOString() };
+
+            if (stored) {
+              try {
+                const parsedData = JSON.parse(stored);
+                draftData = {
+                  data: parsedData.data || {},
+                  timestamp: parsedData.timestamp || new Date().toISOString(),
+                };
+              } catch (error) {
+                console.warn("Failed to parse draft data:", error);
+              }
+            }
+
+            return (
+              <DraftRecovery
+                draftData={draftData}
+                onRestore={handleDraftRestore}
+                onDiscard={() => {
+                  handleDraftDiscard();
+                  setShowDraftRecovery(false);
+                }}
+              />
+            );
+          })()}
+
         {error && (
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <p className="text-red-700 dark:text-red-400">{error}</p>

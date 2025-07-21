@@ -4,9 +4,12 @@ import MarkdownEditor from "../components/MarkdownEditor";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
+import SaveStatusIndicator from "../components/SaveStatusIndicator";
+import DraftRecovery from "../components/DraftRecovery";
 import { ArticleService } from "../utils/articleApi";
 import { TagService } from "../utils/tagApi";
 import { useAuth } from "../contexts/AuthContextDefinition";
+import { useAutoSave } from "../hooks/useAutoSave";
 import type { Article } from "../types/article";
 import type { Tag } from "../types/tag";
 
@@ -28,6 +31,7 @@ const ArticleEditPage: React.FC = () => {
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [showDraftRecovery, setShowDraftRecovery] = useState(false);
 
   const [formData, setFormData] = useState<ArticleFormData>({
     title: "",
@@ -36,6 +40,23 @@ const ArticleEditPage: React.FC = () => {
     price: 0,
     tag_ids: [],
   });
+
+  // 自動保存機能（記事IDベース）
+  const {
+    saveStatus,
+    lastSaved,
+    forceSave,
+    restoreFromStorage,
+    clearStorage,
+    hasUnsavedChanges,
+  } = useAutoSave(
+    { ...formData, selectedTags },
+    {
+      storageKey: `article-edit-autosave-${id}`,
+      interval: 5000, // 5秒間隔
+      disabled: isSubmitting || isLoading,
+    },
+  );
 
   // 記事データとタグ一覧を取得
   useEffect(() => {
@@ -73,6 +94,25 @@ const ArticleEditPage: React.FC = () => {
 
         // 選択されたタグを設定
         setSelectedTags(articleResponse.tags?.map((tag) => tag.id) || []);
+
+        // データ読み込み後に下書き復元をチェック
+        setTimeout(() => {
+          const draftData = restoreFromStorage();
+          if (draftData) {
+            const hasContent =
+              draftData.title?.trim() || draftData.content?.trim();
+            // 元の記事と異なる内容があるかチェック
+            const isDifferent =
+              draftData.title !== articleResponse.title ||
+              draftData.content !== articleResponse.content ||
+              draftData.is_paid !== articleResponse.is_paid ||
+              draftData.price !== (articleResponse.price || 0);
+
+            if (hasContent && isDifferent) {
+              setShowDraftRecovery(true);
+            }
+          }
+        }, 100);
       } catch (error: unknown) {
         console.error("データの取得に失敗しました:", error);
         const is404Error =
@@ -89,7 +129,30 @@ const ArticleEditPage: React.FC = () => {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, restoreFromStorage]);
+
+  // 下書き復元ハンドラー
+  const handleDraftRestore = (
+    draftData: Partial<ArticleFormData & { selectedTags: number[] }>,
+  ) => {
+    if (draftData.title !== undefined)
+      setFormData((prev) => ({ ...prev, title: draftData.title }));
+    if (draftData.content !== undefined)
+      setFormData((prev) => ({ ...prev, content: draftData.content }));
+    if (draftData.is_paid !== undefined)
+      setFormData((prev) => ({ ...prev, is_paid: draftData.is_paid }));
+    if (draftData.price !== undefined)
+      setFormData((prev) => ({ ...prev, price: draftData.price }));
+    if (draftData.selectedTags && Array.isArray(draftData.selectedTags)) {
+      setSelectedTags(draftData.selectedTags);
+      setFormData((prev) => ({ ...prev, tag_ids: draftData.selectedTags }));
+    }
+  };
+
+  // 下書き破棄ハンドラー
+  const handleDraftDiscard = () => {
+    clearStorage();
+  };
 
   const handleInputChange =
     (field: keyof ArticleFormData) =>
@@ -171,6 +234,9 @@ const ArticleEditPage: React.FC = () => {
           );
         }
       }
+
+      // 記事更新成功時に自動保存をクリア
+      clearStorage();
 
       navigate(`/articles/${article.id}`, {
         state: {
@@ -279,16 +345,64 @@ const ArticleEditPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          記事を編集
-        </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Markdownを使って記事を編集できます。リアルタイムでプレビューも確認できます。
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            記事を編集
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Markdownを使って記事を編集できます。リアルタイムでプレビューも確認できます。
+          </p>
+        </div>
+
+        {/* 保存状態表示 */}
+        <div className="flex items-center space-x-4">
+          <SaveStatusIndicator status={saveStatus} lastSaved={lastSaved} />
+          {hasUnsavedChanges && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={forceSave}
+              disabled={isSubmitting}
+            >
+              手動保存
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-6">
+        {/* 下書き復元 */}
+        {showDraftRecovery &&
+          (() => {
+            const stored = localStorage.getItem(`article-edit-autosave-${id}`);
+            let draftData = { data: {}, timestamp: new Date().toISOString() };
+
+            if (stored) {
+              try {
+                const parsedData = JSON.parse(stored);
+                draftData = {
+                  data: parsedData.data || {},
+                  timestamp: parsedData.timestamp || new Date().toISOString(),
+                };
+              } catch (error) {
+                console.warn("Failed to parse draft data:", error);
+              }
+            }
+
+            return (
+              <DraftRecovery
+                draftData={draftData}
+                onRestore={handleDraftRestore}
+                onDiscard={() => {
+                  handleDraftDiscard();
+                  setShowDraftRecovery(false);
+                }}
+              />
+            );
+          })()}
+
         {error && (
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <p className="text-red-700 dark:text-red-400">{error}</p>

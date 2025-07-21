@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { PaymentData } from "../api/payment";
+import type { PaymentData } from "../api/payment";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
 import Alert from "./Alert";
