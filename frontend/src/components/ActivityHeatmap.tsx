@@ -76,6 +76,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     let currentMonth = "";
 
     weeks.forEach((week, weekIndex) => {
+      // 週の最初の有効な日付を取得
       const firstDate = week.find((date) => date !== "");
       if (!firstDate) return;
 
@@ -83,8 +84,14 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
         month: "short",
       });
 
+      // 新しい月が始まる場合のみラベルを追加
       if (monthYear !== currentMonth) {
-        months.push({ label: monthYear, weekIndex });
+        months.push({
+          label: monthYear,
+          weekIndex,
+          // 月の開始位置を週の中央に調整
+          position: weekIndex * 16 + 8, // セル幅12px + 間隔4px = 16px, 中央は+8px
+        });
         currentMonth = monthYear;
       }
     });
@@ -203,22 +210,22 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 
       <div className="overflow-x-auto">
         {/* 月のラベル */}
-        <div className="flex mb-2 min-w-max ml-8">
-          {monthLabels.map((month, index) => (
-            <div
-              key={index}
-              className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0"
-              style={{
-                width: "16px",
-                marginLeft:
-                  index === 0
-                    ? `${month.weekIndex * 16}px`
-                    : `${(month.weekIndex - monthLabels[index - 1]?.weekIndex) * 16}px`,
-              }}
-            >
-              {month.label}
-            </div>
-          ))}
+        <div className="relative mb-2 min-w-max h-4">
+          {/* 曜日ラベル分のオフセット */}
+          <div className="ml-8">
+            {monthLabels.map((month, index) => (
+              <div
+                key={index}
+                className="absolute text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap"
+                style={{
+                  left: `${month.position}px`,
+                  transform: "translateX(-50%)", // 中央揃え
+                }}
+              >
+                {month.label}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* 曜日ラベルとヒートマップグリッド */}
