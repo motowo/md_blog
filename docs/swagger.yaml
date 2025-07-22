@@ -1,0 +1,1484 @@
+openapi: 3.0.3
+info:
+  title: MD Blog API
+  description: ITエンジニア向け有料コンテンツ共有プラットフォーム
+  version: 1.0.0
+  contact:
+    name: MD Blog Support
+    email: support@md-blog.local
+
+servers:
+  - url: http://localhost:8000/api
+    description: 開発環境
+  - url: https://api.md-blog.com/api
+    description: 本番環境
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Laravel Sanctum トークン
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        username:
+          type: string
+          example: "john_doe"
+        name:
+          type: string
+          example: "John Doe"
+        role:
+          type: string
+          enum: [author, admin]
+          example: "author"
+        profile_image_url:
+          type: string
+          nullable: true
+          example: "https://example.com/avatar.jpg"
+        bio:
+          type: string
+          nullable: true
+          example: "フルスタックエンジニア"
+        career_description:
+          type: string
+          nullable: true
+          example: "10年のWeb開発経験"
+        x_url:
+          type: string
+          nullable: true
+          example: "https://x.com/johndoe"
+        github_url:
+          type: string
+          nullable: true
+          example: "https://github.com/johndoe"
+        profile_public:
+          type: boolean
+          example: true
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Article:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Laravel 11の新機能解説"
+        content:
+          type: string
+          example: "# Laravel 11の新機能\n\n今回のアップデートで..."
+        status:
+          type: string
+          enum: [draft, published, private]
+          example: "published"
+        is_paid:
+          type: boolean
+          example: true
+        price:
+          type: number
+          format: decimal
+          nullable: true
+          example: 500.00
+        thumbnail_url:
+          type: string
+          nullable: true
+          example: "https://example.com/thumbnail.jpg"
+        is_featured:
+          type: boolean
+          example: false
+        user:
+          $ref: '#/components/schemas/User'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Laravel"
+        slug:
+          type: string
+          example: "laravel"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        article_id:
+          type: integer
+          example: 1
+        amount:
+          type: number
+          format: decimal
+          example: 500.00
+        status:
+          type: string
+          enum: [success, failed, pending]
+          example: "success"
+        transaction_id:
+          type: string
+          example: "txn_1234567890"
+        paid_at:
+          type: string
+          format: date-time
+        article:
+          $ref: '#/components/schemas/Article'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "エラーメッセージ"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        from:
+          type: integer
+          example: 1
+        last_page:
+          type: integer
+          example: 10
+        per_page:
+          type: integer
+          example: 15
+        to:
+          type: integer
+          example: 15
+        total:
+          type: integer
+          example: 150
+
+paths:
+  # 認証API
+  /register:
+    post:
+      tags:
+        - Authentication
+      summary: ユーザー登録
+      description: 新規ユーザーを登録します
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - username
+                - email
+                - password
+                - password_confirmation
+              properties:
+                name:
+                  type: string
+                  example: "田中太郎"
+                username:
+                  type: string
+                  example: "tanaka_taro"
+                email:
+                  type: string
+                  format: email
+                  example: "tanaka@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "password123"
+                password_confirmation:
+                  type: string
+                  format: password
+                  example: "password123"
+                role:
+                  type: string
+                  enum: [author, admin]
+                  default: author
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                    example: "1|abc123def456"
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: ログイン
+      description: ユーザー認証を行い、トークンを発行します
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "tanaka@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "password123"
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                    example: "1|abc123def456"
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /logout:
+    post:
+      tags:
+        - Authentication
+      summary: ログアウト
+      description: 現在のトークンを無効化します
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "ログアウトしました"
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user:
+    get:
+      tags:
+        - Authentication
+      summary: ユーザー情報取得
+      description: 認証済みユーザーの情報を取得します
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ユーザー情報取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - User Management
+      summary: アカウント削除
+      description: ユーザーアカウントを削除します
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+                  format: password
+                  example: "current_password"
+      responses:
+        '200':
+          description: アカウント削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "アカウントを削除しました"
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # 記事管理API
+  /articles:
+    get:
+      tags:
+        - Articles
+      summary: 記事一覧取得
+      description: 公開記事の一覧を取得します
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            default: 15
+        - name: tag
+          in: query
+          description: タグによる絞り込み
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: キーワード検索
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 記事一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags:
+        - Articles
+      summary: 記事作成
+      description: 新しい記事を作成します
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - content
+              properties:
+                title:
+                  type: string
+                  example: "Laravel 11の新機能解説"
+                content:
+                  type: string
+                  example: "# Laravel 11の新機能\n\n今回のアップデートで..."
+                status:
+                  type: string
+                  enum: [draft, published, private]
+                  default: draft
+                is_paid:
+                  type: boolean
+                  default: false
+                price:
+                  type: number
+                  format: decimal
+                  nullable: true
+                  example: 500.00
+                thumbnail_url:
+                  type: string
+                  nullable: true
+                tag_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 3]
+      responses:
+        '201':
+          description: 記事作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Article'
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /articles/{id}:
+    get:
+      tags:
+        - Articles
+      summary: 記事詳細取得
+      description: 特定の記事の詳細を取得します
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 記事ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 記事詳細取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Article'
+                  has_purchased:
+                    type: boolean
+                    description: 購入済みかどうか
+                    example: true
+                  is_preview:
+                    type: boolean
+                    description: プレビュー表示かどうか
+                    example: false
+        '404':
+          description: 記事が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Articles
+      summary: 記事更新
+      description: 記事を更新します（作成者のみ）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 記事ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                status:
+                  type: string
+                  enum: [draft, published, private]
+                is_paid:
+                  type: boolean
+                price:
+                  type: number
+                  format: decimal
+                  nullable: true
+                thumbnail_url:
+                  type: string
+                  nullable: true
+                tag_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: 記事更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Article'
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 記事が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Articles
+      summary: 記事削除
+      description: 記事を削除します（作成者のみ）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 記事ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 記事削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "記事を削除しました"
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 記事が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /articles/user:
+    get:
+      tags:
+        - Articles
+      summary: 自分の記事一覧取得
+      description: 認証済みユーザーの記事一覧を取得します
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: 記事一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  # タグ管理API
+  /tags:
+    get:
+      tags:
+        - Tags
+      summary: タグ一覧取得
+      description: 全タグの一覧を取得します
+      responses:
+        '200':
+          description: タグ一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tag'
+
+    post:
+      tags:
+        - Tags
+      summary: タグ作成
+      description: 新しいタグを作成します（管理者のみ）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - slug
+              properties:
+                name:
+                  type: string
+                  example: "React"
+                slug:
+                  type: string
+                  example: "react"
+      responses:
+        '201':
+          description: タグ作成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tag'
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tags/{id}:
+    get:
+      tags:
+        - Tags
+      summary: タグ詳細取得
+      description: 特定のタグの詳細を取得します
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: タグID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: タグ詳細取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tag'
+        '404':
+          description: タグが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Tags
+      summary: タグ更新
+      description: タグを更新します（管理者のみ）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: タグID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+      responses:
+        '200':
+          description: タグ更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tag'
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Tags
+      summary: タグ削除
+      description: タグを削除します（管理者のみ）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: タグID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: タグ削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "タグを削除しました"
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # 決済API（Mock）
+  /payments:
+    post:
+      tags:
+        - Payments (Mock)
+      summary: 記事購入（Mock）
+      description: 有料記事の購入処理を行います（Mock実装）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - article_id
+                - card_number
+                - card_name
+                - expiry_month
+                - expiry_year
+                - cvv
+              properties:
+                article_id:
+                  type: integer
+                  example: 1
+                card_number:
+                  type: string
+                  example: "4242424242424242"
+                  description: "テストカード番号（成功: 4242424242424242, 拒否: 4000000000000002, 残高不足: 4000000000009995）"
+                card_name:
+                  type: string
+                  example: "TARO YAMADA"
+                expiry_month:
+                  type: string
+                  example: "12"
+                expiry_year:
+                  type: string
+                  example: "2025"
+                cvv:
+                  type: string
+                  example: "123"
+      responses:
+        '201':
+          description: 決済成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Payment'
+        '422':
+          description: 決済エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - Payments (Mock)
+      summary: 決済履歴取得
+      description: ユーザーの決済履歴を取得します
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            default: 15
+      responses:
+        '200':
+          description: 決済履歴取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Payment'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  # ユーザー管理API
+  /user/profile:
+    put:
+      tags:
+        - User Management
+      summary: プロフィール更新
+      description: ユーザーのプロフィール情報を更新します
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "田中太郎"
+                username:
+                  type: string
+                  example: "tanaka_taro"
+                email:
+                  type: string
+                  format: email
+                  example: "tanaka@example.com"
+                bio:
+                  type: string
+                  nullable: true
+                  example: "フルスタックエンジニア"
+                career_description:
+                  type: string
+                  nullable: true
+                  example: "10年のWeb開発経験"
+                x_url:
+                  type: string
+                  nullable: true
+                  example: "https://x.com/tanaka"
+                github_url:
+                  type: string
+                  nullable: true
+                  example: "https://github.com/tanaka"
+                profile_public:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: プロフィール更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/password:
+    put:
+      tags:
+        - User Management
+      summary: パスワード変更
+      description: ユーザーのパスワードを変更します
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - current_password
+                - new_password
+                - new_password_confirmation
+              properties:
+                current_password:
+                  type: string
+                  format: password
+                  example: "current_password"
+                new_password:
+                  type: string
+                  format: password
+                  example: "new_password123"
+                new_password_confirmation:
+                  type: string
+                  format: password
+                  example: "new_password123"
+      responses:
+        '200':
+          description: パスワード変更成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "パスワードを変更しました"
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/avatar:
+    post:
+      tags:
+        - User Management
+      summary: アバターアップロード
+      description: ユーザーのアバター画像をアップロードします
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: アップロードする画像ファイル
+                crop_data:
+                  type: string
+                  description: クロッピング情報（JSON文字列）
+                  example: '{"x": 0, "y": 0, "width": 200, "height": 200}'
+      responses:
+        '200':
+          description: アバターアップロード成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/avatar/{id}:
+    delete:
+      tags:
+        - User Management
+      summary: アバター削除
+      description: ユーザーのアバター画像を削除します
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: アバターファイルID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: アバター削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "アバターを削除しました"
+        '404':
+          description: アバターが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/activity:
+    get:
+      tags:
+        - User Management
+      summary: アクティビティ取得
+      description: ユーザーの記事投稿アクティビティを取得します
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: アクティビティ取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                    example:
+                      "2024-01-15": 2
+                      "2024-01-20": 1
+                      "2024-02-05": 3
+
+  # 管理者API
+  /admin/dashboard:
+    get:
+      tags:
+        - Admin
+      summary: 管理者ダッシュボード
+      description: サイト統計情報を取得します（管理者のみ）
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ダッシュボード情報取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statistics:
+                    type: object
+                    properties:
+                      total_users:
+                        type: integer
+                        example: 150
+                      total_articles:
+                        type: integer
+                        example: 320
+                      total_payments:
+                        type: integer
+                        example: 89
+                      total_revenue:
+                        type: number
+                        format: decimal
+                        example: 45000.00
+                  monthly_sales:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        month:
+                          type: string
+                          example: "2024-01"
+                        total_amount:
+                          type: number
+                          format: decimal
+                          example: 15000.00
+                        total_count:
+                          type: integer
+                          example: 30
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/users:
+    get:
+      tags:
+        - Admin
+      summary: ユーザー一覧取得
+      description: 全ユーザーの一覧を取得します（管理者のみ）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            default: 15
+        - name: search
+          in: query
+          description: ユーザー名・メールアドレスで検索
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ユーザー一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/users/{id}:
+    get:
+      tags:
+        - Admin
+      summary: ユーザー詳細取得
+      description: 特定ユーザーの詳細情報を取得します（管理者のみ）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ユーザーID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ユーザー詳細取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: ユーザーが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Admin
+      summary: ユーザー情報更新
+      description: ユーザーの情報を更新します（管理者のみ）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ユーザーID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_active:
+                  type: boolean
+                  description: アカウントの有効/無効状態
+                  example: false
+      responses:
+        '200':
+          description: ユーザー情報更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/articles:
+    get:
+      tags:
+        - Admin
+      summary: 全記事一覧取得
+      description: 全記事の一覧を取得します（管理者のみ）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: 1ページあたりの件数
+          schema:
+            type: integer
+            default: 15
+        - name: search
+          in: query
+          description: タイトル・内容で検索
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: ステータスで絞り込み
+          schema:
+            type: string
+            enum: [draft, published, private]
+      responses:
+        '200':
+          description: 記事一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/articles/{id}:
+    put:
+      tags:
+        - Admin
+      summary: 記事管理
+      description: 記事のステータスや特集設定を更新します（管理者のみ）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 記事ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [draft, published, private]
+                  description: 記事のステータス
+                is_featured:
+                  type: boolean
+                  description: 特集記事に設定するかどうか
+      responses:
+        '200':
+          description: 記事更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Article'
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Admin
+      summary: 記事削除
+      description: 記事を削除します（管理者のみ）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 記事ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 記事削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "記事を削除しました"
+        '403':
+          description: 権限がありません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Authentication
+    description: 認証関連API
+  - name: Articles
+    description: 記事管理API
+  - name: Tags
+    description: タグ管理API
+  - name: Payments (Mock)
+    description: 決済関連API（Mock実装）
+  - name: User Management
+    description: ユーザー管理API
+  - name: Admin
+    description: 管理者専用API
