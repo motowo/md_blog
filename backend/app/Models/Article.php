@@ -16,17 +16,14 @@ class Article extends Model
         'user_id',
         'title',
         'content',
-        'thumbnail_url',
         'status',
         'is_paid',
         'price',
         'preview_content',
-        'is_featured',
     ];
 
     protected $casts = [
         'is_paid' => 'boolean',
-        'is_featured' => 'boolean',
         'price' => 'decimal:2',
     ];
 

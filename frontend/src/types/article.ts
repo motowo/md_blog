@@ -6,12 +6,10 @@ export interface Article {
   user_id: number;
   title: string;
   content: string;
-  thumbnail_url?: string;
   status: "draft" | "published";
   is_paid: boolean;
   price?: number;
   preview_content?: string;
-  is_featured: boolean;
   created_at: string;
   updated_at: string;
   // リレーション
@@ -30,12 +28,10 @@ export interface ArticlesResponse {
 export interface ArticleCreateRequest {
   title: string;
   content: string;
-  thumbnail_url?: string;
   status: "draft" | "published";
   is_paid: boolean;
   price?: number;
   preview_content?: string;
-  is_featured?: boolean;
   tag_ids?: number[];
 }
 

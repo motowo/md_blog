@@ -38,6 +38,7 @@
 | `github_url`     | VARCHAR(255) | Nullable       | GitHub URL                         |
 | `profile_public` | BOOLEAN      | Default: true  | プロフィール公開設定               |
 | `is_active`      | BOOLEAN      | Default: true  | アカウント有効状態                 |
+| `last_login_at`  | TIMESTAMP    | Nullable       | 最終ログイン日時                   |
 | `remember_token` | VARCHAR(100) | Nullable       | Remember token                     |
 | `created_at`     | TIMESTAMP    | Not Null       | 登録日時                           |
 | `updated_at`     | TIMESTAMP    | Not Null       | 更新日時                           |
@@ -66,12 +67,10 @@
 | `user_id`        | BIGINT       | FK (User), Cascade Delete | 投稿ユーザーID                     |
 | `title`          | VARCHAR(255) | Not Null       | 記事タイトル                       |
 | `content`        | LONGTEXT     | Not Null       | 記事本文 (Markdown)                |
-| `thumbnail_url`  | VARCHAR(255) | Nullable       | サムネイル画像URL                  |
 | `status`         | ENUM('published', 'draft') | Default: 'draft' | 公開ステータス (公開, 下書き)      |
 | `is_paid`        | BOOLEAN      | Default: false | 有料/無料 (True: 有料, False: 無料) |
 | `price`          | DECIMAL(10,2)| Nullable       | 価格 (有料の場合)                  |
 | `preview_content` | TEXT         | Nullable       | プレビュー内容                     |
-| `is_featured`    | BOOLEAN      | Default: false | 特集記事フラグ                     |
 | `created_at`     | TIMESTAMP    | Not Null       | 投稿日時                           |
 | `updated_at`     | TIMESTAMP    | Not Null       | 更新日時                           |
 
@@ -105,15 +104,6 @@
 | `created_at`     | TIMESTAMP    | Not Null       | 作成日時                           |
 | `updated_at`     | TIMESTAMP    | Not Null       | 更新日時                           |
 
-#### Comment
-| 属性名       | データ型     | 制約           | 説明             |
-| :----------- | :----------- | :------------- | :--------------- |
-| `id`         | BIGINT       | PK, Auto Inc.  | コメントID       |
-| `user_id`    | BIGINT       | FK (User), Cascade Delete | コメント投稿者ID |
-| `article_id` | BIGINT       | FK (Article), Cascade Delete | 記事ID           |
-| `content`    | TEXT         | Not Null       | コメント内容     |
-| `created_at` | TIMESTAMP    | Not Null       | 投稿日時         |
-| `updated_at` | TIMESTAMP    | Not Null       | 更新日時         |
 
 #### Payout
 | 属性名           | データ型     | 制約           | 説明                               |
@@ -133,10 +123,8 @@
 erDiagram
     User ||--o{ Article : "投稿する"
     User ||--o{ Payment : "購入する"
-    User ||--o{ Comment : "コメントする"
     User ||--o{ Payout : "受け取る"
     User ||--o{ AvatarFiles : "アバター管理"
-    Article ||--o{ Comment : "にコメントが付く"
     Article ||--o{ Payment : "が購入される"
     Article }|..|{ Tag : "を持つ (多対多)"
 
@@ -155,6 +143,7 @@ erDiagram
         varchar github_url
         boolean profile_public
         boolean is_active
+        timestamp last_login_at
         varchar remember_token
         timestamp created_at
         timestamp updated_at
@@ -181,12 +170,10 @@ erDiagram
         bigint user_id FK
         varchar title
         longtext content
-        varchar thumbnail_url
         enum status
         boolean is_paid
         decimal price
         text preview_content
-        boolean is_featured
         timestamp created_at
         timestamp updated_at
     }
@@ -217,14 +204,6 @@ erDiagram
         timestamp updated_at
     }
 
-    Comment {
-        bigint id PK
-        bigint user_id FK
-        bigint article_id FK
-        text content
-        timestamp created_at
-        timestamp updated_at
-    }
 
     Payout {
         bigint id PK

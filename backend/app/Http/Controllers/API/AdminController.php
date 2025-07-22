@@ -195,11 +195,10 @@ class AdminController extends Controller
     {
         $request->validate([
             'status' => 'sometimes|in:published,draft',
-            'is_featured' => 'sometimes|boolean',
             'title' => 'sometimes|string|max:255',
         ]);
 
-        $article->update($request->only(['status', 'is_featured', 'title']));
+        $article->update($request->only(['status', 'title']));
 
         return response()->json([
             'message' => '記事情報を更新しました',

@@ -162,7 +162,6 @@ export class AdminService {
     articleId: number,
     data: {
       status?: "published" | "draft";
-      is_featured?: boolean;
       title?: string;
     },
   ): Promise<{ message: string; article: AdminArticle }> {

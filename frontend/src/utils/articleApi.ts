@@ -94,10 +94,10 @@ export class ArticleService {
     return this.getArticles({ ...params, status: "published" });
   }
 
-  // 特集記事取得
+  // 特集記事取得（is_featuredが削除されたため、最新記事を返す）
   static async getFeaturedArticles(): Promise<Article[]> {
     const response = await apiClient.get<{ data: Article[] }>(
-      "/articles?is_featured=1&status=published",
+      "/articles/recent?limit=6",
     );
     return response.data.data;
   }

@@ -21,12 +21,10 @@ class ArticleFactory extends Factory
             'user_id' => User::factory(),
             'title' => fake()->sentence(4),
             'content' => fake()->paragraphs(3, true),
-            'thumbnail_url' => fake()->imageUrl(640, 480, 'business'),
             'status' => fake()->randomElement(['draft', 'published']),
             'is_paid' => fake()->boolean(30),
             'price' => fake()->optional(0.7)->randomFloat(2, 100, 10000),
             'preview_content' => fake()->paragraph(),
-            'is_featured' => fake()->boolean(10),
         ];
     }
 
