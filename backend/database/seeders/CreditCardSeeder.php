@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Article;
 use App\Models\CreditCard;
 use App\Models\Payment;
 use App\Models\User;
-use App\Models\Article;
 use Illuminate\Database\Seeder;
 
 class CreditCardSeeder extends Seeder
@@ -17,15 +17,15 @@ class CreditCardSeeder extends Seeder
     {
         // テスト用クレジットカードデータを作成
         $users = User::whereIn('email', [
-            'tanaka@example.com', 
-            'sato@example.com'
+            'tanaka@example.com',
+            'sato@example.com',
         ])->get();
 
         foreach ($users as $user) {
             // 既存のクレジットカードがあるかチェック
             $existingCard = CreditCard::where('user_id', $user->id)->first();
-            
-            if (!$existingCard) {
+
+            if (! $existingCard) {
                 // 各ユーザーにクレジットカードを1枚登録
                 $creditCard = CreditCard::create([
                     'user_id' => $user->id,
@@ -45,20 +45,20 @@ class CreditCardSeeder extends Seeder
         // 田中太郎に決済履歴を追加（サンプル購入）
         $tanakaUser = User::where('email', 'tanaka@example.com')->first();
         $sampleArticle = Article::where('is_paid', true)->first();
-        
+
         if ($tanakaUser && $sampleArticle) {
             // 既存の決済履歴をチェック
             $existingPayment = Payment::where('user_id', $tanakaUser->id)
-                                    ->where('article_id', $sampleArticle->id)
-                                    ->first();
-            
-            if (!$existingPayment) {
+                ->where('article_id', $sampleArticle->id)
+                ->first();
+
+            if (! $existingPayment) {
                 Payment::create([
                     'user_id' => $tanakaUser->id,
                     'article_id' => $sampleArticle->id,
                     'amount' => $sampleArticle->price,
                     'status' => 'success',
-                    'transaction_id' => 'test_' . time(),
+                    'transaction_id' => 'test_fixed_transaction_001',
                     'paid_at' => now(),
                 ]);
 

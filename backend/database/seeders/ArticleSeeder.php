@@ -5,162 +5,800 @@ namespace Database\Seeders;
 use App\Models\Article;
 use App\Models\Tag;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class ArticleSeeder extends Seeder
 {
+    private const MARKDOWN_COMPREHENSIVE_ARTICLE_TITLE = 'Markdown完全ガイド：見出しからコードブロックまで【実践編】';
+
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        $admin = User::where('email', 'admin@md-blog.local')->first();
-        if (! $admin) {
-            $this->command->error('Admin user not found. Please run UserSeeder first.');
+        $users = User::where('role', 'author')->get();
+        $tags = Tag::all();
+
+        if ($users->isEmpty()) {
+            $this->command->error('一般ユーザーが見つかりません。先にUserSeederを実行してください。');
 
             return;
         }
 
-        $articles = [
-            [
-                'title' => 'React Hooksの基本と活用方法',
-                'content' => $this->getReactHooksContent(),
-                'status' => 'published',
-                'is_paid' => false,
-                'tags' => ['react', 'javascript', 'typescript'],
+        if ($tags->isEmpty()) {
+            $this->command->error('タグが見つかりません。先にTagSeederを実行してください。');
+
+            return;
+        }
+
+        // ユーザー別投稿パターン設定
+        $userPatterns = $this->getUserPatterns($users);
+
+        // 記事作成実行
+        $this->createArticles($userPatterns, $tags);
+
+        $this->showStatistics();
+    }
+
+    /**
+     * ユーザー別投稿パターンを取得
+     */
+    private function getUserPatterns($users): array
+    {
+        $usersByEmail = $users->keyBy('email');
+
+        return [
+            // ヒートマップ確認用ユーザー（3名）
+            'tanaka@example.com' => [
+                'user' => $usersByEmail['tanaka@example.com'] ?? null,
+                'pattern' => 'super_active',
+                'description' => '超アクティブユーザー（有料・無料混在）',
+                '2024_posts' => 200,
+                '2025_posts' => 100,
             ],
-            [
-                'title' => 'Laravel 11の新機能とアップグレード手順',
-                'content' => $this->getLaravelContent(),
-                'status' => 'published',
-                'is_paid' => true,
-                'price' => 1500,
-                'tags' => ['laravel', 'php'],
+            'sato@example.com' => [
+                'user' => $usersByEmail['sato@example.com'] ?? null,
+                'pattern' => 'medium_active_paid',
+                'description' => '中程度アクティブユーザー（有料記事メイン）',
+                '2024_posts' => 100,
+                '2025_posts' => 50,
             ],
-            [
-                'title' => 'TypeScriptでのAPI型安全性の実現',
-                'content' => $this->getTypeScriptApiContent(),
-                'status' => 'published',
-                'is_paid' => true,
-                'price' => 2000,
-                'tags' => ['typescript', 'api-design', 'javascript'],
+            'yamada@example.com' => [
+                'user' => $usersByEmail['yamada@example.com'] ?? null,
+                'pattern' => 'free_only',
+                'description' => '無料記事専門ユーザー',
+                '2024_posts' => 80,
+                '2025_posts' => 40,
             ],
-            [
-                'title' => 'Dockerを使った開発環境構築のベストプラクティス',
-                'content' => $this->getDockerContent(),
-                'status' => 'published',
-                'is_paid' => false,
-                'tags' => ['docker', 'nodejs', 'php'],
+
+            // 投稿なしユーザー（3名）
+            'takahashi@example.com' => [
+                'user' => $usersByEmail['takahashi@example.com'] ?? null,
+                'pattern' => 'no_posts',
+                'description' => '投稿なしユーザー',
+                '2024_posts' => 0,
+                '2025_posts' => 0,
             ],
-            [
-                'title' => 'Next.js App Routerの完全ガイド',
-                'content' => $this->getNextJsContent(),
-                'status' => 'published',
-                'is_paid' => true,
-                'price' => 2500,
-                'tags' => ['nextjs', 'react', 'typescript'],
+            'ito@example.com' => [
+                'user' => $usersByEmail['ito@example.com'] ?? null,
+                'pattern' => 'no_posts',
+                'description' => '投稿なしユーザー',
+                '2024_posts' => 0,
+                '2025_posts' => 0,
             ],
-            [
-                'title' => 'AWS Lambda + Node.jsでサーバーレス開発',
-                'content' => $this->getAwsLambdaContent(),
-                'status' => 'published',
-                'is_paid' => true,
-                'price' => 3000,
-                'tags' => ['aws', 'nodejs', 'api-design'],
+            'watanabe@example.com' => [
+                'user' => $usersByEmail['watanabe@example.com'] ?? null,
+                'pattern' => 'no_posts',
+                'description' => '投稿なしユーザー',
+                '2024_posts' => 0,
+                '2025_posts' => 0,
             ],
-            [
-                'title' => 'Vue.js 3 Composition APIの実践的活用法',
-                'content' => $this->getVueCompositionContent(),
-                'status' => 'published',
-                'is_paid' => false,
-                'tags' => ['vuejs', 'javascript', 'typescript'],
+
+            // 適度な投稿ユーザー（4名）
+            'nakamura@example.com' => [
+                'user' => $usersByEmail['nakamura@example.com'] ?? null,
+                'pattern' => 'moderate',
+                'description' => '適度な投稿ユーザー',
+                '2024_posts' => 25,
+                '2025_posts' => 12,
             ],
-            [
-                'title' => 'Python Django REST APIの設計パターン',
-                'content' => $this->getDjangoContent(),
-                'status' => 'published',
-                'is_paid' => true,
-                'price' => 2200,
-                'tags' => ['python', 'django', 'api-design'],
+            'kobayashi@example.com' => [
+                'user' => $usersByEmail['kobayashi@example.com'] ?? null,
+                'pattern' => 'moderate',
+                'description' => '適度な投稿ユーザー',
+                '2024_posts' => 30,
+                '2025_posts' => 15,
             ],
-            [
-                'title' => 'Go言語でのマイクロサービス設計',
-                'content' => $this->getGoMicroservicesContent(),
-                'status' => 'published',
-                'is_paid' => true,
-                'price' => 3500,
-                'tags' => ['go', 'api-design', 'docker'],
+            'kato@example.com' => [
+                'user' => $usersByEmail['kato@example.com'] ?? null,
+                'pattern' => 'moderate',
+                'description' => '適度な投稿ユーザー',
+                '2024_posts' => 20,
+                '2025_posts' => 10,
             ],
-            [
-                'title' => 'MySQL パフォーマンスチューニング入門',
-                'content' => $this->getMySQLContent(),
-                'status' => 'published',
-                'is_paid' => false,
-                'tags' => ['mysql', 'php', 'python'],
-            ],
-            [
-                'title' => 'React Native + Expo開発環境の構築',
-                'content' => $this->getReactNativeContent(),
-                'status' => 'published',
-                'is_paid' => true,
-                'price' => 1800,
-                'tags' => ['react', 'javascript', 'typescript'],
-            ],
-            [
-                'title' => 'GraphQL APIの設計と実装パターン',
-                'content' => $this->getGraphQLContent(),
-                'status' => 'published',
-                'is_paid' => true,
-                'price' => 2800,
-                'tags' => ['api-design', 'nodejs', 'typescript'],
+            'yoshida@example.com' => [
+                'user' => $usersByEmail['yoshida@example.com'] ?? null,
+                'pattern' => 'moderate',
+                'description' => '適度な投稿ユーザー',
+                '2024_posts' => 15,
+                '2025_posts' => 8,
             ],
         ];
+    }
 
-        foreach ($articles as $articleData) {
-            $tags = $articleData['tags'];
-            unset($articleData['tags']);
+    /**
+     * 記事を作成
+     */
+    private function createArticles(array $userPatterns, $tags): void
+    {
+        $articlesCreated = 0;
+        $totalArticles = 0;
 
-            $article = Article::create([
-                'user_id' => $admin->id,
-                ...$articleData,
-            ]);
+        foreach ($userPatterns as $email => $pattern) {
+            if (! $pattern['user'] || $pattern['pattern'] === 'no_posts') {
+                if ($pattern['pattern'] === 'no_posts') {
+                    $this->command->info("投稿なしユーザー: {$email}");
+                }
 
-            // タグを関連付け
-            $tagIds = Tag::whereIn('slug', $tags)->pluck('id');
-            $article->tags()->attach($tagIds);
+                continue;
+            }
+
+            $user = $pattern['user'];
+            $this->command->info("記事作成開始: {$user->name} ({$pattern['description']})");
+
+            // 2024年の記事作成
+            if ($pattern['2024_posts'] > 0) {
+                $created = $this->createArticlesForYear($user, 2024, $pattern['2024_posts'], $pattern['pattern'], $tags);
+                $articlesCreated += $created;
+                $totalArticles += $pattern['2024_posts'];
+            }
+
+            // 2025年の記事作成
+            if ($pattern['2025_posts'] > 0) {
+                $created = $this->createArticlesForYear($user, 2025, $pattern['2025_posts'], $pattern['pattern'], $tags);
+                $articlesCreated += $created;
+                $totalArticles += $pattern['2025_posts'];
+            }
+
+            $totalPosts = $pattern['2024_posts'] + $pattern['2025_posts'];
+            $this->command->info("記事作成完了: {$user->name} - 作成予定: {$totalPosts}記事");
+        }
+
+        $this->command->info('=== 記事作成完了 ===');
+        $this->command->info("作成予定記事数: {$totalArticles}");
+        $this->command->info("実際作成数: {$articlesCreated}");
+    }
+
+    /**
+     * 指定年の記事を作成
+     */
+    private function createArticlesForYear(User $user, int $year, int $targetCount, string $pattern, $tags): int
+    {
+        $startDate = Carbon::createFromDate($year, 1, 1);
+        $endDate = $year === 2025 ? Carbon::createFromDate(2025, 6, 30) : Carbon::createFromDate($year, 12, 31);
+        $totalDays = $startDate->diffInDays($endDate) + 1;
+
+        $articlesCreated = 0;
+        $markdownArticleCreated = false; // マークダウン網羅記事作成フラグ
+
+        // 記事作成分布を計算
+        $dailyDistribution = $this->calculateDailyDistribution($targetCount, $totalDays, $pattern);
+
+        for ($day = 0; $day < $totalDays && $articlesCreated < $targetCount; $day++) {
+            $currentDate = $startDate->copy()->addDays($day);
+            $articlesToCreate = $dailyDistribution[$day] ?? 0;
+
+            for ($i = 0; $i < $articlesToCreate && $articlesCreated < $targetCount; $i++) {
+                $articleTime = $currentDate->copy()->setTime(
+                    8 + ($articlesCreated % 14),
+                    ($articlesCreated * 7) % 60
+                );
+
+                // マークダウン網羅記事を作成（ユーザーごとに1つ）
+                if (! $markdownArticleCreated && $articlesCreated === 0) {
+                    $this->createMarkdownComprehensiveArticle($user, $articleTime, $pattern, $tags);
+                    $markdownArticleCreated = true;
+                } else {
+                    $this->createRegularArticle($user, $articleTime, $pattern, $tags, $articlesCreated);
+                }
+
+                $articlesCreated++;
+            }
+        }
+
+        return $articlesCreated;
+    }
+
+    /**
+     * 日別記事数分布を計算
+     */
+    private function calculateDailyDistribution(int $targetCount, int $totalDays, string $pattern): array
+    {
+        $distribution = array_fill(0, $totalDays, 0);
+        $remaining = $targetCount;
+
+        switch ($pattern) {
+            case 'super_active':
+                // 超アクティブ：固定パターンで配置
+                $dayIndex = 0;
+                while ($remaining > 0) {
+                    $day = ($dayIndex * 7 + 3) % $totalDays; // 7日おきに3日目
+                    $articles = min(1 + ($dayIndex % 5), $remaining); // 1-5記事
+                    $distribution[$day] += $articles;
+                    $remaining -= $articles;
+                    $dayIndex++;
+                }
+                break;
+
+            case 'medium_active_paid':
+                // 中程度：固定パターンで配置
+                $dayIndex = 0;
+                while ($remaining > 0) {
+                    $day = ($dayIndex * 5 + 2) % $totalDays; // 5日おきに2日目
+                    $articles = min(1 + ($dayIndex % 3), $remaining); // 1-3記事
+                    $distribution[$day] += $articles;
+                    $remaining -= $articles;
+                    $dayIndex++;
+                }
+                break;
+
+            case 'free_only':
+            case 'moderate':
+                // 無料専門・適度：固定パターンで配置
+                $articlesPerDay = max(1, intval($remaining / ($totalDays * 0.7)));
+                for ($day = 0; $day < $totalDays && $remaining > 0; $day += 3) {
+                    $articles = min($articlesPerDay, $remaining);
+                    $distribution[$day] += $articles;
+                    $remaining -= $articles;
+                }
+                break;
+        }
+
+        return $distribution;
+    }
+
+    /**
+     * マークダウン網羅記事を作成
+     */
+    private function createMarkdownComprehensiveArticle(User $user, Carbon $dateTime, string $pattern, $tags): void
+    {
+        $content = $this->generateMarkdownComprehensiveContent();
+        $selectedTags = $this->selectTags(['マークダウン', 'ドキュメント'], $tags, 2);
+
+        // 固定値でcreated_at時間に基づいて決定
+        $isPaid = $pattern !== 'free_only' && ($dateTime->day + $dateTime->hour) % 2 === 1;
+        $status = ($dateTime->day + $dateTime->hour + $dateTime->minute) % 10 === 1 ? 'draft' : 'published';
+
+        $article = Article::create([
+            'user_id' => $user->id,
+            'title' => self::MARKDOWN_COMPREHENSIVE_ARTICLE_TITLE,
+            'content' => $content,
+            'status' => $status,
+            'is_paid' => $isPaid,
+            'price' => $isPaid ? (300 + (($dateTime->day + $dateTime->hour) % 170) * 10) : null,
+            'preview_content' => $isPaid ? $this->generatePreviewContent($content) : null,
+            'created_at' => $dateTime,
+            'updated_at' => $dateTime->copy()->addMinutes(10 + (($dateTime->day + $dateTime->hour) % 110)),
+        ]);
+
+        if (! empty($selectedTags)) {
+            $article->tags()->attach($selectedTags);
+        }
+
+        $this->command->info("Markdown網羅記事を作成: {$user->name} - {$article->title}");
+    }
+
+    /**
+     * 通常記事を作成
+     */
+    private function createRegularArticle(User $user, Carbon $dateTime, string $pattern, $tags, int $articleIndex): void
+    {
+        $template = $this->getRandomArticleTemplate($pattern);
+        $content = $this->generateArticleContent($template['tags'], $template['title']);
+        // 固定タグ数を決定
+        $tagCount = 1 + (($dateTime->day + $articleIndex) % 3);
+        $selectedTags = $this->selectTags($template['tags'], $tags, $tagCount);
+
+        // 固定値でcreated_at時間とインデックスに基づいて決定
+        $isPaid = $this->determineIsPaidFixed($pattern, $dateTime, $articleIndex);
+        $status = ($dateTime->day + $dateTime->hour + $articleIndex) % 10 === 1 ? 'draft' : 'published';
+
+        $article = Article::create([
+            'user_id' => $user->id,
+            'title' => $template['title'],
+            'content' => $content,
+            'status' => $status,
+            'is_paid' => $isPaid,
+            'price' => $isPaid ? (300 + (($dateTime->day + $articleIndex) % 170) * 10) : null,
+            'preview_content' => $isPaid ? $this->generatePreviewContent($content) : null,
+            'created_at' => $dateTime,
+            'updated_at' => $dateTime->copy()->addMinutes(10 + (($dateTime->day + $articleIndex) % 110)),
+        ]);
+
+        if (! empty($selectedTags)) {
+            $article->tags()->attach($selectedTags);
         }
     }
 
-    private function getReactHooksContent(): string
+    /**
+     * 記事テンプレートを取得
+     */
+    private function getRandomArticleTemplate(string $pattern): array
     {
-        return <<<'MD'
-# React Hooksの基本と活用方法
+        $templates = [
+            // JavaScript関連
+            [
+                'title' => 'JavaScript ES2024の新機能解説と実践的な使い方',
+                'tags' => ['JavaScript'],
+            ],
+            [
+                'title' => 'Promise・async/awaitを使った非同期処理の最適化手法',
+                'tags' => ['JavaScript'],
+            ],
+            [
+                'title' => 'DOM操作とイベント処理の効率的なパフォーマンス改善',
+                'tags' => ['JavaScript'],
+            ],
 
-React Hooksは、React 16.8で導入された機能で、関数コンポーネントでstate管理や副作用処理を行うことができます。
+            // TypeScript関連
+            [
+                'title' => 'TypeScript 5.x型システム完全攻略：Union型からMapped型まで',
+                'tags' => ['TypeScript'],
+            ],
+            [
+                'title' => 'Next.js + TypeScriptでの堅牢なアプリケーション設計',
+                'tags' => ['TypeScript', 'Next.js'],
+            ],
+            [
+                'title' => 'TypeScript Genericsを使った再利用可能なコンポーネント設計',
+                'tags' => ['TypeScript', 'React'],
+            ],
 
-## useState フック
+            // React関連
+            [
+                'title' => 'React Hooks深掘り：useEffect最適化とメモリリーク対策',
+                'tags' => ['React', 'JavaScript'],
+            ],
+            [
+                'title' => 'React 18 Concurrent Featuresを活用したUX向上テクニック',
+                'tags' => ['React'],
+            ],
+            [
+                'title' => 'カスタムHooksでロジック分離：再利用性の高いReact開発',
+                'tags' => ['React'],
+            ],
 
-最も基本的なフックの一つです。
+            // Vue.js関連
+            [
+                'title' => 'Vue.js 3 Composition API実践：リアクティブシステム完全理解',
+                'tags' => ['Vue.js', 'JavaScript'],
+            ],
+            [
+                'title' => 'Vue Router 4とPinia状態管理による現代的SPA構築',
+                'tags' => ['Vue.js'],
+            ],
+
+            // Next.js関連
+            [
+                'title' => 'Next.js 14 App Routerとサーバーコンポーネント実装ガイド',
+                'tags' => ['Next.js', 'React'],
+            ],
+            [
+                'title' => 'Next.js ISR・SSG・SSRの使い分けとパフォーマンス最適化',
+                'tags' => ['Next.js'],
+            ],
+
+            // PHP関連
+            [
+                'title' => 'PHP 8.3新機能とモダンPHP開発のベストプラクティス',
+                'tags' => ['PHP'],
+            ],
+            [
+                'title' => 'PSR標準に準拠したPHPアプリケーション設計パターン',
+                'tags' => ['PHP'],
+            ],
+
+            // Laravel関連
+            [
+                'title' => 'Laravel 11 新機能解説：パフォーマンス向上と開発効率化',
+                'tags' => ['Laravel', 'PHP'],
+            ],
+            [
+                'title' => 'Laravel Eloquent ORM高度技法：リレーションとクエリ最適化',
+                'tags' => ['Laravel', 'MySQL'],
+            ],
+            [
+                'title' => 'Laravel Sanctum認証とAPI設計のセキュリティベストプラクティス',
+                'tags' => ['Laravel'],
+            ],
+
+            // Python関連
+            [
+                'title' => 'Python 3.12新機能とパフォーマンス改善のポイント',
+                'tags' => ['Python'],
+            ],
+            [
+                'title' => 'Pythonデータ分析：pandas・NumPy効率的な処理テクニック',
+                'tags' => ['Python'],
+            ],
+
+            // Django関連
+            [
+                'title' => 'Django REST Framework実践：スケーラブルなAPI開発手法',
+                'tags' => ['Django', 'Python'],
+            ],
+            [
+                'title' => 'Django ORMクエリ最適化とN+1問題の解決策',
+                'tags' => ['Django'],
+            ],
+
+            // Go関連
+            [
+                'title' => 'Go言語のgoroutineとchannelを使った並行処理設計',
+                'tags' => ['Go'],
+            ],
+            [
+                'title' => 'Go Web API開発：Gin Frameworkとクリーンアーキテクチャ',
+                'tags' => ['Go'],
+            ],
+
+            // Docker関連
+            [
+                'title' => 'Docker Compose本格活用：マルチコンテナ開発環境構築',
+                'tags' => ['Docker'],
+            ],
+            [
+                'title' => 'Dockerイメージ最適化：レイヤーキャッシュとマルチステージビルド',
+                'tags' => ['Docker'],
+            ],
+
+            // AWS関連
+            [
+                'title' => 'AWS Lambda関数最適化：コールドスタート対策とメモリ調整',
+                'tags' => ['AWS'],
+            ],
+            [
+                'title' => 'AWS ECS Fargate本格運用：スケーリングとコスト最適化',
+                'tags' => ['AWS', 'Docker'],
+            ],
+
+            // MySQL関連
+            [
+                'title' => 'MySQL 8.0クエリ最適化：インデックス設計とパフォーマンスチューニング',
+                'tags' => ['MySQL'],
+            ],
+            [
+                'title' => 'MySQL パーティション分割によるビッグデータ処理高速化',
+                'tags' => ['MySQL'],
+            ],
+
+            // Node.js関連
+            [
+                'title' => 'Node.js EventLoop完全理解：非同期処理の内部動作',
+                'tags' => ['Node.js', 'JavaScript'],
+            ],
+            [
+                'title' => 'Express.js + TypeScriptで構築するREST API設計パターン',
+                'tags' => ['Node.js', 'TypeScript'],
+            ],
+
+            // API設計関連
+            [
+                'title' => 'RESTful API設計原則とGraphQL比較：適切な選択指針',
+                'tags' => ['API設計'],
+            ],
+            [
+                'title' => 'OpenAPI Specification活用：自動化されたAPI開発フロー',
+                'tags' => ['API設計'],
+            ],
+        ];
+
+        // 固定インデックスでテンプレート選択
+        $index = $pattern === 'free_only' ? count($templates) - 1 : 0;
+
+        return $templates[$index % count($templates)];
+    }
+
+    /**
+     * 有料記事かどうかを固定値で決定
+     */
+    private function determineIsPaidFixed(string $pattern, Carbon $dateTime, int $articleIndex): bool
+    {
+        switch ($pattern) {
+            case 'free_only':
+                return false;
+            case 'medium_active_paid':
+                // 75%の確率で有料（固定アルゴリズム）
+                return ($dateTime->day + $articleIndex) % 4 !== 0;
+            default:
+                // 50%の確率で有料（固定アルゴリズム）
+                return ($dateTime->day + $articleIndex) % 2 === 1;
+        }
+    }
+
+    /**
+     * タグを選択
+     */
+    private function selectTags(array $preferredTags, $allTags, int $count): array
+    {
+        $selectedTags = [];
+
+        // 優先タグから選択
+        foreach ($preferredTags as $tagName) {
+            $tag = $allTags->where('name', $tagName)->first();
+            if ($tag) {
+                $selectedTags[] = $tag->id;
+            }
+            if (count($selectedTags) >= $count) {
+                break;
+            }
+        }
+
+        // 足りない分は既存タグから選択
+        $tagIndex = 0;
+        while (count($selectedTags) < $count && $tagIndex < $allTags->count()) {
+            $tag = $allTags[$tagIndex % $allTags->count()];
+            if (! in_array($tag->id, $selectedTags)) {
+                $selectedTags[] = $tag->id;
+            }
+            $tagIndex++;
+        }
+
+        return $selectedTags;
+    }
+
+    /**
+     * マークダウン網羅コンテンツを生成
+     */
+    private function generateMarkdownComprehensiveContent(): string
+    {
+        return <<<'MARKDOWN'
+# Markdown完全ガイド：見出しからコードブロックまで
+
+この記事では、Markdownの全機能を網羅的に解説します。技術文書の執筆からブログ投稿まで、あらゆる場面で活用できる実践的なテクニックを紹介します。
+
+## 見出し（Headers）
+
+Markdownでは、`#`記号を使って見出しを作成できます。レベル1から6まで対応しています。
+
+### 見出しレベル3の例
+
+#### 見出しレベル4の例
+
+##### 見出しレベル5の例
+
+###### 見出しレベル6の例
+
+## テキスト装飾
+
+**太字（Bold）**は`**`または`__`で囲みます。
+
+*斜体（Italic）*は`*`または`_`で囲みます。
+
+***太字斜体***は`***`で囲みます。
+
+~~取り消し線~~は`~~`で囲みます。
+
+## リスト
+
+### 順序なしリスト
+
+- 項目1
+- 項目2
+  - ネストした項目1
+  - ネストした項目2
+    - さらにネスト
+- 項目3
+
+### 順序ありリスト
+
+1. 最初の項目
+2. 2番目の項目
+   1. ネストした番号付き項目
+   2. もう一つのネスト項目
+3. 3番目の項目
+
+## リンクと画像
+
+[リンクテキスト](https://example.com)
+
+![画像の代替テキスト](https://via.placeholder.com/150)
+
+## コードブロック
+
+### インラインコード
+
+`console.log('Hello, World!')`のように、バッククォートで囲みます。
+
+### コードブロック（JavaScript）
 
 ```javascript
-import React, { useState } from 'react';
-
-function Counter() {
-  const [count, setCount] = useState(0);
-
-  return (
-    <div>
-      <p>カウント: {count}</p>
-      <button onClick={() => setCount(count + 1)}>
-        増加
-      </button>
-    </div>
-  );
+function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
 }
+
+const result = fibonacci(10);
+console.log(`フィボナッチ数列の10番目: ${result}`);
 ```
 
-## useEffect フック
+### コードブロック（Python）
 
-副作用処理を行うためのフックです。
+```python
+def quick_sort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quick_sort(left) + middle + quick_sort(right)
 
-```javascript
+numbers = [64, 34, 25, 12, 22, 11, 90]
+sorted_numbers = quick_sort(numbers)
+print(f"ソート後: {sorted_numbers}")
+```
+
+### コードブロック（SQL）
+
+```sql
+SELECT 
+    u.name,
+    COUNT(a.id) as article_count,
+    AVG(CASE WHEN a.is_paid THEN a.price ELSE 0 END) as avg_price
+FROM users u
+LEFT JOIN articles a ON u.id = a.user_id
+WHERE a.status = 'published'
+GROUP BY u.id, u.name
+HAVING article_count > 5
+ORDER BY article_count DESC;
+```
+
+## 引用
+
+> これは引用文です。重要なポイントや他者の言葉を引用する際に使用します。
+> 
+> 複数行の引用も可能です。
+
+## 表（テーブル）
+
+| 言語 | 難易度 | 用途 | 人気度 |
+|------|--------|------|--------|
+| JavaScript | 中 | Web開発 | ★★★★★ |
+| Python | 低 | データサイエンス | ★★★★★ |
+| Go | 中 | バックエンド | ★★★★☆ |
+| Rust | 高 | システムプログラミング | ★★★☆☆ |
+
+## 水平線
+
+---
+
+## チェックボックス（タスクリスト）
+
+- [x] 完了したタスク
+- [x] Markdownの基本構文学習
+- [ ] 未完了のタスク
+- [ ] 応用技法の習得
+- [ ] 実践プロジェクトへの適用
+
+## 数式表示（LaTeX風）
+
+インライン数式: $E = mc^2$
+
+ブロック数式:
+$$
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+$$
+
+## 高度な技法
+
+### 定義リスト
+
+HTML
+: ウェブページを作るためのマークアップ言語
+
+CSS  
+: HTMLの見た目をスタイリングするための言語
+
+JavaScript
+: ウェブページに動的な機能を追加するプログラミング言語
+
+### 脚注
+
+これは脚注付きのテキストです[^1]。
+
+[^1]: これが脚注の内容です。詳細な説明や参照情報を記載できます。
+
+## まとめ
+
+Markdownは軽量でありながら表現力豊かなマークアップ言語です。この記事で紹介した記法をマスターすることで、技術文書やブログ記事を効率的に執筆できるようになります。
+
+### 実践のポイント
+
+1. **見出し構造を意識する**: 階層的な文書構造を作る
+2. **コードブロックを活用する**: 技術記事では必須の機能
+3. **表を効果的に使う**: データを整理して見やすく表示
+4. **リストで情報を整理**: 箇条書きで読みやすさを向上
+
+継続的な練習により、Markdownでの文書作成スキルを向上させていきましょう。
+MARKDOWN;
+    }
+
+    /**
+     * 記事コンテンツを生成
+     */
+    private function generateArticleContent(array $tags, string $title): string
+    {
+        $mainTag = $tags[0] ?? 'プログラミング';
+        $wordCount = 200 + (strlen($title) % 800); // 固定範囲で文字数決定
+
+        // タグに基づいた技術的コンテンツテンプレート
+        $templates = $this->getContentTemplatesByTag($mainTag);
+        $selectedTemplate = $templates[0]; // 固定インデックスで選択
+
+        // コンテンツを組み立て
+        $content = "# {$title}\n\n";
+        $content .= $selectedTemplate['introduction']."\n\n";
+        $content .= "## 概要\n\n".$selectedTemplate['overview']."\n\n";
+        $content .= "## 実装方法\n\n".$selectedTemplate['implementation']."\n\n";
+
+        if (isset($selectedTemplate['code_example'])) {
+            $content .= "## コード例\n\n".$selectedTemplate['code_example']."\n\n";
+        }
+
+        $content .= "## まとめ\n\n".$selectedTemplate['conclusion']."\n";
+
+        return $content;
+    }
+
+    /**
+     * タグ別コンテンツテンプレートを取得
+     */
+    private function getContentTemplatesByTag(string $tag): array
+    {
+        $templates = [
+            'JavaScript' => [
+                [
+                    'introduction' => 'JavaScriptは現代のウェブ開発において中核を成す言語です。ES2024の新機能を含む最新の仕様を理解することで、より効率的で保守性の高いコードが書けるようになります。',
+                    'overview' => 'この記事では、JavaScriptの基本概念から応用技術まで、実践的な観点から解説します。非同期処理、DOM操作、モジュールシステムなど、実際の開発現場で必要となる知識を体系的に学べます。',
+                    'implementation' => 'JavaScriptの実装において重要なのは、適切なデザインパターンの選択です。関数型プログラミングとオブジェクト指向プログラミングの考え方を組み合わせることで、柔軟性と再利用性を兼ね備えたコードが実現できます。',
+                    'code_example' => "```javascript\n// 非同期処理の例\nasync function fetchUserData(userId) {\n  try {\n    const response = await fetch('/api/users/' + userId);\n    if (!response.ok) throw new Error('ユーザーデータの取得に失敗しました');\n    return await response.json();\n  } catch (error) {\n    console.error('エラー:', error.message);\n    throw error;\n  }\n}\n```",
+                    'conclusion' => 'JavaScriptの習得は継続的な学習プロセスです。基礎をしっかりと身につけ、実践的なプロジェクトを通じてスキルを向上させることが重要です。',
+                ],
+            ],
+            'TypeScript' => [
+                [
+                    'introduction' => 'TypeScriptは、JavaScriptに静的型付けを追加した言語として、大規模アプリケーション開発において欠かせない存在となっています。型安全性により、開発効率の向上とバグの早期発見が可能になります。',
+                    'overview' => 'TypeScriptの型システムは非常に強力で、Union型、Intersection型、Mapped型など高度な型機能を提供します。これらを適切に活用することで、コードの品質と保守性を大幅に向上させることができます。',
+                    'implementation' => 'TypeScriptプロジェクトの設定では、tsconfig.jsonの適切な設定が重要です。strict modeを有効にし、適切なコンパイルオプションを選択することで、型チェックの恩恵を最大限に活用できます。',
+                    'code_example' => <<<'CODE'
+```typescript
+// ジェネリック型の活用例
+interface ApiResponse<T> {
+  data: T;
+  status: number;
+  message: string;
+}
+
+class ApiClient {
+  async get<T>(url: string): Promise<ApiResponse<T>> {
+    const response = await fetch(url);
+    return response.json();
+  }
+}
+```
+CODE,
+                    'conclusion' => 'TypeScriptは学習コストがありますが、それを上回る開発体験の向上をもたらします。チーム開発における生産性向上のために、積極的に導入を検討すべき技術です。',
+                ],
+            ],
+            'React' => [
+                [
+                    'introduction' => 'Reactは、コンポーネントベースのアーキテクチャにより、再利用可能で保守性の高いUIを構築できるJavaScriptライブラリです。Hooksの導入により、関数コンポーネントでの状態管理がより直感的になりました。',
+                    'overview' => 'React 18では、Concurrent Featuresが導入され、ユーザーエクスペリエンスの向上が図られています。Suspense、useTransition、useDeferredValueなどの新機能を理解することで、よりスムーズなアプリケーションが作成できます。',
+                    'implementation' => 'Reactアプリケーションの設計において、適切な状態管理とコンポーネントの責務分離が重要です。単一責任の原則に従い、小さく再利用可能なコンポーネントを作成することを心がけましょう。',
+                    'code_example' => <<<'CODE'
+```jsx
 import React, { useState, useEffect } from 'react';
 
 function UserProfile({ userId }) {
@@ -168,932 +806,108 @@ function UserProfile({ userId }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/users/${userId}`);
-        const userData = await response.json();
-        setUser(userData);
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (userId) {
-      fetchUser();
-    }
+    fetchUserData(userId)
+      .then(setUser)
+      .finally(() => setLoading(false));
   }, [userId]);
 
-  if (loading) return <div>読み込み中...</div>;
-  if (!user) return <div>ユーザーが見つかりません</div>;
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <div>User not found</div>;
 
   return (
-    <div>
-      <h1>{user.name}</h1>
+    <div className="user-profile">
+      <h2>{user.name}</h2>
       <p>{user.email}</p>
     </div>
   );
 }
 ```
-
-## カスタムフック
-
-ロジックを再利用可能な形で抽出できます。
-
-```javascript
-import { useState, useEffect } from 'react';
-
-function useApi(url) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [url]);
-
-  return { data, loading, error };
-}
-```
-
-## まとめ
-
-React Hooksを使うことで、より簡潔で再利用可能なコンポーネントを作成できます。適切に活用することで、コードの可読性と保守性が大幅に向上します。
-MD;
-    }
-
-    private function getLaravelContent(): string
-    {
-        return <<<'MD'
-# Laravel 11の新機能とアップグレード手順
-
-Laravel 11では多くの新機能と改善が導入されました。
-
-## 主な新機能
-
-### 1. 改善されたルーティング
-
+CODE,
+                    'conclusion' => 'Reactエコシステムは急速に進化しています。最新のベストプラクティスを継続的に学習し、実際のプロジェクトで実践することが成長への近道です。',
+                ],
+            ],
+            'Laravel' => [
+                [
+                    'introduction' => 'LaravelはPHPにおける最も人気の高いフレームワークの一つです。Eloquent ORM、Blade テンプレートエンジン、Artisanコマンドラインツールなど、開発効率を高める機能が豊富に用意されています。',
+                    'overview' => 'Laravel 11では、パフォーマンスの向上と開発者体験の改善が図られています。新しいルーティング機能、改善されたクエリビルダー、強化されたバリデーション機能などが追加されました。',
+                    'implementation' => 'Laravelアプリケーションの開発では、MVCアーキテクチャの適切な実装が重要です。モデル、ビュー、コントローラーの責務を明確に分離し、サービス層やリポジトリパターンを活用することで保守性を向上させます。',
+                    'code_example' => <<<'CODE'
 ```php
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-Route::get('/users/{user}', function (User $user) {
-    return $user;
-})->middleware(['auth', 'verified']);
-
-Route::prefix('api/v1')->group(function () {
-    Route::apiResource('posts', PostController::class);
-});
-```
-
-### 2. 新しいキューシステム
-
-```php
-<?php
-
-namespace App\Jobs;
-
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-
-class ProcessPayment implements ShouldQueue
+class UserController extends Controller
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
     public function __construct(
-        private readonly Payment $payment
+        private UserService $userService
     ) {}
 
-    public function handle(): void
+    public function store(CreateUserRequest $request): JsonResponse
     {
-        // 支払い処理のロジック
-        $this->payment->process();
-    }
-}
-```
-
-### 3. 強化されたEloquent
-
-```php
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-
-class User extends Model
-{
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
-
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    public function posts(): HasMany
-    {
-        return $this->hasMany(Post::class);
-    }
-}
-```
-
-## アップグレード手順
-
-1. PHP 8.2以上にアップグレード
-2. Composerの依存関係を更新
-3. 設定ファイルの移行
-4. テストの実行と修正
-
-```bash
-composer update
-php artisan migrate
-php artisan test
-```
-
-詳細な手順については公式ドキュメントを参照してください。
-MD;
-    }
-
-    private function getTypeScriptApiContent(): string
-    {
-        return <<<'MD'
-# TypeScriptでのAPI型安全性の実現
-
-TypeScriptを使ってAPI通信の型安全性を確保する方法を解説します。
-
-## Zodを使った型バリデーション
-
-```typescript
-import { z } from 'zod';
-
-const UserSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  email: z.string().email(),
-  createdAt: z.string().datetime(),
-});
-
-type User = z.infer<typeof UserSchema>;
-
-async function fetchUser(id: number): Promise<User> {
-  const response = await fetch(`/api/users/${id}`);
-  const data = await response.json();
-  
-  return UserSchema.parse(data);
-}
-```
-
-## APIクライアントの型定義
-
-```typescript
-interface ApiResponse<T> {
-  data: T;
-  message: string;
-  success: boolean;
-}
-
-class ApiClient {
-  private baseUrl: string;
-
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-  }
-
-  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`);
-    return response.json();
-  }
-
-  async post<T, U>(
-    endpoint: string, 
-    data: T
-  ): Promise<ApiResponse<U>> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return response.json();
-  }
-}
-```
-
-型安全性を保ちながら効率的なAPI通信を実現できます。
-MD;
-    }
-
-    private function getDockerContent(): string
-    {
-        return <<<'MD'
-# Dockerを使った開発環境構築のベストプラクティス
-
-Dockerを活用した効率的な開発環境の構築方法を解説します。
-
-## Dockerfileの最適化
-
-```dockerfile
-# Multi-stage build
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-
-FROM node:18-alpine AS runtime
-
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
-WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY . .
-
-USER nextjs
-
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-## docker-compose.yml
-
-```yaml
-version: '3.8'
-
-services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-
-  backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
-    depends_on:
-      - database
-    environment:
-      - DB_HOST=database
-
-  database:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: app_db
-    volumes:
-      - mysql_data:/var/lib/mysql
-
-volumes:
-  mysql_data:
-```
-
-効率的な開発環境を構築できます。
-MD;
-    }
-
-    private function getNextJsContent(): string
-    {
-        return <<<'MD'
-# Next.js App Routerの完全ガイド
-
-Next.js 13で導入されたApp Routerの使い方を解説します。
-
-## ディレクトリ構造
-
-```
-app/
-├── layout.tsx
-├── page.tsx
-├── loading.tsx
-├── error.tsx
-├── not-found.tsx
-├── posts/
-│   ├── [id]/
-│   │   └── page.tsx
-│   └── page.tsx
-└── api/
-    └── posts/
-        └── route.ts
-```
-
-## レイアウトの作成
-
-```tsx
-// app/layout.tsx
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="ja">
-      <body>
-        <header>
-          <nav>ナビゲーション</nav>
-        </header>
-        <main>{children}</main>
-        <footer>フッター</footer>
-      </body>
-    </html>
-  );
-}
-```
-
-## API Routeの実装
-
-```typescript
-// app/api/posts/route.ts
-export async function GET() {
-  const posts = await fetchPosts();
-  return Response.json(posts);
-}
-
-export async function POST(request: Request) {
-  const body = await request.json();
-  const post = await createPost(body);
-  return Response.json(post, { status: 201 });
-}
-```
-
-App Routerで効率的なアプリケーションを構築できます。
-MD;
-    }
-
-    private function getAwsLambdaContent(): string
-    {
-        return <<<'MD'
-# AWS Lambda + Node.jsでサーバーレス開発
-
-AWS Lambdaを使ったサーバーレスアプリケーションの開発手法を解説します。
-
-## Lambda関数の基本構造
-
-```javascript
-exports.handler = async (event, context) => {
-    try {
-        const { httpMethod, path, body } = event;
-        
-        switch (httpMethod) {
-            case 'GET':
-                return await handleGet(path);
-            case 'POST':
-                return await handlePost(path, JSON.parse(body));
-            default:
-                return {
-                    statusCode: 405,
-                    body: JSON.stringify({ message: 'Method not allowed' })
-                };
+        try {
+            $user = $this->userService->create($request->validated());
+            return response()->json([
+                'message' => 'ユーザーが正常に作成されました',
+                'user' => new UserResource($user)
+            ], 201);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'ユーザーの作成に失敗しました'
+            ], 500);
         }
-    } catch (error) {
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: error.message })
-        };
     }
-};
+}
 ```
+CODE,
+                    'conclusion' => 'Laravelは豊富な機能と優秀なドキュメントにより、迅速な開発が可能です。フレームワークの機能を適切に活用し、品質の高いWebアプリケーションを構築していきましょう。',
+                ],
+            ],
+        ];
 
-## Serverless Frameworkを使った構成
-
-```yaml
-# serverless.yml
-service: my-api
-
-provider:
-  name: aws
-  runtime: nodejs18.x
-  region: ap-northeast-1
-
-functions:
-  api:
-    handler: index.handler
-    events:
-      - http:
-          path: /{proxy+}
-          method: ANY
-          cors: true
-
-plugins:
-  - serverless-offline
-```
-
-効率的なサーバーレス開発が可能です。
-MD;
+        return $templates[$tag] ?? $templates['JavaScript'];
     }
 
-    private function getVueCompositionContent(): string
+    /**
+     * プレビューコンテンツを生成
+     */
+    private function generatePreviewContent(string $content): string
     {
-        return <<<'MD'
-# Vue.js 3 Composition APIの実践的活用法
+        $words = explode(' ', strip_tags($content));
+        $previewWords = array_slice($words, 0, 100);
 
-Vue.js 3のComposition APIを使った効率的なコンポーネント設計について解説します。
-
-## setup関数の基本
-
-```vue
-<template>
-  <div>
-    <h1>{{ title }}</h1>
-    <p>カウント: {{ count }}</p>
-    <button @click="increment">増加</button>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed } from 'vue';
-
-const count = ref(0);
-const title = computed(() => `カウンター: ${count.value}`);
-
-const increment = () => {
-  count.value++;
-};
-</script>
-```
-
-## Composablesの作成
-
-```typescript
-// composables/useCounter.ts
-import { ref, computed } from 'vue';
-
-export function useCounter(initialValue = 0) {
-  const count = ref(initialValue);
-  
-  const doubleCount = computed(() => count.value * 2);
-  
-  const increment = () => {
-    count.value++;
-  };
-  
-  const decrement = () => {
-    count.value--;
-  };
-  
-  const reset = () => {
-    count.value = initialValue;
-  };
-  
-  return {
-    count,
-    doubleCount,
-    increment,
-    decrement,
-    reset
-  };
-}
-```
-
-再利用可能なロジックを効率的に管理できます。
-MD;
+        return implode(' ', $previewWords).'...';
     }
 
-    private function getDjangoContent(): string
+    /**
+     * 統計情報を表示
+     */
+    private function showStatistics(): void
     {
-        return <<<'MD'
-# Python Django REST APIの設計パターン
+        $totalArticles = Article::count();
+        $paidArticles = Article::where('is_paid', true)->count();
+        $draftArticles = Article::where('status', 'draft')->count();
+        $publishedArticles = Article::where('status', 'published')->count();
 
-Django REST frameworkを使った高品質なAPIの設計パターンを解説します。
+        $this->command->info('=== 記事統計 ===');
+        $this->command->info("総記事数: {$totalArticles}");
+        $this->command->info("有料記事: {$paidArticles}");
+        $this->command->info('無料記事: '.($totalArticles - $paidArticles));
+        $this->command->info("下書き: {$draftArticles}");
+        $this->command->info("公開済み: {$publishedArticles}");
 
-## シリアライザーの設計
+        if ($paidArticles > 0) {
+            $avgPrice = Article::where('is_paid', true)->avg('price');
+            $this->command->info('平均価格: '.number_format($avgPrice, 0).'円');
+        }
 
-```python
-from rest_framework import serializers
-from .models import Post, Comment
+        // 年別統計
+        $yearlyStats = Article::selectRaw('YEAR(created_at) as year, COUNT(*) as count')
+            ->groupBy('year')
+            ->orderBy('year')
+            ->get();
 
-class CommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ['id', 'content', 'created_at', 'author']
-        read_only_fields = ['id', 'created_at', 'author']
-
-class PostSerializer(serializers.ModelSerializer):
-    comments = CommentSerializer(many=True, read_only=True)
-    author_name = serializers.CharField(source='author.username', read_only=True)
-    
-    class Meta:
-        model = Post
-        fields = ['id', 'title', 'content', 'created_at', 'author', 'author_name', 'comments']
-        read_only_fields = ['id', 'created_at', 'author']
-```
-
-## ViewSetの実装
-
-```python
-from rest_framework import viewsets, permissions, filters
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
-
-class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['category', 'status']
-    search_fields = ['title', 'content']
-    
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-    
-    @action(detail=True, methods=['post'])
-    def like(self, request, pk=None):
-        post = self.get_object()
-        # いいね処理
-        return Response({'status': 'liked'})
-```
-
-効率的なAPI設計が可能です。
-MD;
-    }
-
-    private function getGoMicroservicesContent(): string
-    {
-        return <<<'MD'
-# Go言語でのマイクロサービス設計
-
-Go言語を使ったマイクロサービスアーキテクチャの設計と実装について解説します。
-
-## サービス構造の設計
-
-```go
-package main
-
-import (
-    "context"
-    "log"
-    "net/http"
-    "time"
-    
-    "github.com/gin-gonic/gin"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
-)
-
-type UserService struct {
-    db *mongo.Database
-}
-
-type User struct {
-    ID       string    `json:"id" bson:"_id"`
-    Name     string    `json:"name" bson:"name"`
-    Email    string    `json:"email" bson:"email"`
-    Created  time.Time `json:"created" bson:"created"`
-}
-
-func (s *UserService) CreateUser(c *gin.Context) {
-    var user User
-    if err := c.ShouldBindJSON(&user); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
-    
-    user.Created = time.Now()
-    collection := s.db.Collection("users")
-    
-    result, err := collection.InsertOne(context.TODO(), user)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
-    
-    c.JSON(http.StatusCreated, gin.H{"id": result.InsertedID})
-}
-```
-
-## Docker化
-
-```dockerfile
-FROM golang:1.21-alpine AS builder
-
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
-RUN go build -o main .
-
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
-WORKDIR /root/
-
-COPY --from=builder /app/main .
-CMD ["./main"]
-```
-
-スケーラブルなマイクロサービスを構築できます。
-MD;
-    }
-
-    private function getMySQLContent(): string
-    {
-        return <<<'MD'
-# MySQL パフォーマンスチューニング入門
-
-MySQLデータベースのパフォーマンス最適化の基本的な手法を解説します。
-
-## インデックスの最適化
-
-```sql
--- 複合インデックスの作成
-CREATE INDEX idx_user_status_created 
-ON users (status, created_at);
-
--- クエリの最適化
-EXPLAIN SELECT * FROM users 
-WHERE status = 'active' 
-  AND created_at >= '2023-01-01'
-ORDER BY created_at DESC;
-```
-
-## クエリの最適化
-
-```sql
--- 悪い例
-SELECT * FROM orders o
-JOIN users u ON o.user_id = u.id
-WHERE u.email LIKE '%@example.com';
-
--- 良い例
-SELECT o.id, o.total, u.name
-FROM orders o
-JOIN users u ON o.user_id = u.id
-WHERE u.email_domain = 'example.com'
-  AND o.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY);
-```
-
-## 設定の最適化
-
-```ini
-# my.cnf
-[mysqld]
-innodb_buffer_pool_size = 2G
-innodb_log_file_size = 256M
-query_cache_size = 64M
-tmp_table_size = 64M
-max_heap_table_size = 64M
-```
-
-効率的なデータベース運用が可能です。
-MD;
-    }
-
-    private function getReactNativeContent(): string
-    {
-        return <<<'MD'
-# React Native + Expo開発環境の構築
-
-React NativeとExpoを使ったモバイルアプリ開発環境の構築方法を解説します。
-
-## プロジェクトの初期化
-
-```bash
-npx create-expo-app MyApp --template
-cd MyApp
-npm start
-```
-
-## 基本的なコンポーネント
-
-```tsx
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-} from 'react-native';
-
-export default function App() {
-  const [text, setText] = useState('');
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Hello React Native!</Text>
-        
-        <TextInput
-          style={styles.input}
-          value={text}
-          onChangeText={setText}
-          placeholder="テキストを入力"
-        />
-        
-        <TouchableOpacity 
-          style={styles.button}
-          onPress={() => alert(`入力: ${text}`)}
-        >
-          <Text style={styles.buttonText}>送信</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-});
-```
-
-効率的なモバイルアプリ開発が可能です。
-MD;
-    }
-
-    private function getGraphQLContent(): string
-    {
-        return <<<'MD'
-# GraphQL APIの設計と実装パターン
-
-GraphQLを使った効率的なAPI設計と実装のベストプラクティスを紹介します。
-
-## スキーマ定義
-
-```graphql
-type User {
-  id: ID!
-  name: String!
-  email: String!
-  posts: [Post!]!
-  createdAt: DateTime!
-}
-
-type Post {
-  id: ID!
-  title: String!
-  content: String!
-  author: User!
-  comments: [Comment!]!
-  publishedAt: DateTime
-}
-
-type Comment {
-  id: ID!
-  content: String!
-  author: User!
-  post: Post!
-  createdAt: DateTime!
-}
-
-type Query {
-  users(limit: Int, offset: Int): [User!]!
-  user(id: ID!): User
-  posts(authorId: ID, published: Boolean): [Post!]!
-  post(id: ID!): Post
-}
-
-type Mutation {
-  createUser(input: CreateUserInput!): User!
-  updateUser(id: ID!, input: UpdateUserInput!): User!
-  createPost(input: CreatePostInput!): Post!
-  deletePost(id: ID!): Boolean!
-}
-
-input CreateUserInput {
-  name: String!
-  email: String!
-}
-
-input UpdateUserInput {
-  name: String
-  email: String
-}
-
-input CreatePostInput {
-  title: String!
-  content: String!
-  authorId: ID!
-}
-```
-
-## Resolverの実装
-
-```typescript
-import { IResolvers } from '@graphql-tools/utils';
-
-export const resolvers: IResolvers = {
-  Query: {
-    users: async (_, { limit = 10, offset = 0 }) => {
-      return await User.findAll({
-        limit,
-        offset,
-        order: [['createdAt', 'DESC']],
-      });
-    },
-    
-    user: async (_, { id }) => {
-      return await User.findByPk(id);
-    },
-    
-    posts: async (_, { authorId, published }) => {
-      const where: any = {};
-      if (authorId) where.authorId = authorId;
-      if (published !== undefined) where.publishedAt = published ? { [Op.ne]: null } : null;
-      
-      return await Post.findAll({ where });
-    },
-  },
-  
-  Mutation: {
-    createUser: async (_, { input }) => {
-      return await User.create(input);
-    },
-    
-    createPost: async (_, { input }) => {
-      return await Post.create(input);
-    },
-  },
-  
-  User: {
-    posts: async (user) => {
-      return await Post.findAll({
-        where: { authorId: user.id },
-      });
-    },
-  },
-  
-  Post: {
-    author: async (post) => {
-      return await User.findByPk(post.authorId);
-    },
-    
-    comments: async (post) => {
-      return await Comment.findAll({
-        where: { postId: post.id },
-      });
-    },
-  },
-};
-```
-
-効率的なGraphQL APIを構築できます。
-MD;
+        $this->command->info('=== 年別統計 ===');
+        foreach ($yearlyStats as $stat) {
+            $this->command->info("{$stat->year}年: {$stat->count}記事");
+        }
     }
 }

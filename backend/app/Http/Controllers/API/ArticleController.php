@@ -55,24 +55,20 @@ class ArticleController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'thumbnail_url' => 'nullable|url',
             'status' => 'in:draft,published',
             'is_paid' => 'boolean',
             'price' => 'nullable|numeric|min:0',
             'preview_content' => 'nullable|string',
-            'is_featured' => 'boolean',
         ]);
 
         $article = Article::create([
             'user_id' => Auth::id(),
             'title' => $request->title,
             'content' => $request->content,
-            'thumbnail_url' => $request->thumbnail_url,
             'status' => $request->status ?? 'draft',
             'is_paid' => $request->is_paid ?? false,
             'price' => $request->price,
             'preview_content' => $request->preview_content,
-            'is_featured' => $request->is_featured ?? false,
         ]);
 
         return response()->json([
@@ -169,23 +165,19 @@ class ArticleController extends Controller
         $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'content' => 'sometimes|required|string',
-            'thumbnail_url' => 'nullable|url',
             'status' => 'in:draft,published',
             'is_paid' => 'boolean',
             'price' => 'nullable|numeric|min:0',
             'preview_content' => 'nullable|string',
-            'is_featured' => 'boolean',
         ]);
 
         $article->update($request->only([
             'title',
             'content',
-            'thumbnail_url',
             'status',
             'is_paid',
             'price',
             'preview_content',
-            'is_featured',
         ]));
 
         return response()->json([
