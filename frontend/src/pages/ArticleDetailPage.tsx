@@ -12,6 +12,7 @@ import Alert from "../components/Alert";
 import { paymentApi } from "../api/payment";
 import type { PaymentData } from "../api/payment";
 import type { Article } from "../types/article";
+import { getBadgeClass } from "../constants/badgeStyles";
 
 // PrismJS core - 必ず最初にインポート
 import Prism from "prismjs";
@@ -472,7 +473,7 @@ export const ArticleDetailPage: React.FC = () => {
                     {/* 自分の記事の場合はアイコンを表示 */}
                     {user && user.id === article.user_id && (
                       <span
-                        className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                        className={`ml-2 ${getBadgeClass("metrics", "owner")}`}
                         title="あなたの記事"
                       >
                         ✏️ 投稿者

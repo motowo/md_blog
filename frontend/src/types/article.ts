@@ -1,3 +1,6 @@
+import type { User } from "./auth";
+import type { Tag } from "./tag";
+
 export interface Article {
   id: number;
   user_id: number;
@@ -14,25 +17,6 @@ export interface Article {
   // リレーション
   user?: User;
   tags?: Tag[];
-}
-
-export interface User {
-  id: number;
-  email: string;
-  username: string;
-  role: "author" | "admin";
-  profile_image_url?: string;
-  bio?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Tag {
-  id: number;
-  name: string;
-  slug: string;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface ArticlesResponse {

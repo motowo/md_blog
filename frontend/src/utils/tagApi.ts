@@ -1,45 +1,58 @@
 import apiClient from "./api";
-import type { Tag } from "../types/tag";
+import type { Tag, TagCreateRequest, TagUpdateRequest } from "../types/tag";
+import { ServiceBase, type DeleteResponse } from "./serviceBase";
 
-export class TagService {
+export class TagService extends ServiceBase {
   // タグ一覧取得
   static async getTags(): Promise<Tag[]> {
-    const response = await apiClient.get<{ data?: Tag[] } | Tag[]>("/tags");
-    // Laravel API の場合、data フィールドでラップされている場合がある
-    if (
-      response.data &&
-      typeof response.data === "object" &&
-      "data" in response.data
-    ) {
-      return response.data.data || [];
+    try {
+      const response = await apiClient.get<{ data?: Tag[] } | Tag[]>("/tags");
+      return this.extractData(response) || [];
+    } catch (error) {
+      throw this.handleError(error);
     }
-    // 直接配列が返される場合
-    return Array.isArray(response.data) ? response.data : [];
   }
 
   // タグ詳細取得
   static async getTag(id: number): Promise<Tag> {
-    const response = await apiClient.get<Tag>(`/tags/${id}`);
-    return response.data;
+    try {
+      const response = await apiClient.get<Tag | { data: Tag }>(`/tags/${id}`);
+      return this.extractData(response);
+    } catch (error) {
+      throw this.handleError(error);
+    }
   }
 
   // タグ作成（管理者のみ）
-  static async createTag(data: { name: string; slug: string }): Promise<Tag> {
-    const response = await apiClient.post<Tag>("/tags", data);
-    return response.data;
+  static async createTag(data: TagCreateRequest): Promise<Tag> {
+    try {
+      const response = await apiClient.post<Tag | { data: Tag }>("/tags", data);
+      return this.extractData(response);
+    } catch (error) {
+      throw this.handleError(error);
+    }
   }
 
   // タグ更新（管理者のみ）
-  static async updateTag(
-    id: number,
-    data: { name: string; slug: string },
-  ): Promise<Tag> {
-    const response = await apiClient.put<Tag>(`/tags/${id}`, data);
-    return response.data;
+  static async updateTag(id: number, data: TagUpdateRequest): Promise<Tag> {
+    try {
+      const response = await apiClient.put<Tag | { data: Tag }>(
+        `/tags/${id}`,
+        data,
+      );
+      return this.extractData(response);
+    } catch (error) {
+      throw this.handleError(error);
+    }
   }
 
   // タグ削除（管理者のみ）
-  static async deleteTag(id: number): Promise<void> {
-    await apiClient.delete(`/tags/${id}`);
+  static async deleteTag(id: number): Promise<DeleteResponse> {
+    try {
+      const response = await apiClient.delete<DeleteResponse>(`/tags/${id}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
   }
 }
