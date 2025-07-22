@@ -9,6 +9,7 @@ import {
   type AdminArticle,
   type ArticlesResponse,
 } from "../utils/adminApi";
+import { getBadgeClass } from "../constants/badgeStyles";
 
 const AdminArticles: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -90,17 +91,6 @@ const AdminArticles: React.FC = () => {
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    return status === "published"
-      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
-  };
-
-  const getPriceBadgeColor = (isPaid: boolean) => {
-    return isPaid
-      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-      : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-  };
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ja-JP");
@@ -225,21 +215,21 @@ const AdminArticles: React.FC = () => {
                         {/* ステータスと価格のバッジ */}
                         <div className="flex items-center gap-2 mb-3">
                           <span
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(article.status)}`}
+                            className={getBadgeClass("articleStatus", article.status === "published" ? "published" : "draft")}
                           >
                             {article.status === "published"
                               ? "公開中"
                               : "下書き"}
                           </span>
                           <span
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriceBadgeColor(article.is_paid)}`}
+                            className={getBadgeClass("priceType", article.is_paid ? "paid" : "free")}
                           >
                             {article.is_paid
                               ? `有料 ${formatCurrency(article.price || 0)}`
                               : "無料"}
                           </span>
                           {article.payments_count > 0 && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            <span className={getBadgeClass("metrics", "count")}>
                               購入数: {article.payments_count}
                             </span>
                           )}

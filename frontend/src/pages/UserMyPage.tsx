@@ -16,6 +16,7 @@ import ActivityHeatmap from "../components/ActivityHeatmap";
 import AvatarUpload from "../components/AvatarUpload";
 import type { Article } from "../types/article";
 import type { ApiError } from "../types/auth";
+import { getBadgeClass } from "../constants/badgeStyles";
 
 const UserMyPage: React.FC = () => {
   const { user, logout, updateUser } = useAuth();
@@ -283,26 +284,15 @@ const UserMyPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      published: {
-        label: "公開",
-        color:
-          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      },
-      draft: {
-        label: "下書き",
-        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
-      },
-      private: {
-        label: "非公開",
-        color:
-          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-      },
+      published: { label: "公開" },
+      draft: { label: "下書き" },
+      private: { label: "非公開" },
     };
     const config =
       statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
     return (
       <span
-        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.color}`}
+        className={getBadgeClass("articleStatus", status as "published" | "draft" | "private")}
       >
         {config.label}
       </span>
@@ -617,13 +607,7 @@ const UserMyPage: React.FC = () => {
                             ¥{purchase.amount.toLocaleString()}
                           </span>
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                              purchase.status === "success"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                : purchase.status === "failed"
-                                  ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                            }`}
+                            className={getBadgeClass("paymentStatus", purchase.status)}
                           >
                             {purchase.status === "success"
                               ? "完了"
@@ -716,7 +700,7 @@ const UserMyPage: React.FC = () => {
                           </h3>
                           {getStatusBadge(article.status)}
                           {article.is_paid && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            <span className={getBadgeClass("priceType", "paid")}>
                               有料: ¥{article.price}
                             </span>
                           )}

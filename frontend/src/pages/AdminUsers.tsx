@@ -10,6 +10,7 @@ import {
   type AdminUser,
   type UsersResponse,
 } from "../utils/adminApi";
+import { getBadgeClass } from "../constants/badgeStyles";
 
 const AdminUsers: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -103,11 +104,6 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  const getRoleBadgeColor = (role: string) => {
-    return role === "admin"
-      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-      : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-  };
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ja-JP");
@@ -260,7 +256,7 @@ const AdminUsers: React.FC = () => {
                         </td>
                         <td className="py-3 px-4">
                           <span
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(targetUser.role)}`}
+                            className={getBadgeClass("userRole", targetUser.role === "admin" ? "admin" : "user")}
                           >
                             {targetUser.role === "admin" ? "管理者" : "投稿者"}
                           </span>

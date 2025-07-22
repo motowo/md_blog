@@ -4,6 +4,7 @@ import { Card, CardBody, CardHeader } from "./ui/Card";
 import { generatePreviewText, generateBlurredText } from "../utils/markdown";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import type { Article } from "../types/article";
+import { getBadgeClass } from "../constants/badgeStyles";
 
 interface ArticleCardProps {
   article: Article;
@@ -60,17 +61,17 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
         <div className="flex items-center space-x-2 mt-2">
           {article.is_paid && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+            <span className={getBadgeClass("priceType", "paid")}>
               ¥{Math.floor(article.price || 0).toLocaleString()}
             </span>
           )}
           {!article.is_paid && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+            <span className={getBadgeClass("priceType", "free")}>
               無料
             </span>
           )}
           {article.status === "draft" && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+            <span className={getBadgeClass("articleStatus", "draft")}>
               下書き
             </span>
           )}

@@ -4,6 +4,7 @@ import { paymentApi, PaymentHistoryItem } from "../api/payment";
 import Button from "../components/ui/Button";
 import { Card, CardBody } from "../components/ui/Card";
 import Alert from "../components/Alert";
+import { getBadgeClass } from "../constants/badgeStyles";
 
 const PaymentHistoryPage: React.FC = () => {
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
@@ -42,28 +43,20 @@ const PaymentHistoryPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "success":
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded-full">
-            成功
-          </span>
-        );
-      case "failed":
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 rounded-full">
-            失敗
-          </span>
-        );
-      case "pending":
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-full">
-            保留
-          </span>
-        );
-      default:
-        return null;
-    }
+    const statusLabels = {
+      success: "成功",
+      failed: "失敗", 
+      pending: "保留",
+    };
+    
+    const label = statusLabels[status as keyof typeof statusLabels];
+    if (!label) return null;
+    
+    return (
+      <span className={getBadgeClass("paymentStatus", status)}>
+        {label}
+      </span>
+    );
   };
 
   if (loading && payments.length === 0) {
