@@ -4,7 +4,8 @@ import type { ApiError } from "../types/auth";
 import { translateApiError } from "./errorMessages";
 
 // API Base URL (環境変数または固定値)
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Axios インスタンスを作成
 export const apiClient = axios.create({
