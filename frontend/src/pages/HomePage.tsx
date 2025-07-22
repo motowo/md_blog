@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import { ArticleCard } from "../components/ArticleCard";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import { ArticleService } from "../utils/articleApi";
+import { paymentApi } from "../api/payment";
 import type { Article } from "../types/article";
 
 const HomePage: React.FC = () => {
@@ -11,6 +12,33 @@ const HomePage: React.FC = () => {
   const [recentArticles, setRecentArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [purchasedArticles, setPurchasedArticles] = useState<Set<number>>(
+    new Set(),
+  );
+
+  // 購入状況を取得する関数
+  const fetchPurchasedArticles = useCallback(async () => {
+    if (!user) {
+      setPurchasedArticles(new Set());
+      return;
+    }
+
+    try {
+      const response = await paymentApi.getPaymentHistory(1);
+      const purchasedIds = response.data
+        .filter((payment) => payment.status === "success")
+        .map((payment) => payment.article_id);
+      setPurchasedArticles(new Set(purchasedIds));
+    } catch (error) {
+      console.warn("Failed to fetch purchase history:", error);
+      setPurchasedArticles(new Set());
+    }
+  }, [user]);
+
+  // 購入成功時の処理
+  const handlePurchaseSuccess = (articleId: number) => {
+    setPurchasedArticles((prev) => new Set(prev).add(articleId));
+  };
 
   // 新着記事を取得
   useEffect(() => {
@@ -20,6 +48,9 @@ const HomePage: React.FC = () => {
         setError(null);
         const articles = await ArticleService.getRecentArticles(3);
         setRecentArticles(articles);
+
+        // 記事取得後に購入状況も取得
+        await fetchPurchasedArticles();
       } catch (err) {
         console.error("Failed to fetch recent articles:", err);
         setError("新着記事の取得に失敗しました");
@@ -29,7 +60,7 @@ const HomePage: React.FC = () => {
     };
 
     fetchRecentArticles();
-  }, []);
+  }, [fetchPurchasedArticles]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -80,17 +111,19 @@ const HomePage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {recentArticles.map((article) => {
-              // 無料記事、自分の記事、管理者は常に購入済みとして扱う
+              // 購入済み判定: 無料記事、投稿者本人、管理者、または実際に購入済みの場合
               const isPurchased =
                 !article.is_paid ||
                 article.user_id === user?.id ||
-                user?.role === "admin";
+                user?.role === "admin" ||
+                purchasedArticles.has(article.id);
 
               return (
                 <ArticleCard
                   key={article.id}
                   article={article}
                   isPurchased={isPurchased}
+                  onPurchaseSuccess={handlePurchaseSuccess}
                 />
               );
             })}

@@ -3,6 +3,7 @@ import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import { AdminService, type DashboardResponse } from "../utils/adminApi";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import { Navigate } from "react-router-dom";
+import { formatCurrency } from "../utils/currency";
 
 const AdminDashboard: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -34,13 +35,6 @@ const AdminDashboard: React.FC = () => {
   if (!isAuthenticated || user?.role !== "admin") {
     return <Navigate to="/" replace />;
   }
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("ja-JP", {
-      style: "currency",
-      currency: "JPY",
-    }).format(amount);
-  };
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ja-JP", {

@@ -5,6 +5,7 @@ import Button from "../components/ui/Button";
 import { Card, CardBody } from "../components/ui/Card";
 import Alert from "../components/Alert";
 import { getBadgeClass } from "../constants/badgeStyles";
+import { formatCurrency } from "../utils/currency";
 
 const PaymentHistoryPage: React.FC = () => {
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
@@ -127,7 +128,7 @@ const PaymentHistoryPage: React.FC = () => {
                     </div>
                     <div className="text-right ml-4">
                       <p className="text-lg font-bold text-gray-900 dark:text-white">
-                        ¥{Math.floor(payment.amount).toLocaleString()}
+                        {formatCurrency(payment.amount)}
                       </p>
                       {payment.status === "success" && (
                         <Link to={`/articles/${payment.article_id}`}>

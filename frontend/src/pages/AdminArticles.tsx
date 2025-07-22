@@ -10,6 +10,7 @@ import {
   type ArticlesResponse,
 } from "../utils/adminApi";
 import { getBadgeClass } from "../constants/badgeStyles";
+import { formatCurrency } from "../utils/currency";
 
 const AdminArticles: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -93,13 +94,6 @@ const AdminArticles: React.FC = () => {
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ja-JP");
-  };
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("ja-JP", {
-      style: "currency",
-      currency: "JPY",
-    }).format(amount);
   };
 
   const truncateText = (text: string, maxLength: number): string => {

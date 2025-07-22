@@ -26,10 +26,11 @@ class PaymentController extends Controller
     {
         $validated = $request->validate([
             'article_id' => ['required', 'exists:articles,id'],
-            'card_number' => ['required', 'string', 'regex:/^\d{16}$/'],
-            'card_name' => ['required', 'string', 'max:255'],
-            'expiry_month' => ['required', 'string', 'regex:/^\d{2}$/'],
-            'expiry_year' => ['required', 'string', 'regex:/^\d{4}$/'],
+            'use_saved_card' => ['sometimes', 'boolean'],
+            'card_number' => ['required_without:use_saved_card', 'string', 'regex:/^\d{16}$/'],
+            'card_name' => ['required_without:use_saved_card', 'string', 'max:255'],
+            'expiry_month' => ['required_without:use_saved_card', 'string', 'regex:/^\d{2}$/'],
+            'expiry_year' => ['required_without:use_saved_card', 'string', 'regex:/^\d{4}$/'],
             'cvv' => ['required', 'string', 'regex:/^\d{3}$/'],
         ]);
 
@@ -60,8 +61,23 @@ class PaymentController extends Controller
             ], 422);
         }
 
+        // 登録済みカードを使用する場合
+        if ($request->input('use_saved_card')) {
+            $creditCard = auth()->user()->creditCard;
+            
+            if (!$creditCard) {
+                return response()->json([
+                    'errors' => ['card' => ['クレジットカードが登録されていません。']],
+                ], 422);
+            }
+            
+            $cardNumber = $creditCard->card_number;
+        } else {
+            $cardNumber = $validated['card_number'];
+        }
+
         // Mock決済処理
-        $cardResult = self::MOCK_CARDS[$validated['card_number']] ?? 'success';
+        $cardResult = self::MOCK_CARDS[$cardNumber] ?? 'success';
         $transactionId = 'MOCK_'.Str::upper(Str::random(16));
 
         DB::beginTransaction();

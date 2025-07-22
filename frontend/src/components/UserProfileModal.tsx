@@ -10,6 +10,7 @@ import ActivityHeatmap from "./ActivityHeatmap";
 import AvatarUpload from "./AvatarUpload";
 import type { Article } from "../types/article";
 import type { User } from "../types/auth";
+import { formatCurrency } from "../utils/currency";
 
 interface UserProfileModalProps {
   user: User;
@@ -165,13 +166,6 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ja-JP");
-  };
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("ja-JP", {
-      style: "currency",
-      currency: "JPY",
-    }).format(amount);
   };
 
   if (!isOpen) return null;

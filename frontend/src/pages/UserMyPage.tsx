@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -14,17 +14,31 @@ import {
 import { paymentApi, type PaymentHistoryItem } from "../api/payment";
 import ActivityHeatmap from "../components/ActivityHeatmap";
 import AvatarUpload from "../components/AvatarUpload";
+import { CreditCardManager } from "../components/CreditCardManager";
 import type { Article } from "../types/article";
 import type { ApiError } from "../types/auth";
 import { getBadgeClass } from "../constants/badgeStyles";
+import { formatCurrency } from "../utils/currency";
 
 const UserMyPage: React.FC = () => {
   const { user, logout, updateUser } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // URLパラメータからタブを取得
+  const tabParam = searchParams.get("tab") as
+    | "profile"
+    | "articles"
+    | "purchases"
+    | "payment"
+    | "settings"
+    | null;
+  const initialTab = tabParam || "profile";
+
   const [activeTab, setActiveTab] = useState<
-    "profile" | "articles" | "purchases" | "settings"
-  >("profile");
+    "profile" | "articles" | "purchases" | "payment" | "settings"
+  >(initialTab);
   const [userArticles, setUserArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +117,13 @@ const UserMyPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // URLパラメータのタブを反映
+  useEffect(() => {
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam, activeTab]);
 
   const handleAvatarUpload = async (file: File, cropData?: CropData) => {
     console.log("🔵 UserMyPage.handleAvatarUpload: Starting", {
@@ -342,6 +363,16 @@ const UserMyPage: React.FC = () => {
             }`}
           >
             購入履歴
+          </button>
+          <button
+            onClick={() => setActiveTab("payment")}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "payment"
+                ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            支払い方法
           </button>
           <button
             onClick={() => setActiveTab("settings")}
@@ -607,7 +638,7 @@ const UserMyPage: React.FC = () => {
                         </p>
                         <div className="flex items-center space-x-2">
                           <span className="text-lg font-semibold text-green-600 dark:text-green-400">
-                            ¥{purchase.amount.toLocaleString()}
+                            {formatCurrency(purchase.amount)}
                           </span>
                           <span
                             className={getBadgeClass(
@@ -709,7 +740,7 @@ const UserMyPage: React.FC = () => {
                             <span
                               className={getBadgeClass("priceType", "paid")}
                             >
-                              有料: ¥{article.price}
+                              有料: {formatCurrency(article.price || 0)}
                             </span>
                           )}
                         </div>
@@ -752,6 +783,13 @@ const UserMyPage: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* 支払い方法タブ */}
+      {activeTab === "payment" && (
+        <div className="space-y-6">
+          <CreditCardManager />
         </div>
       )}
 
