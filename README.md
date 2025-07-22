@@ -5,105 +5,21 @@ ITエンジニアが技術記事を投稿し、有料コンテンツとして販
 
 ## 実装状況（Mock決済システム完了）
 
-### ✅ 完了機能
-- **Docker環境構築**: フロントエンド、バックエンド、データベースのコンテナ化
-- **フロントエンド基盤**: React 19 + TypeScript + Vite + TailwindCSS v4
-- **Laravel基盤**: Laravel 11.x完全初期化、全依存関係設定、日本語ロケール対応
-- **データベース設計**: 7テーブル完全構築（users, articles, tags, article_tags, payments, comments, payouts）
-- **認証システム**: Laravel Sanctum実装、トークンベース認証API完成
-- **API基盤**: 認証関連エンドポイント（登録・ログイン・ログアウト・ユーザー情報取得）
-- **記事CRUD API**: 記事の作成・読取・更新・削除の完全実装、権限制御、バリデーション
-- **タグ管理API**: タグCRUD、記事タグ付け、タグ検索機能、管理者権限制御
-- **CI/CD環境**: GitHub Actions（フロントエンドのみ、PR品質チェック、Dependabot）
-- **フロントエンドUI**: TailwindCSS v4シンプル設計、完全再構築
-  - **ホームページ**: サービス紹介、機能説明、認証状態対応表示
-  - **ログイン画面**: バリデーション付きフォーム、日本語エラーハンドリング、管理者アカウント表示
-  - **ユーザー登録画面**: バリデーション、パスワード確認、日本語エラーメッセージ
-  - **ダークモード**: ライト/ダークモード完全対応、切り替えボタン、localStorage保存
-  - **UIコンポーネント**: Button、Input、Card、Layout（基本コンポーネント）
-  - **レスポンシブ**: 基本的なモバイル対応
-- **認証API連携**: フロントエンド・バックエンド完全連携、トークンベース認証
-  - **APIクライアント**: Axios設定、自動トークン付与、エラーハンドリング
-  - **認証コンテキスト**: React Context API、ローカルストレージ連携
-  - **保護ルート**: 認証・ロールベースアクセス制御
-  - **エラー日本語化**: 全認証・バリデーションエラーの日本語変換
-  - **管理者アカウント**: テスト用管理者（admin@md-blog.local / password123）
-- **記事一覧画面実装**: ページネーション、検索、タグフィルター付き
-  - **ArticleListPage**: React Router連携、URL状態管理
-  - **ArticleCard**: 再利用可能カードコンポーネント、サムネイル・価格表示対応
-  - **記事API連携**: 公開記事取得、レスポンス処理、エラーハンドリング
-  - **UI/UX**: レスポンシブデザイン、ローディング、エラー表示
-- **記事詳細画面実装**: 高機能Markdown表示、有料コンテンツ対応
-  - **ArticleDetailPage**: 記事詳細表示、メタ情報、ナビゲーション
-  - **Markdownレンダリング**: react-markdown、シンタックスハイライト、コピー機能
-  - **PrismJS統合**: 多言語対応（JavaScript, TypeScript, PHP, Python等）、動的ローディング
-  - **表示モード切り替え**: プレビュー・Markdownテキスト表示
-  - **有料記事対応**: プレビュー制限、購入促進UI、投稿者フル表示
-  - **レスポンシブ対応**: ダークモード、モバイルフレンドリー
-  - **投稿者識別**: 自分の記事にアイコン表示、編集ボタン表示
-- **認証統合**: Optional Sanctum認証、投稿者・管理者のフルアクセス制御
-- **ユーザーマイページ機能**: 包括的なアカウント管理システム
-  - **タブ型UI設計**: プロフィール/記事管理/アカウント設定の3タブ構成
-  - **プロフィール管理**: 名前、ユーザー名、メールアドレスの編集機能
-  - **記事管理**: 自分の投稿記事一覧、ステータス表示、編集・表示リンク
-  - **アカウント設定**: パスワード変更、アカウント削除機能
-  - **ナビゲーション統合**: ヘッダーのユーザー名→マイページリンク、ログイン後リダイレクト
-  - **セキュリティ**: パスワード確認、トークン無効化、入力値バリデーション
-- **テストデータ充実**: 現実的な記事・ユーザーデータの自動生成
-  - **改良されたシーダー**: 15記事（有料・無料混在）、過去3ヶ月分散配置
-  - **マークダウンコンテンツ**: 実際のコンテンツファイル自動生成
-  - **価格・ステータス分散**: 300-1500円の価格帯、公開・下書き状態の混在
-- **Mock決済システム**: 有料記事購入機能の完全実装
-  - **決済API実装**: 記事購入、決済履歴取得、Mock決済処理
-  - **テストカード対応**: 成功・失敗・残高不足のシミュレーション
-  - **購入フローUI**: 決済フォーム、モーダル表示、エラーハンドリング
-  - **購入履歴ページ**: 購入済み記事一覧、ステータス表示、ページネーション
-  - **購入済み判定**: 記事詳細での購入状態管理、動的コンテンツ表示
-  - **セキュリティ**: 二重購入防止、権限チェック、バリデーション
-- **高機能Markdownエディタ**: 記事作成・編集での自動保存機能実装
-  - **自動保存機能**: 5秒間隔での自動保存、ローカルストレージバックアップ
-  - **保存状態表示**: 視覚的フィードバック（保存済み・保存中・未保存・エラー状態）
-  - **下書き復元機能**: ページ離脱後の下書き自動復元、差分検出
-  - **エラーハンドリング**: TypeScript完全対応、ESLint品質保証
-- **ユーザープロフィール管理機能**: 充実したプロフィール設定・アバター管理システム
-  - **アバター機能**: 画像アップロード、リアルタイムクロッピング、サーバーサイド画像処理
-  - **プロフィール拡張**: 自己紹介、経歴・キャリア、SNSリンク（X, GitHub）設定
-  - **アクティビティ可視化**: GitHub風ヒートマップによる記事投稿活動表示
-  - **購入履歴管理**: 購入記事の一覧表示、ステータス追跡機能
-  - **公開設定**: プロフィール情報の公開・非公開制御
-- **管理者機能**: 包括的なサイト運営管理システム
-  - **ダッシュボード**: 統計情報、収益データ、月別グラフ表示
-  - **ユーザー管理**: 一覧・詳細表示、アカウント有効化/無効化、アバター表示
-  - **記事管理**: 全記事管理、公開/非公開切り替え、削除機能
-  - **ユーザー参照モーダル**: マイページUIを再利用した読み取り専用詳細表示
-  - **セキュリティ**: 無効化されたユーザーのログイン防止、管理者権限制御
-- **アカウントセキュリティ**: ユーザー状態管理とアクセス制御
-  - **ユーザー無効化**: 管理者による一時的なアカウント停止機能
-  - **ログイン制御**: 無効化されたアカウントのログイン防止
-  - **権限管理**: ロールベースアクセス制御、管理者専用機能分離
-- **コード品質**: ESLint、Prettier、Laravel Pint、全テスト成功（35テスト/200アサーション）
-- **UIコンポーネント統一化**: Badge UI色統一とスタイル標準化
-  - **リファクタリング実装**: TypeScript型定義統一、API呼び出しサービス統一、コード重複削減
-  - **Badge統一デザイン**: 用途別色設計（記事ステータス・価格・決済状況・ユーザーロール）
-  - **視覚的改善**: 有料記事Badge（塗りつぶし）と記事ステータスBadge（境界線）の差別化
-  - **共通スタイル定数**: badgeStyles.ts、alertStyles.tsによる一貫性確保
+詳細な実装状況については [実装状況ドキュメント](docs/implementation.md) をご確認ください。
 
-### 🚧 次期実装予定（MVP機能開発）
+### ✅ 主要完了機能
+- **Docker環境**: フロントエンド、バックエンド、データベースのコンテナ化完了
+- **認証システム**: Laravel Sanctum + React Context による完全な認証基盤
+- **記事管理**: CRUD操作、Markdownエディタ、自動保存機能
+- **決済システム**: Mock決済による有料記事購入フロー
+- **ユーザー管理**: プロフィール、アバター、アクティビティヒートマップ
+- **管理者機能**: ダッシュボード、ユーザー管理、記事管理
+- **UI統一化**: Badge色統一、コンポーネントスタイル標準化
 
-#### 🔥 最高優先度（即座に着手すべき）
-- 高機能Markdownエディタ拡張（リアルタイムプレビュー、シンタックスハイライト、画像アップロード）
-- 記事検索機能強化（キーワード・高度絞り込み、タグ検索）
-
-#### 🚨 高優先度（MVP必須機能）
-- コメント機能完全実装（CRUD、返信、通知）
-- 投稿者ダッシュボード（収益状況確認、売上分析）
-- メール通知システム（購入通知、コメント通知）
-
-#### 📊 中優先度（機能拡張）
-- フォロー機能（投稿者フォロー、新着通知）
-- お気に入り機能（記事ブックマーク）
-- SEO最適化（メタタグ、OGP、サイトマップ）
-- パフォーマンス最適化（キャッシュ、CDN対応）
+### 🚧 次期実装予定
+- **Markdownエディタ拡張**: リアルタイムプレビュー、画像アップロード
+- **検索機能**: キーワード・高度絞り込み、タグ検索
+- **コメント機能**: CRUD操作、返信、通知システム
 
 ## 技術スタック
 - **フロントエンド**: React.js (v19.x), TypeScript (v5.x), TailwindCSS (v4.x), Vite
@@ -206,193 +122,33 @@ php artisan cache:clear
 
 ## API仕様
 
-### 認証API
+詳細なAPI仕様については以下をご確認ください：
+- [技術設計書](docs/design.md) - API仕様の表形式一覧
+- [Swagger仕様書](docs/swagger.yaml) - OpenAPI 3.0形式の完全なAPI仕様
 
-#### ユーザー登録
-```bash
-POST /api/register
-Content-Type: application/json
+### 主要エンドポイント
 
-{
-    "name": "Test User",
-    "username": "testuser",
-    "email": "test@example.com",
-    "password": "password123",
-    "password_confirmation": "password123",
-    "role": "author"
-}
-```
+#### 認証API
+- `POST /api/register` - ユーザー登録
+- `POST /api/login` - ログイン
+- `POST /api/logout` - ログアウト（認証必要）
+- `GET /api/user` - ユーザー情報取得（認証必要）
 
-#### ログイン
-```bash
-POST /api/login
-Content-Type: application/json
+#### 記事管理API
+- `GET /api/articles` - 記事一覧取得
+- `GET /api/articles/{id}` - 記事詳細取得
+- `POST /api/articles` - 記事作成（認証必要）
+- `PUT /api/articles/{id}` - 記事更新（認証必要・作成者のみ）
+- `DELETE /api/articles/{id}` - 記事削除（認証必要・作成者のみ）
 
-{
-    "email": "test@example.com",
-    "password": "password123"
-}
-```
-
-#### ログアウト（認証必要）
-```bash
-POST /api/logout
-Authorization: Bearer {token}
-```
-
-#### ユーザー情報取得（認証必要）
-```bash
-GET /api/user
-Authorization: Bearer {token}
-```
-
-### 記事API
-
-#### 記事一覧取得
-```bash
-GET /api/articles
-```
-
-#### 記事詳細取得
-```bash
-GET /api/articles/{id}
-```
-
-#### 記事作成（認証必要）
-```bash
-POST /api/articles
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-    "title": "記事タイトル",
-    "content": "記事本文",
-    "thumbnail_url": "https://example.com/image.jpg",
-    "status": "draft",
-    "is_paid": false,
-    "price": 1000,
-    "preview_content": "プレビュー内容",
-    "is_featured": false
-}
-```
-
-#### 記事更新（認証必要・作成者のみ）
-```bash
-PUT /api/articles/{id}
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-    "title": "更新後タイトル",
-    "content": "更新後本文",
-    "status": "published"
-}
-```
-
-#### 記事削除（認証必要・作成者のみ）
-```bash
-DELETE /api/articles/{id}
-Authorization: Bearer {token}
-```
-
-#### タグによる記事絞り込み
-```bash
-GET /api/articles?tag={slug}
-```
-
-### タグAPI
-
-#### タグ一覧取得
-```bash
-GET /api/tags
-```
-
-#### タグ詳細取得
-```bash
-GET /api/tags/{id}
-```
-
-#### タグ作成（認証必要・管理者のみ）
-```bash
-POST /api/tags
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-    "name": "Laravel",
-    "slug": "laravel"
-}
-```
-
-#### タグ更新（認証必要・管理者のみ）
-```bash
-PUT /api/tags/{id}
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-    "name": "Laravel Framework",
-    "slug": "laravel-framework"
-}
-```
-
-#### タグ削除（認証必要・管理者のみ）
-```bash
-DELETE /api/tags/{id}
-Authorization: Bearer {token}
-```
-
-#### 記事へのタグ付け（認証必要・記事作成者のみ）
-```bash
-POST /api/articles/{id}/tags
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-    "tag_ids": [1, 2, 3]
-}
-```
-
-#### 記事からのタグ削除（認証必要・記事作成者のみ）
-```bash
-DELETE /api/articles/{id}/tags/{tag_id}
-Authorization: Bearer {token}
-```
-
-### 決済API（Mock）
-
-#### 記事購入（Mock決済）
-```bash
-POST /api/payments
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-    "article_id": 1,
-    "card_number": "4242424242424242",
-    "card_name": "TARO YAMADA",
-    "expiry_month": "12",
-    "expiry_year": "2025",
-    "cvv": "123"
-}
-```
+#### 決済API（Mock）
+- `POST /api/payments` - 記事購入（Mock決済）
+- `GET /api/payments` - 決済履歴取得
 
 **テスト用カード番号:**
 - 成功: `4242424242424242`
 - カード拒否: `4000000000000002`
 - 残高不足: `4000000000009995`
-
-#### 決済履歴取得
-```bash
-GET /api/payments
-Authorization: Bearer {token}
-```
-
-#### 決済履歴取得（ページネーション）
-```bash
-GET /api/payments?page=2
-Authorization: Bearer {token}
-```
 
 ### Docker環境の管理
 
@@ -462,38 +218,3 @@ docker-compose down -v
 7. CI/CDパイプラインで品質確認後マージ
 
 詳細な開発ガイドラインは `CLAUDE.md` を参照してください。
-
-## 最新アップデート（2025-07-22）
-
-### ✨ Badge UI統一化とリファクタリング完了
-今回のアップデートで以下の改善を実装しました：
-
-#### 🎨 Badge UI色統一化
-- **記事ステータスBadge**: 境界線スタイル（白背景+カラー境界線）で実装
-  - 公開: 白背景 + 緑境界線
-  - 下書き: 白背景 + グレー境界線
-  - 非公開: 白背景 + オレンジ境界線
-- **価格タイプBadge**: 塗りつぶしスタイルで有料・無料を区別
-  - 有料記事: emerald系背景色
-  - 無料記事: blue系背景色
-- **決済・ユーザーロールBadge**: 用途別色設計で統一
-
-#### 🔧 コードリファクタリング
-- **TypeScript型定義統一**: 重複していたUser・Tag型を統一
-- **API呼び出しサービス統一**: ServiceBase基底クラスによる統一化
-- **スタイル定数化**: badgeStyles.ts、alertStyles.tsによる一貫性確保
-- **コンポーネント再利用性向上**: AlertとSaveStatusIndicatorの拡張
-
-#### 📊 テストデータ充実
-- 管理者アカウント（admin@md-blog.local / password123）
-- 一般ユーザー10名（各種パスワードは名前から連想可能）
-- 15記事（有料10記事・無料5記事、公開13記事・下書き2記事）
-- 技術タグ15種類（JavaScript、React、Laravel等）
-
-## 次のステップ
-
-現在の実装状況を踏まえ、以下の機能から着手することを推奨します：
-
-1. **高機能Markdownエディタの拡張** - リアルタイムプレビュー強化
-2. **記事検索機能の実装** - キーワード検索・高度絞り込み
-3. **コメント機能の完全実装** - ユーザー間のインタラクション強化

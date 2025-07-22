@@ -3,6 +3,7 @@
 - docs/requirements.md
 - docs/design.md
 - docs/tasks.md
+- docs/implementation.md
 - README.md
 
 ## 次に開発する機能、テーマについて提案
