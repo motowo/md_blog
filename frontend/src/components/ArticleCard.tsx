@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContextDefinition";
 import { PaidArticleAccessModal } from "./PaidArticleAccessModal";
 import type { Article } from "../types/article";
 import { getBadgeClass } from "../constants/badgeStyles";
+import { formatCurrency } from "../utils/currency";
 
 interface ArticleCardProps {
   article: Article;
@@ -71,7 +72,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         <div className="flex items-center space-x-2 mt-2">
           {article.is_paid && (
             <span className={getBadgeClass("priceType", "paid")}>
-              ¥{Math.floor(article.price || 0).toLocaleString()}
+              {formatCurrency(article.price || 0)}
             </span>
           )}
           {!article.is_paid && (

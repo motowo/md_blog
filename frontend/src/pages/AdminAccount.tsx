@@ -15,6 +15,7 @@ import {
 import { ArticleService } from "../utils/articleApi";
 import type { Article } from "../types/article";
 import type { ApiError } from "../types/auth";
+import { formatCurrency } from "../utils/currency";
 
 const AdminAccount: React.FC = () => {
   const { user, isAuthenticated, updateUser } = useAuth();
@@ -188,15 +189,6 @@ const AdminAccount: React.FC = () => {
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ja-JP");
-  };
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("ja-JP", {
-      style: "currency",
-      currency: "JPY",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(Math.floor(amount));
   };
 
   return (

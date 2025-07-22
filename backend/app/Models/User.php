@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -90,6 +91,14 @@ class User extends Authenticatable
     public function activeAvatar()
     {
         return $this->avatarFiles()->active()->latest()->first();
+    }
+
+    /**
+     * Get the credit card for the user.
+     */
+    public function creditCard(): HasOne
+    {
+        return $this->hasOne(CreditCard::class);
     }
 
     /**

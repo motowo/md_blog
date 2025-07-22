@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\ArticleController;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\CreditCardController;
 use App\Http\Controllers\API\TagController;
 use App\Http\Controllers\API\UserController as APIUserController;
 use App\Http\Controllers\PaymentController;
@@ -69,6 +70,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // 決済関連のルート
     Route::post('/payments', [PaymentController::class, 'store']);
     Route::get('/payments', [PaymentController::class, 'index']);
+    
+    // クレジットカード管理
+    Route::get('/credit-card', [CreditCardController::class, 'show']);
+    Route::post('/credit-card', [CreditCardController::class, 'store']);
+    Route::delete('/credit-card', [CreditCardController::class, 'destroy']);
 
     // 管理者専用ルート
     Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function () {

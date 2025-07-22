@@ -7,12 +7,10 @@ import { ArticleService } from "../utils/articleApi";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import Button from "../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
-import PaymentForm from "../components/PaymentForm";
-import Alert from "../components/Alert";
-import { paymentApi } from "../api/payment";
-import type { PaymentData } from "../api/payment";
+import { PaidArticleAccessModal } from "../components/PaidArticleAccessModal";
 import type { Article } from "../types/article";
 import { getBadgeClass } from "../constants/badgeStyles";
+import { formatCurrency } from "../utils/currency";
 
 // PrismJS core - 必ず最初にインポート
 import Prism from "prismjs";
@@ -312,9 +310,8 @@ export const ArticleDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"preview" | "markdown">("preview");
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isPurchased, setIsPurchased] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -361,29 +358,6 @@ export const ArticleDetailPage: React.FC = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-
-  const handlePurchase = async (paymentData: PaymentData) => {
-    setPaymentError(null);
-    try {
-      await paymentApi.purchaseArticle(paymentData);
-      // 購入成功後、ページをリロードして最新の状態を取得
-      window.location.reload();
-    } catch (error: unknown) {
-      if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as {
-          response?: { data?: { message?: string } };
-        };
-        if (axiosError.response?.data?.message) {
-          setPaymentError(axiosError.response.data.message);
-        } else {
-          setPaymentError("決済処理中にエラーが発生しました");
-        }
-      } else {
-        setPaymentError("決済処理中にエラーが発生しました");
-      }
-      throw error;
-    }
   };
 
   if (loading) {
@@ -500,7 +474,7 @@ export const ArticleDetailPage: React.FC = () => {
               <div className="flex items-center space-x-2">
                 {article.is_paid ? (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    ¥{Math.floor(article.price || 0).toLocaleString()}
+                    {formatCurrency(article.price || 0)}
                   </span>
                 ) : (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -551,7 +525,7 @@ export const ArticleDetailPage: React.FC = () => {
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-yellow-800 dark:text-yellow-200">
-                    ¥{Math.floor(article.price || 0).toLocaleString()}
+                    {formatCurrency(article.price || 0)}
                   </span>
                   <Button
                     variant="primary"
@@ -559,7 +533,7 @@ export const ArticleDetailPage: React.FC = () => {
                       if (!user) {
                         navigate("/login");
                       } else {
-                        setShowPaymentForm(true);
+                        setShowPaymentModal(true);
                       }
                     }}
                   >
@@ -770,11 +744,11 @@ export const ArticleDetailPage: React.FC = () => {
                       if (!user) {
                         navigate("/login");
                       } else {
-                        setShowPaymentForm(true);
+                        setShowPaymentModal(true);
                       }
                     }}
                   >
-                    ¥{Math.floor(article.price || 0).toLocaleString()}で購入する
+                    {formatCurrency(article.price || 0)}で購入する
                   </Button>
                 </div>
               </div>
@@ -792,34 +766,17 @@ export const ArticleDetailPage: React.FC = () => {
         </div>
       </article>
 
-      {/* 決済フォームモーダル */}
-      {showPaymentForm && article && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-                記事を購入
-              </h2>
-
-              {paymentError && (
-                <Alert variant="error" className="mb-4">
-                  {paymentError}
-                </Alert>
-              )}
-
-              <PaymentForm
-                articleId={article.id}
-                price={article.price || 0}
-                onSubmit={handlePurchase}
-                onCancel={() => {
-                  setShowPaymentForm(false);
-                  setPaymentError(null);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 決済モーダル */}
+      <PaidArticleAccessModal
+        article={article}
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onPurchaseSuccess={() => {
+          setShowPaymentModal(false);
+          setIsPurchased(true);
+        }}
+        isLoggedIn={!!user}
+      />
     </div>
   );
 };
