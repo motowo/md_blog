@@ -11,11 +11,11 @@ export const badgeStyles = {
     lg: "px-3 py-1.5 text-sm",
   },
 
-  // 記事ステータス用の色設定
+  // 記事ステータス用の色設定（境界線スタイル）
   articleStatus: {
-    published: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    draft: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200", 
-    private: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+    published: "bg-white dark:bg-gray-800 text-green-700 dark:text-green-300 border-2 border-green-500 dark:border-green-400",
+    draft: "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-gray-400 dark:border-gray-500", 
+    private: "bg-white dark:bg-gray-800 text-orange-700 dark:text-orange-300 border-2 border-orange-500 dark:border-orange-400",
   },
 
   // 価格タイプ用の色設定
