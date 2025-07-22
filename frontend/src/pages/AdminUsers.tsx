@@ -11,6 +11,7 @@ import {
   type UsersResponse,
 } from "../utils/adminApi";
 import { getBadgeClass } from "../constants/badgeStyles";
+import { API_BASE_URL } from "../utils/api";
 
 const AdminUsers: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -194,7 +195,7 @@ const AdminUsers: React.FC = () => {
                         ユーザー
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
-                        ロール
+                        ロール・状態
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
                         記事数
@@ -217,14 +218,18 @@ const AdminUsers: React.FC = () => {
                     {users.map((targetUser) => (
                       <tr
                         key={targetUser.id}
-                        className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                          !targetUser.is_active
+                            ? "opacity-60 bg-gray-50 dark:bg-gray-800"
+                            : ""
+                        }`}
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center space-x-3">
                             <div className="flex-shrink-0">
                               {targetUser.avatar_path ? (
                                 <img
-                                  src={`http://localhost:8000${targetUser.avatar_path}`}
+                                  src={`${API_BASE_URL}${targetUser.avatar_path}`}
                                   alt={targetUser.username}
                                   className="h-10 w-10 rounded-full object-cover"
                                 />
@@ -254,14 +259,30 @@ const AdminUsers: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span
-                            className={getBadgeClass(
-                              "userRole",
-                              targetUser.role === "admin" ? "admin" : "user",
-                            )}
-                          >
-                            {targetUser.role === "admin" ? "管理者" : "投稿者"}
-                          </span>
+                          <div className="flex flex-col space-y-1">
+                            <span
+                              className={getBadgeClass(
+                                "userRole",
+                                targetUser.role === "admin" ? "admin" : "user",
+                              )}
+                            >
+                              {targetUser.role === "admin"
+                                ? "管理者"
+                                : "投稿者"}
+                            </span>
+                            <div className="flex items-center space-x-1">
+                              <div
+                                className={`w-2 h-2 rounded-full ${
+                                  targetUser.is_active
+                                    ? "bg-green-400"
+                                    : "bg-red-400"
+                                }`}
+                              />
+                              <span className="text-xs text-gray-600 dark:text-gray-400">
+                                {targetUser.is_active ? "有効" : "無効"}
+                              </span>
+                            </div>
+                          </div>
                         </td>
                         <td className="py-3 px-4 text-gray-900 dark:text-white">
                           {targetUser.articles_count}
@@ -278,7 +299,7 @@ const AdminUsers: React.FC = () => {
                           {formatDate(targetUser.created_at)}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-col sm:flex-row gap-1">
                             <Button
                               size="sm"
                               variant="outline"

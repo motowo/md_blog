@@ -11,6 +11,7 @@ import {
 } from "../utils/adminApi";
 import { getBadgeClass } from "../constants/badgeStyles";
 import { formatCurrency } from "../utils/currency";
+import { API_BASE_URL } from "../utils/api";
 
 const AdminArticles: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -238,9 +239,30 @@ const AdminArticles: React.FC = () => {
 
                         {/* 作者と日付 */}
                         <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <span>
-                            作者: {article.user.name || article.user.username}
-                          </span>
+                          <div className="flex items-center space-x-2">
+                            <div className="flex-shrink-0">
+                              {article.user.avatar_path ? (
+                                <img
+                                  src={`${API_BASE_URL}${article.user.avatar_path}`}
+                                  alt={article.user.username}
+                                  className="h-6 w-6 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                  <svg
+                                    className="h-3 w-3 text-gray-500 dark:text-gray-400"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            <span>
+                              作者: {article.user.name || article.user.username}
+                            </span>
+                          </div>
                           <span>投稿日: {formatDate(article.created_at)}</span>
                           {article.updated_at !== article.created_at && (
                             <span>
@@ -270,7 +292,7 @@ const AdminArticles: React.FC = () => {
                       </div>
 
                       {/* 操作ボタン */}
-                      <div className="flex flex-col gap-2 ml-4">
+                      <div className="flex flex-col sm:flex-row sm:flex-col gap-2 ml-4 min-w-fit">
                         <Button
                           size="sm"
                           variant="outline"
