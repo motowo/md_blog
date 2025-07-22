@@ -12,11 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // bio, avatar_path, profile_image_url are already exist
-            $table->text('career_description')->nullable();
-            $table->string('twitter_url')->nullable();
-            $table->string('github_url')->nullable();
-            $table->boolean('profile_public')->default(true);
+            $table->boolean('is_active')->default(true)->after('profile_public');
         });
     }
 
@@ -26,12 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn([
-                'career_description',
-                'twitter_url',
-                'github_url',
-                'profile_public',
-            ]);
+            $table->dropColumn('is_active');
         });
     }
 };

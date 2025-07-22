@@ -73,6 +73,15 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
+
+        // ユーザーが無効化されているかチェック
+        if (! $user->is_active) {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => ['このアカウントは無効化されています。管理者にお問い合わせください。'],
+            ]);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

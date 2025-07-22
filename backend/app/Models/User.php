@@ -32,6 +32,7 @@ class User extends Authenticatable
         'x_url',
         'github_url',
         'profile_public',
+        'is_active',
     ];
 
     /**
@@ -55,6 +56,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'profile_public' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 

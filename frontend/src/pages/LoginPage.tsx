@@ -64,8 +64,13 @@ const LoginPage: React.FC = () => {
     setGeneralError("");
 
     try {
-      await login(formData);
-      navigate("/mypage"); // ログイン成功後はマイページへ
+      const loginUser = await login(formData);
+      // ユーザーの役割に応じてリダイレクト先を変更
+      if (loginUser.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/mypage");
+      }
     } catch (error) {
       console.error("Login failed:", error);
       const apiError = error as ApiError;
@@ -146,8 +151,21 @@ const LoginPage: React.FC = () => {
               />
 
               {generalError && (
-                <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
-                  {generalError}
+                <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-md border border-red-200 dark:border-red-800">
+                  <div className="flex items-start">
+                    <svg
+                      className="w-4 h-4 mt-0.5 mr-2 flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>{generalError}</span>
+                  </div>
                 </div>
               )}
 
