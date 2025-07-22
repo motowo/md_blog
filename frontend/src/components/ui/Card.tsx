@@ -1,11 +1,12 @@
 import React from "react";
+import { cardStyles } from "../../constants/styles";
 
 type CardProps = React.HTMLAttributes<HTMLDivElement>;
 
 const Card: React.FC<CardProps> = ({ children, className = "", ...props }) => {
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm ${className}`}
+      className={`${cardStyles.base} ${className}`}
       {...props}
     >
       {children}
@@ -22,7 +23,7 @@ const CardHeader: React.FC<CardHeaderProps> = ({
 }) => {
   return (
     <div
-      className={`px-6 py-4 border-b border-gray-200 dark:border-gray-700 ${className}`}
+      className={`${cardStyles.header} ${className}`}
       {...props}
     >
       {children}
@@ -38,7 +39,7 @@ const CardBody: React.FC<CardBodyProps> = ({
   ...props
 }) => {
   return (
-    <div className={`px-6 py-4 ${className}`} {...props}>
+    <div className={`${cardStyles.body} ${className}`} {...props}>
       {children}
     </div>
   );
@@ -53,7 +54,7 @@ const CardFooter: React.FC<CardFooterProps> = ({
 }) => {
   return (
     <div
-      className={`px-6 py-4 border-t border-gray-200 dark:border-gray-700 ${className}`}
+      className={`${cardStyles.footer} ${className}`}
       {...props}
     >
       {children}
