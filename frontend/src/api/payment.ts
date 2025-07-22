@@ -54,4 +54,31 @@ export const paymentApi = {
     }>(`/payments?page=${page}`);
     return response.data;
   },
+
+  /**
+   * 記事の購入状況を確認する
+   */
+  checkPurchaseStatus: async (articleId: number) => {
+    try {
+      const response = await apiClient.get<{
+        data: PaymentHistoryItem[];
+        meta: {
+          current_page: number;
+          last_page: number;
+          per_page: number;
+          total: number;
+        };
+      }>("/payments");
+
+      const purchasedArticle = response.data.data.find(
+        (payment) =>
+          payment.article_id === articleId && payment.status === "success",
+      );
+
+      return !!purchasedArticle;
+    } catch {
+      // 認証エラーやその他のエラーの場合は未購入とみなす
+      return false;
+    }
+  },
 };

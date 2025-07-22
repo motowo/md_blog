@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { generatePreviewText, generateBlurredText } from "../utils/markdown";
 import { useAuth } from "../contexts/AuthContextDefinition";
+import { PaidArticleAccessModal } from "./PaidArticleAccessModal";
 import type { Article } from "../types/article";
 import { getBadgeClass } from "../constants/badgeStyles";
 
@@ -10,14 +11,18 @@ interface ArticleCardProps {
   article: Article;
   showAuthor?: boolean;
   isPurchased?: boolean;
+  onPurchaseSuccess?: (articleId: number) => void;
 }
 
 export const ArticleCard: React.FC<ArticleCardProps> = ({
   article,
   showAuthor = true,
   isPurchased = false,
+  onPurchaseSuccess,
 }) => {
   const { user } = useAuth();
+  const [showModal, setShowModal] = useState(false);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ja-JP", {
       year: "numeric",
@@ -40,13 +45,17 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       ? generateBlurredText(previewText)
       : previewText;
 
-  // 未購入の有料記事の場合はリンクを無効化
-  const canNavigate = !article.is_paid || isPurchased;
+  // 投稿者本人または管理者かチェック
+  const isOwnerOrAdmin =
+    user && (user.id === article.user_id || user.role === "admin");
+
+  // ナビゲーション可能かチェック
+  const canNavigate = !article.is_paid || isPurchased || isOwnerOrAdmin;
+
   const handleClick = (e: React.MouseEvent) => {
     if (!canNavigate) {
       e.preventDefault();
-      // TODO: 購入モーダルを表示するか、購入ページに遷移
-      alert("この記事は有料です。購入してからお読みください。");
+      setShowModal(true);
     }
   };
 
@@ -162,20 +171,38 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   );
 
   return (
-    <Card
-      className={`h-full transition-transform hover:scale-105 hover:shadow-lg ${
-        !canNavigate ? "cursor-default" : "cursor-pointer"
-      }`}
-    >
-      {canNavigate ? (
-        <Link to={`/articles/${article.id}`} className="block h-full">
-          {cardContent}
-        </Link>
-      ) : (
-        <div className="block h-full" onClick={handleClick}>
-          {cardContent}
-        </div>
-      )}
-    </Card>
+    <>
+      <Card
+        className={`h-full transition-transform hover:scale-105 hover:shadow-lg ${
+          !canNavigate ? "cursor-pointer" : "cursor-pointer"
+        }`}
+      >
+        {canNavigate ? (
+          <Link to={`/articles/${article.id}`} className="block h-full">
+            {cardContent}
+          </Link>
+        ) : (
+          <div className="block h-full" onClick={handleClick}>
+            {cardContent}
+          </div>
+        )}
+      </Card>
+
+      {/* 有料記事アクセスモーダル */}
+      <PaidArticleAccessModal
+        article={article}
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+        }}
+        onPurchaseSuccess={() => {
+          setShowModal(false);
+          if (onPurchaseSuccess) {
+            onPurchaseSuccess(article.id);
+          }
+        }}
+        isLoggedIn={!!user}
+      />
+    </>
   );
 };

@@ -4,6 +4,7 @@ import { ArticleCard } from "../components/ArticleCard";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { ArticleService } from "../utils/articleApi";
+import { paymentApi } from "../api/payment";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import type { Article, ArticlesResponse } from "../types/article";
 
@@ -13,6 +14,9 @@ export const ArticleListPage: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [purchasedArticles, setPurchasedArticles] = useState<Set<number>>(
+    new Set(),
+  );
   const [pagination, setPagination] = useState({
     current_page: 1,
     last_page: 1,
@@ -25,6 +29,25 @@ export const ArticleListPage: React.FC = () => {
     searchParams.get("search") || "",
   );
   const [selectedTag, setSelectedTag] = useState(searchParams.get("tag") || "");
+
+  // 購入状況を取得する関数
+  const fetchPurchasedArticles = useCallback(async () => {
+    if (!user) {
+      setPurchasedArticles(new Set());
+      return;
+    }
+
+    try {
+      const response = await paymentApi.getPaymentHistory(1);
+      const purchasedIds = response.data
+        .filter((payment) => payment.status === "success")
+        .map((payment) => payment.article_id);
+      setPurchasedArticles(new Set(purchasedIds));
+    } catch (error) {
+      console.warn("Failed to fetch purchase history:", error);
+      setPurchasedArticles(new Set());
+    }
+  }, [user]);
 
   // 記事データ取得
   const fetchArticles = useCallback(
@@ -56,6 +79,9 @@ export const ArticleListPage: React.FC = () => {
           per_page: response.per_page,
           total: response.total,
         });
+
+        // 記事取得後に購入状況も取得
+        await fetchPurchasedArticles();
       } catch (err) {
         console.error("Failed to fetch articles:", err);
         setError("記事の取得に失敗しました");
@@ -63,7 +89,7 @@ export const ArticleListPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [selectedTag, pagination.per_page],
+    [selectedTag, pagination.per_page, fetchPurchasedArticles],
   );
 
   // ページ変更時の処理
@@ -99,6 +125,11 @@ export const ArticleListPage: React.FC = () => {
     newSearchParams.delete("page"); // ページをリセット
     setSearchParams(newSearchParams);
     // TODO: 検索API実装時に追加
+  };
+
+  // 購入成功時の処理
+  const handlePurchaseSuccess = (articleId: number) => {
+    setPurchasedArticles((prev) => new Set(prev).add(articleId));
   };
 
   // 初期ロード & URLパラメータ変更時
@@ -274,13 +305,15 @@ export const ArticleListPage: React.FC = () => {
               const isPurchased =
                 !article.is_paid ||
                 article.user_id === user?.id ||
-                user?.role === "admin";
+                user?.role === "admin" ||
+                purchasedArticles.has(article.id);
 
               return (
                 <ArticleCard
                   key={article.id}
                   article={article}
                   isPurchased={isPurchased}
+                  onPurchaseSuccess={handlePurchaseSuccess}
                 />
               );
             })}

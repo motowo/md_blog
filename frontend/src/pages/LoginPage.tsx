@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -11,6 +11,13 @@ const LoginPage: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // リダイレクト情報を取得
+  const state = location.state as { from?: string; message?: string } | null;
+  const redirectMessage = state?.message;
+  const redirectTo = state?.from || "/mypage";
+
   const [formData, setFormData] = useState<LoginRequest>({
     email: "",
     password: "",
@@ -65,8 +72,11 @@ const LoginPage: React.FC = () => {
 
     try {
       const loginUser = await login(formData);
-      // ユーザーの役割に応じてリダイレクト先を変更
-      if (loginUser.role === "admin") {
+
+      // リダイレクト先がある場合はそちらに、なければ役割に応じて遷移
+      if (state?.from) {
+        navigate(redirectTo, { replace: true });
+      } else if (loginUser.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/mypage");
@@ -116,7 +126,7 @@ const LoginPage: React.FC = () => {
             ログイン
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            アカウントにログインしてください
+            {redirectMessage || "アカウントにログインしてください"}
           </p>
         </div>
 
