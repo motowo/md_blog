@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             GeneralUserSeeder::class,
             TagSeeder::class,
             ImprovedArticleSeeder::class,
+            SatoHanakoHeatmapSeeder::class,
+            CreditCardSeeder::class,
         ]);
     }
 }

@@ -95,9 +95,9 @@ const UserMyPage: React.FC = () => {
     }
   };
 
-  const fetchActivityData = async () => {
+  const fetchActivityData = async (year?: number) => {
     try {
-      const activities = await UserService.getArticleActivity();
+      const activities = await UserService.getArticleActivity(undefined, year);
       setActivityData(activities);
     } catch (err) {
       console.error("Failed to fetch activity data:", err);
@@ -396,31 +396,21 @@ const UserMyPage: React.FC = () => {
       {/* プロフィールタブ */}
       {activeTab === "profile" && (
         <div className="space-y-6">
-          {/* アクティビティヒートマップとプロフィール写真 */}
+          {/* プロフィール画像 */}
           <Card>
+            <CardHeader>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                プロフィール画像
+              </h2>
+            </CardHeader>
             <CardBody>
-              <div className="flex flex-col lg:flex-row lg:space-x-6 space-y-6 lg:space-y-0">
-                {/* ヒートマップエリア (3/4) */}
-                <div className="flex-1 lg:w-3/4">
-                  <ActivityHeatmap activities={activityData} />
-                </div>
-
-                {/* プロフィール写真エリア (1/4) */}
-                <div className="lg:w-1/4">
-                  <div className="text-center">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      プロフィール画像
-                    </h3>
-                    <AvatarUpload
-                      currentAvatar={
-                        user?.avatar_path || user?.profile_image_url
-                      }
-                      onUpload={handleAvatarUpload}
-                      onDelete={handleAvatarDelete}
-                      loading={avatarUploading}
-                    />
-                  </div>
-                </div>
+              <div className="text-center">
+                <AvatarUpload
+                  currentAvatar={user?.avatar_path || user?.profile_image_url}
+                  onUpload={handleAvatarUpload}
+                  onDelete={handleAvatarDelete}
+                  loading={avatarUploading}
+                />
               </div>
             </CardBody>
           </Card>
@@ -677,9 +667,19 @@ const UserMyPage: React.FC = () => {
       {/* 記事管理タブ */}
       {activeTab === "articles" && (
         <div className="space-y-6">
+          {/* アクティビティヒートマップ */}
+          <Card>
+            <CardBody>
+              <ActivityHeatmap
+                activities={activityData}
+                onYearChange={fetchActivityData}
+              />
+            </CardBody>
+          </Card>
+
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              記事管理
+              記事一覧
             </h2>
             <Button variant="primary" onClick={() => navigate("/articles/new")}>
               新しい記事を作成

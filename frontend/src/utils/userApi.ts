@@ -23,7 +23,11 @@ export interface AccountDeleteRequest {
 }
 
 export interface ActivityData {
-  [date: string]: number;
+  [date: string]: {
+    total: number;
+    paid: number;
+    free: number;
+  };
 }
 
 export interface AvatarFile {
@@ -152,9 +156,15 @@ export class UserService {
   }
 
   // 記事投稿アクティビティ取得
-  static async getArticleActivity(userId?: number): Promise<ActivityData> {
+  static async getArticleActivity(
+    userId?: number,
+    year?: number,
+  ): Promise<ActivityData> {
     const url = userId ? `/user/${userId}/activity` : "/user/activity";
-    const response = await apiClient.get<{ activities: ActivityData }>(url);
+    const params = year ? { year: year.toString() } : {};
+    const response = await apiClient.get<{ activities: ActivityData }>(url, {
+      params,
+    });
     return response.data.activities;
   }
 
