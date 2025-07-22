@@ -679,7 +679,7 @@ const UserMyPage: React.FC = () => {
 
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              記事管理
+              記事一覧
             </h2>
             <Button variant="primary" onClick={() => navigate("/articles/new")}>
               新しい記事を作成

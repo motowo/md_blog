@@ -65,7 +65,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     return weeks;
   };
 
-  // 記事種別に基づく色を取得
+  // 記事種別に基づく色を取得（Badgeトンマナに合わせて有料=緑、無料=青）
   const getColor = (
     activityData: { total: number; paid: number; free: number } | null,
   ) => {
@@ -76,27 +76,27 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     const { total, paid } = activityData;
     const paidRatio = paid / total;
 
-    // 有料記事の比率に基づいて色を決定
+    // 有料記事の比率に基づいて色を決定（有料=緑、無料=青）
     if (paidRatio >= 0.8) {
-      // 80%以上有料: 青系（濃い）
-      if (total === 1) return "bg-blue-300 dark:bg-blue-800";
-      if (total === 2) return "bg-blue-400 dark:bg-blue-700";
-      if (total >= 3) return "bg-blue-500 dark:bg-blue-600";
+      // 80%以上有料: 緑系（有料中心）
+      if (total === 1) return "bg-emerald-300 dark:bg-emerald-800";
+      if (total === 2) return "bg-emerald-400 dark:bg-emerald-700";
+      if (total >= 3) return "bg-emerald-500 dark:bg-emerald-600";
     } else if (paidRatio >= 0.5) {
       // 50-79%有料: 紫系（混合）
       if (total === 1) return "bg-purple-300 dark:bg-purple-800";
       if (total === 2) return "bg-purple-400 dark:bg-purple-700";
       if (total >= 3) return "bg-purple-500 dark:bg-purple-600";
     } else if (paidRatio > 0) {
-      // 1-49%有料: 緑系（混合、無料寄り）
-      if (total === 1) return "bg-emerald-300 dark:bg-emerald-800";
-      if (total === 2) return "bg-emerald-400 dark:bg-emerald-700";
-      if (total >= 3) return "bg-emerald-500 dark:bg-emerald-600";
+      // 1-49%有料: 青緑系（混合、無料寄り）
+      if (total === 1) return "bg-cyan-300 dark:bg-cyan-800";
+      if (total === 2) return "bg-cyan-400 dark:bg-cyan-700";
+      if (total >= 3) return "bg-cyan-500 dark:bg-cyan-600";
     } else {
-      // 0%有料（全て無料）: 緑系（薄い）
-      if (total === 1) return "bg-green-200 dark:bg-green-900";
-      if (total === 2) return "bg-green-300 dark:bg-green-800";
-      if (total >= 3) return "bg-green-400 dark:bg-green-700";
+      // 0%有料（全て無料）: 青系
+      if (total === 1) return "bg-blue-300 dark:bg-blue-800";
+      if (total === 2) return "bg-blue-400 dark:bg-blue-700";
+      if (total >= 3) return "bg-blue-500 dark:bg-blue-600";
     }
 
     return "bg-gray-100 dark:bg-gray-800";
@@ -284,11 +284,11 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             <span>記事種別:</span>
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-1">
-                <div className="w-2.5 h-2.5 rounded-sm bg-green-300 dark:bg-green-800" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-blue-400 dark:bg-blue-700" />
                 <span>無料</span>
               </div>
               <div className="flex items-center space-x-1">
-                <div className="w-2.5 h-2.5 rounded-sm bg-emerald-400 dark:bg-emerald-700" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-cyan-400 dark:bg-cyan-700" />
                 <span>混合</span>
               </div>
               <div className="flex items-center space-x-1">
@@ -296,7 +296,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                 <span>半々</span>
               </div>
               <div className="flex items-center space-x-1">
-                <div className="w-2.5 h-2.5 rounded-sm bg-blue-400 dark:bg-blue-700" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-emerald-400 dark:bg-emerald-700" />
                 <span>有料</span>
               </div>
             </div>
@@ -376,7 +376,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
               {Object.keys(yearActivities).length}日間活動）
             </p>
             <div className="flex space-x-4 text-xs">
-              <span className="text-blue-600 dark:text-blue-400">
+              <span className="text-emerald-600 dark:text-emerald-400">
                 有料記事:{" "}
                 {Object.values(yearActivities).reduce(
                   (sum, activity) => sum + activity.paid,
@@ -384,7 +384,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                 )}
                 記事
               </span>
-              <span className="text-green-600 dark:text-green-400">
+              <span className="text-blue-600 dark:text-blue-400">
                 無料記事:{" "}
                 {Object.values(yearActivities).reduce(
                   (sum, activity) => sum + activity.free,
