@@ -64,13 +64,13 @@ class PaymentController extends Controller
         // 登録済みカードを使用する場合
         if ($request->input('use_saved_card')) {
             $creditCard = auth()->user()->creditCard;
-            
-            if (!$creditCard) {
+
+            if (! $creditCard) {
                 return response()->json([
                     'errors' => ['card' => ['クレジットカードが登録されていません。']],
                 ], 422);
             }
-            
+
             $cardNumber = $creditCard->card_number;
         } else {
             $cardNumber = $validated['card_number'];

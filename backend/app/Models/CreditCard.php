@@ -41,7 +41,7 @@ class CreditCard extends Model
     {
         $this->attributes['card_number'] = $value;
         $this->attributes['last_four'] = substr($value, -4);
-        
+
         // カードブランドを判定（簡易版）
         $firstDigit = substr($value, 0, 1);
         if ($firstDigit === '4') {
@@ -60,6 +60,6 @@ class CreditCard extends Model
      */
     public function getMaskedCardNumberAttribute(): string
     {
-        return '**** **** **** ' . $this->last_four;
+        return '**** **** **** '.$this->last_four;
     }
 }

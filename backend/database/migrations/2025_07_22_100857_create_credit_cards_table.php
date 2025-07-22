@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('card_brand')->default('VISA'); // カードブランド（VISA, Mastercard等）
             $table->boolean('is_default')->default(true);
             $table->timestamps();
-            
+
             // ユーザーごとに1枚のみ
             $table->unique('user_id');
         });

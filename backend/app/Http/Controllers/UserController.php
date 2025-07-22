@@ -218,14 +218,23 @@ class UserController extends Controller
     /**
      * Get user article posting activity for heatmap.
      */
-    public function getArticleActivity(?\App\Models\User $user = null): JsonResponse
+    public function getArticleActivity(Request $request, ?\App\Models\User $user = null): JsonResponse
     {
         // userパラメータが指定されていない場合は認証ユーザーを使用
         if (! $user) {
             $user = Auth::user();
         }
 
-        $activities = $user->getArticleActivity();
+        // 年指定パラメータの取得とバリデーション
+        $year = $request->query('year');
+        if ($year) {
+            $request->validate([
+                'year' => 'integer|min:1900|max:'.(date('Y') + 1),
+            ]);
+            $year = (int) $year;
+        }
+
+        $activities = $user->getArticleActivity($year);
 
         return response()->json([
             'activities' => $activities,

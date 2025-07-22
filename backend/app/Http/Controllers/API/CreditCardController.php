@@ -16,7 +16,7 @@ class CreditCardController extends Controller
     {
         $creditCard = Auth::user()->creditCard;
 
-        if (!$creditCard) {
+        if (! $creditCard) {
             return response()->json([
                 'data' => null,
                 'message' => 'クレジットカードが登録されていません',
@@ -64,14 +64,14 @@ class CreditCardController extends Controller
 
         // 既存のカードがあれば更新、なければ新規作成
         $creditCard = Auth::user()->creditCard ?? new CreditCard(['user_id' => Auth::id()]);
-        
+
         $creditCard->fill([
             'card_number' => $validated['card_number'],
             'card_name' => $validated['card_name'],
             'expiry_month' => $validated['expiry_month'],
             'expiry_year' => $validated['expiry_year'],
         ]);
-        
+
         $creditCard->save();
 
         return response()->json([
@@ -98,7 +98,7 @@ class CreditCardController extends Controller
     {
         $creditCard = Auth::user()->creditCard;
 
-        if (!$creditCard) {
+        if (! $creditCard) {
             return response()->json([
                 'message' => 'クレジットカードが登録されていません',
             ], 404);
