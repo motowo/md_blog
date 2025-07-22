@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 
 interface ActivityData {
-  [date: string]: number; // "2024-01-15": 3
+  [date: string]: {
+    total: number;
+    paid: number;
+    free: number;
+  };
 }
 
 interface ActivityHeatmapProps {
@@ -61,13 +65,41 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     return weeks;
   };
 
-  // アクティビティレベルに基づく色を取得
-  const getColor = (count: number) => {
-    if (count === 0) return "bg-gray-100 dark:bg-gray-800";
-    if (count === 1) return "bg-green-200 dark:bg-green-900";
-    if (count === 2) return "bg-green-300 dark:bg-green-700";
-    if (count === 3) return "bg-green-400 dark:bg-green-600";
-    return "bg-green-500 dark:bg-green-500";
+  // 記事種別に基づく色を取得
+  const getColor = (
+    activityData: { total: number; paid: number; free: number } | null,
+  ) => {
+    if (!activityData || activityData.total === 0) {
+      return "bg-gray-100 dark:bg-gray-800";
+    }
+
+    const { total, paid } = activityData;
+    const paidRatio = paid / total;
+
+    // 有料記事の比率に基づいて色を決定
+    if (paidRatio >= 0.8) {
+      // 80%以上有料: 青系（濃い）
+      if (total === 1) return "bg-blue-300 dark:bg-blue-800";
+      if (total === 2) return "bg-blue-400 dark:bg-blue-700";
+      if (total >= 3) return "bg-blue-500 dark:bg-blue-600";
+    } else if (paidRatio >= 0.5) {
+      // 50-79%有料: 紫系（混合）
+      if (total === 1) return "bg-purple-300 dark:bg-purple-800";
+      if (total === 2) return "bg-purple-400 dark:bg-purple-700";
+      if (total >= 3) return "bg-purple-500 dark:bg-purple-600";
+    } else if (paidRatio > 0) {
+      // 1-49%有料: 緑系（混合、無料寄り）
+      if (total === 1) return "bg-emerald-300 dark:bg-emerald-800";
+      if (total === 2) return "bg-emerald-400 dark:bg-emerald-700";
+      if (total >= 3) return "bg-emerald-500 dark:bg-emerald-600";
+    } else {
+      // 0%有料（全て無料）: 緑系（薄い）
+      if (total === 1) return "bg-green-200 dark:bg-green-900";
+      if (total === 2) return "bg-green-300 dark:bg-green-800";
+      if (total >= 3) return "bg-green-400 dark:bg-green-700";
+    }
+
+    return "bg-gray-100 dark:bg-gray-800";
   };
 
   // 月のラベルを生成（1月から開始）
@@ -135,20 +167,40 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   // 現在の年のアクティビティデータのみを抽出
   const yearActivities = Object.entries(activities)
     .filter(([date]) => new Date(date).getFullYear() === currentYear)
-    .reduce((acc, [date, count]) => {
-      acc[date] = count;
+    .reduce((acc, [date, activityData]) => {
+      acc[date] = activityData;
       return acc;
     }, {} as ActivityData);
 
   // ツールチップ用の日付フォーマット
-  const formatTooltip = (date: string, count: number) => {
-    if (!date) return "";
+  const formatTooltip = (
+    date: string,
+    activityData: { total: number; paid: number; free: number } | null,
+  ) => {
+    if (!date || !activityData) return "";
+
     const formattedDate = new Date(date).toLocaleDateString("ja-JP", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
-    return `${formattedDate}: ${count}記事投稿`;
+
+    if (activityData.total === 0) {
+      return `${formattedDate}: 投稿なし`;
+    }
+
+    const { total, paid, free } = activityData;
+    let tooltip = `${formattedDate}: ${total}記事投稿`;
+
+    if (paid > 0 && free > 0) {
+      tooltip += `\n有料記事: ${paid}記事\n無料記事: ${free}記事`;
+    } else if (paid > 0) {
+      tooltip += `\n有料記事: ${paid}記事`;
+    } else if (free > 0) {
+      tooltip += `\n無料記事: ${free}記事`;
+    }
+
+    return tooltip;
   };
 
   return (
@@ -201,16 +253,54 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             </button>
           </div>
         </div>
-        <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-          <span>少ない</span>
-          <div className="flex space-x-1">
-            <div className="w-2.5 h-2.5 rounded-sm bg-gray-100 dark:bg-gray-800" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-green-200 dark:bg-green-900" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-green-300 dark:bg-green-700" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-green-400 dark:bg-green-600" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-green-500 dark:bg-green-500" />
+        <div className="space-y-2">
+          {/* 投稿数の凡例 */}
+          <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+            <span>投稿数:</span>
+            <span>少ない</span>
+            <div className="flex space-x-1">
+              <div
+                className="w-2.5 h-2.5 rounded-sm bg-gray-100 dark:bg-gray-800"
+                title="投稿なし"
+              />
+              <div
+                className="w-2.5 h-2.5 rounded-sm bg-green-300 dark:bg-green-800"
+                title="1記事"
+              />
+              <div
+                className="w-2.5 h-2.5 rounded-sm bg-green-400 dark:bg-green-700"
+                title="2記事"
+              />
+              <div
+                className="w-2.5 h-2.5 rounded-sm bg-green-500 dark:bg-green-600"
+                title="3記事以上"
+              />
+            </div>
+            <span>多い</span>
           </div>
-          <span>多い</span>
+
+          {/* 記事種別の凡例 */}
+          <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+            <span>記事種別:</span>
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-1">
+                <div className="w-2.5 h-2.5 rounded-sm bg-green-300 dark:bg-green-800" />
+                <span>無料</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-2.5 h-2.5 rounded-sm bg-emerald-400 dark:bg-emerald-700" />
+                <span>混合</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-2.5 h-2.5 rounded-sm bg-purple-400 dark:bg-purple-700" />
+                <span>半々</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-2.5 h-2.5 rounded-sm bg-blue-400 dark:bg-blue-700" />
+                <span>有料</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -251,14 +341,16 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             {weeks.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col space-y-1">
                 {week.map((date, dayIndex) => {
-                  const count = date ? yearActivities[date] || 0 : 0;
+                  const activityData = date
+                    ? yearActivities[date] || null
+                    : null;
                   return (
                     <div
                       key={`${weekIndex}-${dayIndex}`}
-                      className={`w-3 h-3 rounded-sm ${getColor(count)} ${
+                      className={`w-3 h-3 rounded-sm ${getColor(activityData)} ${
                         date ? "cursor-pointer" : ""
                       } transition-all duration-200 hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-600`}
-                      title={date ? formatTooltip(date, count) : ""}
+                      title={date ? formatTooltip(date, activityData) : ""}
                     />
                   );
                 })}
@@ -271,17 +363,37 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
       {/* 統計情報 */}
       <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
         {Object.keys(yearActivities).length > 0 && (
-          <p>
-            {currentYear}年に{" "}
-            <span className="font-medium text-gray-900 dark:text-white">
-              {Object.values(yearActivities).reduce(
-                (sum, count) => sum + count,
-                0,
-              )}
-            </span>{" "}
-            記事を投稿しました（
-            {Object.keys(yearActivities).length}日間活動）
-          </p>
+          <div className="space-y-1">
+            <p>
+              {currentYear}年に{" "}
+              <span className="font-medium text-gray-900 dark:text-white">
+                {Object.values(yearActivities).reduce(
+                  (sum, activity) => sum + activity.total,
+                  0,
+                )}
+              </span>{" "}
+              記事を投稿しました（
+              {Object.keys(yearActivities).length}日間活動）
+            </p>
+            <div className="flex space-x-4 text-xs">
+              <span className="text-blue-600 dark:text-blue-400">
+                有料記事:{" "}
+                {Object.values(yearActivities).reduce(
+                  (sum, activity) => sum + activity.paid,
+                  0,
+                )}
+                記事
+              </span>
+              <span className="text-green-600 dark:text-green-400">
+                無料記事:{" "}
+                {Object.values(yearActivities).reduce(
+                  (sum, activity) => sum + activity.free,
+                  0,
+                )}
+                記事
+              </span>
+            </div>
+          </div>
         )}
         {Object.keys(yearActivities).length === 0 && (
           <p className="text-gray-500 dark:text-gray-400">

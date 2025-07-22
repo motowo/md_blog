@@ -120,7 +120,12 @@ class User extends Authenticatable
     public function getArticleActivity(?int $year = null): array
     {
         $query = $this->articles()
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count');
+            ->selectRaw('
+                DATE(created_at) as date, 
+                COUNT(*) as total_count,
+                SUM(CASE WHEN is_paid = true THEN 1 ELSE 0 END) as paid_count,
+                SUM(CASE WHEN is_paid = false THEN 1 ELSE 0 END) as free_count
+            ');
 
         if ($year) {
             // 指定年の1月1日から12月31日まで
@@ -133,7 +138,16 @@ class User extends Authenticatable
         $activities = $query
             ->groupBy('date')
             ->orderBy('date')
-            ->pluck('count', 'date')
+            ->get()
+            ->mapWithKeys(function ($activity) {
+                return [
+                    $activity->date => [
+                        'total' => $activity->total_count,
+                        'paid' => $activity->paid_count,
+                        'free' => $activity->free_count,
+                    ],
+                ];
+            })
             ->toArray();
 
         return $activities;

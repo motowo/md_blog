@@ -23,7 +23,11 @@ export interface AccountDeleteRequest {
 }
 
 export interface ActivityData {
-  [date: string]: number;
+  [date: string]: {
+    total: number;
+    paid: number;
+    free: number;
+  };
 }
 
 export interface AvatarFile {
