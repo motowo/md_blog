@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
-import UserProfileModal from "../components/UserProfileModal";
+import UserProfileView from "../components/UserProfileView";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import {
   AdminService,
@@ -366,16 +366,36 @@ const AdminUsers: React.FC = () => {
         </Card>
 
         {/* ユーザー情報参照モーダル */}
-        {selectedUser && (
-          <UserProfileModal
-            user={selectedUser}
-            isOpen={showProfileModal}
-            onClose={() => {
-              setShowProfileModal(false);
-              setSelectedUser(null);
-            }}
-            isReadOnly={true}
-          />
+        {selectedUser && showProfileModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                {/* ヘッダー */}
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    ユーザー情報参照
+                  </h3>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowProfileModal(false);
+                      setSelectedUser(null);
+                    }}
+                  >
+                    ×
+                  </Button>
+                </div>
+
+                {/* ユーザープロフィールビュー */}
+                <UserProfileView
+                  user={selectedUser}
+                  isReadOnly={true}
+                  showPaymentTab={false}
+                  initialTab="profile"
+                />
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
