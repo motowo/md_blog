@@ -45,17 +45,15 @@ const PaymentHistoryPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusLabels = {
       success: "成功",
-      failed: "失敗", 
+      failed: "失敗",
       pending: "保留",
     };
-    
+
     const label = statusLabels[status as keyof typeof statusLabels];
     if (!label) return null;
-    
+
     return (
-      <span className={getBadgeClass("paymentStatus", status)}>
-        {label}
-      </span>
+      <span className={getBadgeClass("paymentStatus", status)}>{label}</span>
     );
   };
 

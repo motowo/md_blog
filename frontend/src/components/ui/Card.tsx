@@ -5,10 +5,7 @@ type CardProps = React.HTMLAttributes<HTMLDivElement>;
 
 const Card: React.FC<CardProps> = ({ children, className = "", ...props }) => {
   return (
-    <div
-      className={`${cardStyles.base} ${className}`}
-      {...props}
-    >
+    <div className={`${cardStyles.base} ${className}`} {...props}>
       {children}
     </div>
   );
@@ -22,10 +19,7 @@ const CardHeader: React.FC<CardHeaderProps> = ({
   ...props
 }) => {
   return (
-    <div
-      className={`${cardStyles.header} ${className}`}
-      {...props}
-    >
+    <div className={`${cardStyles.header} ${className}`} {...props}>
       {children}
     </div>
   );
@@ -53,10 +47,7 @@ const CardFooter: React.FC<CardFooterProps> = ({
   ...props
 }) => {
   return (
-    <div
-      className={`${cardStyles.footer} ${className}`}
-      {...props}
-    >
+    <div className={`${cardStyles.footer} ${className}`} {...props}>
       {children}
     </div>
   );

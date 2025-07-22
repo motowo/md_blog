@@ -39,9 +39,7 @@ const Alert: React.FC<AlertProps> = ({
           </span>
         )}
         <div className="flex-1">
-          {title && (
-            <h3 className="font-semibold mb-1">{title}</h3>
-          )}
+          {title && <h3 className="font-semibold mb-1">{title}</h3>}
           <div>{children}</div>
         </div>
         {closable && onClose && (

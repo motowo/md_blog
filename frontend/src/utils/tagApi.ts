@@ -1,6 +1,6 @@
 import apiClient from "./api";
 import type { Tag, TagCreateRequest, TagUpdateRequest } from "../types/tag";
-import { ServiceBase, type SuccessResponse, type DeleteResponse } from "./serviceBase";
+import { ServiceBase, type DeleteResponse } from "./serviceBase";
 
 export class TagService extends ServiceBase {
   // タグ一覧取得
@@ -34,12 +34,12 @@ export class TagService extends ServiceBase {
   }
 
   // タグ更新（管理者のみ）
-  static async updateTag(
-    id: number,
-    data: TagUpdateRequest,
-  ): Promise<Tag> {
+  static async updateTag(id: number, data: TagUpdateRequest): Promise<Tag> {
     try {
-      const response = await apiClient.put<Tag | { data: Tag }>(`/tags/${id}`, data);
+      const response = await apiClient.put<Tag | { data: Tag }>(
+        `/tags/${id}`,
+        data,
+      );
       return this.extractData(response);
     } catch (error) {
       throw this.handleError(error);

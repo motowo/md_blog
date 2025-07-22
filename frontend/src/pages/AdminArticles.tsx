@@ -91,7 +91,6 @@ const AdminArticles: React.FC = () => {
     }
   };
 
-
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ja-JP");
   };
@@ -215,14 +214,22 @@ const AdminArticles: React.FC = () => {
                         {/* ステータスと価格のバッジ */}
                         <div className="flex items-center gap-2 mb-3">
                           <span
-                            className={getBadgeClass("articleStatus", article.status === "published" ? "published" : "draft")}
+                            className={getBadgeClass(
+                              "articleStatus",
+                              article.status === "published"
+                                ? "published"
+                                : "draft",
+                            )}
                           >
                             {article.status === "published"
                               ? "公開中"
                               : "下書き"}
                           </span>
                           <span
-                            className={getBadgeClass("priceType", article.is_paid ? "paid" : "free")}
+                            className={getBadgeClass(
+                              "priceType",
+                              article.is_paid ? "paid" : "free",
+                            )}
                           >
                             {article.is_paid
                               ? `有料 ${formatCurrency(article.price || 0)}`

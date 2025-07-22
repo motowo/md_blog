@@ -104,7 +104,6 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ja-JP");
   };
@@ -256,7 +255,10 @@ const AdminUsers: React.FC = () => {
                         </td>
                         <td className="py-3 px-4">
                           <span
-                            className={getBadgeClass("userRole", targetUser.role === "admin" ? "admin" : "user")}
+                            className={getBadgeClass(
+                              "userRole",
+                              targetUser.role === "admin" ? "admin" : "user",
+                            )}
                           >
                             {targetUser.role === "admin" ? "管理者" : "投稿者"}
                           </span>

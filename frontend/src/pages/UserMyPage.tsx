@@ -292,7 +292,10 @@ const UserMyPage: React.FC = () => {
       statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
     return (
       <span
-        className={getBadgeClass("articleStatus", status as "published" | "draft" | "private")}
+        className={getBadgeClass(
+          "articleStatus",
+          status as "published" | "draft" | "private",
+        )}
       >
         {config.label}
       </span>
@@ -607,7 +610,10 @@ const UserMyPage: React.FC = () => {
                             ¥{purchase.amount.toLocaleString()}
                           </span>
                           <span
-                            className={getBadgeClass("paymentStatus", purchase.status)}
+                            className={getBadgeClass(
+                              "paymentStatus",
+                              purchase.status,
+                            )}
                           >
                             {purchase.status === "success"
                               ? "完了"
@@ -700,7 +706,9 @@ const UserMyPage: React.FC = () => {
                           </h3>
                           {getStatusBadge(article.status)}
                           {article.is_paid && (
-                            <span className={getBadgeClass("priceType", "paid")}>
+                            <span
+                              className={getBadgeClass("priceType", "paid")}
+                            >
                               有料: ¥{article.price}
                             </span>
                           )}

@@ -33,7 +33,7 @@ export abstract class ServiceBase {
     [key: string]: unknown;
   }): URLSearchParams {
     const searchParams = new URLSearchParams();
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -41,7 +41,7 @@ export abstract class ServiceBase {
         }
       });
     }
-    
+
     return searchParams;
   }
 }

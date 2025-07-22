@@ -18,10 +18,7 @@ const Input: React.FC<InputProps> = ({
   return (
     <div className="w-full">
       {label && (
-        <label
-          htmlFor={inputId}
-          className={textStyles.label}
-        >
+        <label htmlFor={inputId} className={textStyles.label}>
           {label}
         </label>
       )}
@@ -37,9 +34,7 @@ const Input: React.FC<InputProps> = ({
         `}
         {...props}
       />
-      {error && (
-        <p className={textStyles.error}>{error}</p>
-      )}
+      {error && <p className={textStyles.error}>{error}</p>}
     </div>
   );
 };

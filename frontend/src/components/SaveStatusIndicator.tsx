@@ -39,7 +39,8 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
     }
   };
 
-  const statusKey = status === "idle" || !saveStatusStyles.status[status] ? "idle" : status;
+  const statusKey =
+    status === "idle" || !saveStatusStyles.status[status] ? "idle" : status;
   const config = saveStatusStyles.status[statusKey];
   const sizeClasses = saveStatusStyles.size[size];
   const baseClasses = saveStatusStyles.base;
@@ -56,9 +57,7 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
         {config.icon}
       </span>
       <div className="flex flex-col">
-        <span className={`font-medium ${config.textColor}`}>
-          {config.text}
-        </span>
+        <span className={`font-medium ${config.textColor}`}>{config.text}</span>
         {showLastSaved && status === "saved" && lastSaved && (
           <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {formatLastSaved(lastSaved)}

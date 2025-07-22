@@ -66,9 +66,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             </span>
           )}
           {!article.is_paid && (
-            <span className={getBadgeClass("priceType", "free")}>
-              無料
-            </span>
+            <span className={getBadgeClass("priceType", "free")}>無料</span>
           )}
           {article.status === "draft" && (
             <span className={getBadgeClass("articleStatus", "draft")}>
