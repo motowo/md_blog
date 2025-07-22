@@ -236,13 +236,14 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 
         {/* 曜日ラベルとヒートマップグリッド */}
         <div className="flex min-w-max">
-          <div
-            className="flex flex-col mr-2 text-xs text-gray-500 dark:text-gray-400 justify-between"
-            style={{ height: "112px" }}
-          >
-            <div className="h-4 flex items-center">月</div>
-            <div className="h-4 flex items-center">水</div>
-            <div className="h-4 flex items-center">金</div>
+          <div className="flex flex-col mr-2 text-xs text-gray-500 dark:text-gray-400 space-y-1">
+            <div className="h-3 flex items-center justify-end">日</div>
+            <div className="h-3 flex items-center justify-end">月</div>
+            <div className="h-3 flex items-center justify-end">火</div>
+            <div className="h-3 flex items-center justify-end">水</div>
+            <div className="h-3 flex items-center justify-end">木</div>
+            <div className="h-3 flex items-center justify-end">金</div>
+            <div className="h-3 flex items-center justify-end">土</div>
           </div>
 
           {/* ヒートマップグリッド */}
