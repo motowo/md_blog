@@ -70,7 +70,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // 決済関連のルート
     Route::post('/payments', [PaymentController::class, 'store']);
     Route::get('/payments', [PaymentController::class, 'index']);
-    
+
     // クレジットカード管理
     Route::get('/credit-card', [CreditCardController::class, 'show']);
     Route::post('/credit-card', [CreditCardController::class, 'store']);

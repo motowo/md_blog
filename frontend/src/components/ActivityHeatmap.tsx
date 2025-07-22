@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 interface ActivityData {
   [date: string]: number; // "2024-01-15": 3
@@ -7,20 +7,28 @@ interface ActivityData {
 interface ActivityHeatmapProps {
   activities: ActivityData;
   className?: string;
+  onYearChange?: (year: number) => void;
 }
 
 const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   activities,
   className = "",
+  onYearChange,
 }) => {
-  // 現在から1年前までの日付配列を生成
-  const generateDateRange = () => {
-    const dates = [];
-    const today = new Date();
-    const oneYearAgo = new Date(today);
-    oneYearAgo.setFullYear(today.getFullYear() - 1);
+  // 現在の年を初期値とする
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
-    for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
+  // 指定された年の1月1日から12月31日までの日付配列を生成
+  const generateDateRange = (year: number) => {
+    const dates = [];
+    const startDate = new Date(year, 0, 1); // 1月1日
+    const endDate = new Date(year, 11, 31); // 12月31日
+
+    for (
+      let d = new Date(startDate);
+      d <= endDate;
+      d.setDate(d.getDate() + 1)
+    ) {
       dates.push(new Date(d).toISOString().split("T")[0]);
     }
     return dates;
@@ -84,9 +92,40 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     return months;
   };
 
-  const dates = generateDateRange();
+  // 年切り替え関数
+  const handleYearChange = (direction: "prev" | "next") => {
+    const newYear = direction === "prev" ? currentYear - 1 : currentYear + 1;
+    setCurrentYear(newYear);
+    // 親コンポーネントに年変更を通知してAPI再取得を実行
+    if (onYearChange) {
+      onYearChange(newYear);
+    }
+  };
+
+  // 利用可能な年の範囲を計算（データがある年のみ）
+  const availableYears = Array.from(
+    new Set(
+      Object.keys(activities).map((date) => new Date(date).getFullYear()),
+    ),
+  ).sort((a, b) => b - a);
+
+  const canGoPrev =
+    availableYears.length > 0 && currentYear > Math.min(...availableYears);
+  const canGoNext =
+    availableYears.length > 0 &&
+    currentYear < Math.max(...availableYears, new Date().getFullYear());
+
+  const dates = generateDateRange(currentYear);
   const weeks = groupByWeeks(dates);
   const monthLabels = getMonthLabels(weeks);
+
+  // 現在の年のアクティビティデータのみを抽出
+  const yearActivities = Object.entries(activities)
+    .filter(([date]) => new Date(date).getFullYear() === currentYear)
+    .reduce((acc, [date, count]) => {
+      acc[date] = count;
+      return acc;
+    }, {} as ActivityData);
 
   // ツールチップ用の日付フォーマット
   const formatTooltip = (date: string, count: number) => {
@@ -102,9 +141,53 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          記事投稿アクティビティ
-        </h3>
+        <div className="flex items-center space-x-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            記事投稿アクティビティ ({currentYear}年)
+          </h3>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => handleYearChange("prev")}
+              disabled={!canGoPrev}
+              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="前の年"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <button
+              onClick={() => handleYearChange("next")}
+              disabled={!canGoNext}
+              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="次の年"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
         <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
           <span>少ない</span>
           <div className="flex space-x-1">
@@ -154,7 +237,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             {weeks.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col space-y-1">
                 {week.map((date, dayIndex) => {
-                  const count = date ? activities[date] || 0 : 0;
+                  const count = date ? yearActivities[date] || 0 : 0;
                   return (
                     <div
                       key={`${weekIndex}-${dayIndex}`}
@@ -173,14 +256,22 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 
       {/* 統計情報 */}
       <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-        {Object.keys(activities).length > 0 && (
+        {Object.keys(yearActivities).length > 0 && (
           <p>
-            過去1年間で{" "}
+            {currentYear}年に{" "}
             <span className="font-medium text-gray-900 dark:text-white">
-              {Object.values(activities).reduce((sum, count) => sum + count, 0)}
+              {Object.values(yearActivities).reduce(
+                (sum, count) => sum + count,
+                0,
+              )}
             </span>{" "}
             記事を投稿しました（
-            {Object.keys(activities).length}日間活動）
+            {Object.keys(yearActivities).length}日間活動）
+          </p>
+        )}
+        {Object.keys(yearActivities).length === 0 && (
+          <p className="text-gray-500 dark:text-gray-400">
+            {currentYear}年の投稿記事はありません
           </p>
         )}
       </div>

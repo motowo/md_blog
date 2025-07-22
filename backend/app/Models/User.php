@@ -114,12 +114,23 @@ class User extends Authenticatable
 
     /**
      * Get article posting activity for heatmap.
+     *
+     * @param  int|null  $year  取得対象年（nullの場合は過去1年間）
      */
-    public function getArticleActivity(): array
+    public function getArticleActivity(?int $year = null): array
     {
-        $activities = $this->articles()
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-            ->where('created_at', '>=', now()->subYear())
+        $query = $this->articles()
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count');
+
+        if ($year) {
+            // 指定年の1月1日から12月31日まで
+            $query->whereYear('created_at', $year);
+        } else {
+            // デフォルト：過去1年間
+            $query->where('created_at', '>=', now()->subYear());
+        }
+
+        $activities = $query
             ->groupBy('date')
             ->orderBy('date')
             ->pluck('count', 'date')
