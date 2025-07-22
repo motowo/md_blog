@@ -194,7 +194,9 @@ const AdminAccount: React.FC = () => {
     return new Intl.NumberFormat("ja-JP", {
       style: "currency",
       currency: "JPY",
-    }).format(amount);
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(Math.floor(amount));
   };
 
   return (

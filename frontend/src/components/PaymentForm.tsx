@@ -132,7 +132,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center mb-6">
         <p className="text-2xl font-bold text-gray-900 dark:text-white">
-          ¥{price.toLocaleString()}
+          ¥{Math.floor(price).toLocaleString()}
         </p>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           記事の購入金額

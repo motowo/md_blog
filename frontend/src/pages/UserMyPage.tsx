@@ -607,7 +607,7 @@ const UserMyPage: React.FC = () => {
                         </p>
                         <div className="flex items-center space-x-2">
                           <span className="text-lg font-semibold text-green-600 dark:text-green-400">
-                            ¥{purchase.amount.toLocaleString()}
+                            ¥{Math.floor(purchase.amount).toLocaleString()}
                           </span>
                           <span
                             className={getBadgeClass(
