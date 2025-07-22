@@ -14,6 +14,8 @@ interface ActivityHeatmapProps {
   onYearChange?: (year: number) => void;
 }
 
+type FilterType = "all" | "paid" | "free";
+
 const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   activities,
   className = "",
@@ -21,6 +23,8 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
 }) => {
   // 現在の年を初期値とする
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  // フィルターの状態
+  const [filterType, setFilterType] = useState<FilterType>("all");
 
   // 指定された年の1月1日から12月31日までの日付配列を生成
   const generateDateRange = (year: number) => {
@@ -65,38 +69,44 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     return weeks;
   };
 
-  // 記事種別に基づく色を取得（Badgeトンマナに合わせて有料=緑、無料=青）
+  // 記事数に基づく色を取得（フィルタータイプに応じて色を変更）
   const getColor = (
     activityData: { total: number; paid: number; free: number } | null,
   ) => {
-    if (!activityData || activityData.total === 0) {
+    if (!activityData) {
       return "bg-gray-100 dark:bg-gray-800";
     }
 
-    const { total, paid } = activityData;
-    const paidRatio = paid / total;
+    let count: number;
+    let baseColor: string;
 
-    // 有料記事の比率に基づいて色を決定（有料=緑、無料=青）
-    if (paidRatio >= 0.8) {
-      // 80%以上有料: 緑系（有料中心）
-      if (total === 1) return "bg-emerald-300 dark:bg-emerald-800";
-      if (total === 2) return "bg-emerald-400 dark:bg-emerald-700";
-      if (total >= 3) return "bg-emerald-500 dark:bg-emerald-600";
-    } else if (paidRatio >= 0.5) {
-      // 50-79%有料: 紫系（混合）
-      if (total === 1) return "bg-purple-300 dark:bg-purple-800";
-      if (total === 2) return "bg-purple-400 dark:bg-purple-700";
-      if (total >= 3) return "bg-purple-500 dark:bg-purple-600";
-    } else if (paidRatio > 0) {
-      // 1-49%有料: 青緑系（混合、無料寄り）
-      if (total === 1) return "bg-cyan-300 dark:bg-cyan-800";
-      if (total === 2) return "bg-cyan-400 dark:bg-cyan-700";
-      if (total >= 3) return "bg-cyan-500 dark:bg-cyan-600";
-    } else {
-      // 0%有料（全て無料）: 青系
-      if (total === 1) return "bg-blue-300 dark:bg-blue-800";
-      if (total === 2) return "bg-blue-400 dark:bg-blue-700";
-      if (total >= 3) return "bg-blue-500 dark:bg-blue-600";
+    // フィルタータイプに応じて表示する記事数と色を決定
+    switch (filterType) {
+      case "paid":
+        count = Number(activityData.paid);
+        baseColor = "emerald"; // 有料記事はエメラルド系（Badgeトンマナ）
+        break;
+      case "free":
+        count = Number(activityData.free);
+        baseColor = "blue"; // 無料記事は青系（Badgeトンマナ）
+        break;
+      default: // 'all'
+        count = Number(activityData.total);
+        baseColor = "orange"; // 全記事は暖色系（オレンジ）
+        break;
+    }
+
+    if (count === 0) {
+      return "bg-gray-100 dark:bg-gray-800";
+    }
+
+    // 記事数に基づく濃淡
+    if (count === 1) {
+      return `bg-${baseColor}-300 dark:bg-${baseColor}-800`;
+    } else if (count === 2) {
+      return `bg-${baseColor}-400 dark:bg-${baseColor}-700`;
+    } else if (count >= 3) {
+      return `bg-${baseColor}-500 dark:bg-${baseColor}-600`;
     }
 
     return "bg-gray-100 dark:bg-gray-800";
@@ -185,22 +195,39 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
       day: "numeric",
     });
 
-    if (activityData.total === 0) {
-      return `${formattedDate}: 投稿なし`;
-    }
-
     const { total, paid, free } = activityData;
-    let tooltip = `${formattedDate}: ${total}記事投稿`;
+    const numTotal = Number(total);
+    const numPaid = Number(paid);
+    const numFree = Number(free);
 
-    if (paid > 0 && free > 0) {
-      tooltip += `\n有料記事: ${paid}記事\n無料記事: ${free}記事`;
-    } else if (paid > 0) {
-      tooltip += `\n有料記事: ${paid}記事`;
-    } else if (free > 0) {
-      tooltip += `\n無料記事: ${free}記事`;
+    // フィルタータイプに応じてツールチップの内容を変更
+    switch (filterType) {
+      case "paid":
+        if (numPaid === 0) {
+          return `${formattedDate}: 有料記事の投稿なし`;
+        }
+        return `${formattedDate}: ${numPaid}記事投稿（有料記事のみ）`;
+      case "free":
+        if (numFree === 0) {
+          return `${formattedDate}: 無料記事の投稿なし`;
+        }
+        return `${formattedDate}: ${numFree}記事投稿（無料記事のみ）`;
+      default: {
+        // 'all'
+        if (numTotal === 0) {
+          return `${formattedDate}: 投稿なし`;
+        }
+        let tooltip = `${formattedDate}: ${numTotal}記事投稿`;
+        if (numPaid > 0 && numFree > 0) {
+          tooltip += `\n有料記事: ${numPaid}記事\n無料記事: ${numFree}記事`;
+        } else if (numPaid > 0) {
+          tooltip += `\n有料記事: ${numPaid}記事`;
+        } else if (numFree > 0) {
+          tooltip += `\n無料記事: ${numFree}記事`;
+        }
+        return tooltip;
+      }
     }
-
-    return tooltip;
   };
 
   return (
@@ -253,54 +280,85 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             </button>
           </div>
         </div>
-        <div className="space-y-2">
-          {/* 投稿数の凡例 */}
-          <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-            <span>投稿数:</span>
-            <span>少ない</span>
-            <div className="flex space-x-1">
-              <div
-                className="w-2.5 h-2.5 rounded-sm bg-gray-100 dark:bg-gray-800"
-                title="投稿なし"
-              />
-              <div
-                className="w-2.5 h-2.5 rounded-sm bg-green-300 dark:bg-green-800"
-                title="1記事"
-              />
-              <div
-                className="w-2.5 h-2.5 rounded-sm bg-green-400 dark:bg-green-700"
-                title="2記事"
-              />
-              <div
-                className="w-2.5 h-2.5 rounded-sm bg-green-500 dark:bg-green-600"
-                title="3記事以上"
-              />
-            </div>
-            <span>多い</span>
-          </div>
 
-          {/* 記事種別の凡例 */}
-          <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-            <span>記事種別:</span>
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-1">
-                <div className="w-2.5 h-2.5 rounded-sm bg-blue-400 dark:bg-blue-700" />
-                <span>無料</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <div className="w-2.5 h-2.5 rounded-sm bg-cyan-400 dark:bg-cyan-700" />
-                <span>混合</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <div className="w-2.5 h-2.5 rounded-sm bg-purple-400 dark:bg-purple-700" />
-                <span>半々</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <div className="w-2.5 h-2.5 rounded-sm bg-emerald-400 dark:bg-emerald-700" />
-                <span>有料</span>
-              </div>
-            </div>
+        {/* フィルター切り替えボタン */}
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            表示:
+          </span>
+          <div className="flex rounded-md border border-gray-300 dark:border-gray-600">
+            <button
+              onClick={() => setFilterType("all")}
+              className={`px-3 py-1 text-xs font-medium rounded-l-md transition-colors ${
+                filterType === "all"
+                  ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                  : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              }`}
+            >
+              全記事
+            </button>
+            <button
+              onClick={() => setFilterType("paid")}
+              className={`px-3 py-1 text-xs font-medium border-l border-gray-300 dark:border-gray-600 transition-colors ${
+                filterType === "paid"
+                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
+                  : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              }`}
+            >
+              有料のみ
+            </button>
+            <button
+              onClick={() => setFilterType("free")}
+              className={`px-3 py-1 text-xs font-medium border-l border-gray-300 dark:border-gray-600 rounded-r-md transition-colors ${
+                filterType === "free"
+                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                  : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              }`}
+            >
+              無料のみ
+            </button>
           </div>
+        </div>
+        <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+          <span>投稿数:</span>
+          <span>少ない</span>
+          <div className="flex space-x-1">
+            <div
+              className="w-2.5 h-2.5 rounded-sm bg-gray-100 dark:bg-gray-800"
+              title="投稿なし"
+            />
+            <div
+              className={`w-2.5 h-2.5 rounded-sm ${
+                filterType === "all"
+                  ? "bg-orange-300 dark:bg-orange-800"
+                  : filterType === "paid"
+                    ? "bg-emerald-300 dark:bg-emerald-800"
+                    : "bg-blue-300 dark:bg-blue-800"
+              }`}
+              title="1記事"
+            />
+            <div
+              className={`w-2.5 h-2.5 rounded-sm ${
+                filterType === "all"
+                  ? "bg-orange-400 dark:bg-orange-700"
+                  : filterType === "paid"
+                    ? "bg-emerald-400 dark:bg-emerald-700"
+                    : "bg-blue-400 dark:bg-blue-700"
+              }`}
+              title="2記事"
+            />
+            <div
+              className={`w-2.5 h-2.5 rounded-sm ${
+                filterType === "all"
+                  ? "bg-orange-500 dark:bg-orange-600"
+                  : filterType === "paid"
+                    ? "bg-emerald-500 dark:bg-emerald-600"
+                    : "bg-blue-500 dark:bg-blue-600"
+              }`}
+              title="3記事以上"
+            />
+          </div>
+          <span>多い</span>
         </div>
       </div>
 
@@ -364,35 +422,75 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
       <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
         {Object.keys(yearActivities).length > 0 && (
           <div className="space-y-1">
-            <p>
-              {currentYear}年に{" "}
-              <span className="font-medium text-gray-900 dark:text-white">
-                {Object.values(yearActivities).reduce(
-                  (sum, activity) => sum + activity.total,
-                  0,
-                )}
-              </span>{" "}
-              記事を投稿しました（
-              {Object.keys(yearActivities).length}日間活動）
-            </p>
-            <div className="flex space-x-4 text-xs">
-              <span className="text-emerald-600 dark:text-emerald-400">
-                有料記事:{" "}
-                {Object.values(yearActivities).reduce(
-                  (sum, activity) => sum + activity.paid,
-                  0,
-                )}
-                記事
-              </span>
-              <span className="text-blue-600 dark:text-blue-400">
-                無料記事:{" "}
-                {Object.values(yearActivities).reduce(
-                  (sum, activity) => sum + activity.free,
-                  0,
-                )}
-                記事
-              </span>
-            </div>
+            {filterType === "all" && (
+              <>
+                <p>
+                  {currentYear}年に{" "}
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {Object.values(yearActivities).reduce(
+                      (sum, activity) => sum + Number(activity.total),
+                      0,
+                    )}
+                  </span>{" "}
+                  記事を投稿しました（
+                  {Object.keys(yearActivities).length}日間活動）
+                </p>
+                <div className="flex space-x-4 text-xs">
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    有料記事:{" "}
+                    {Object.values(yearActivities).reduce(
+                      (sum, activity) => sum + Number(activity.paid),
+                      0,
+                    )}
+                    記事
+                  </span>
+                  <span className="text-blue-600 dark:text-blue-400">
+                    無料記事:{" "}
+                    {Object.values(yearActivities).reduce(
+                      (sum, activity) => sum + Number(activity.free),
+                      0,
+                    )}
+                    記事
+                  </span>
+                </div>
+              </>
+            )}
+            {filterType === "paid" && (
+              <p>
+                {currentYear}年に有料記事を{" "}
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  {Object.values(yearActivities).reduce(
+                    (sum, activity) => sum + Number(activity.paid),
+                    0,
+                  )}
+                </span>{" "}
+                記事投稿しました（
+                {
+                  Object.values(yearActivities).filter(
+                    (activity) => Number(activity.paid) > 0,
+                  ).length
+                }
+                日間活動）
+              </p>
+            )}
+            {filterType === "free" && (
+              <p>
+                {currentYear}年に無料記事を{" "}
+                <span className="font-medium text-blue-600 dark:text-blue-400">
+                  {Object.values(yearActivities).reduce(
+                    (sum, activity) => sum + Number(activity.free),
+                    0,
+                  )}
+                </span>{" "}
+                記事投稿しました（
+                {
+                  Object.values(yearActivities).filter(
+                    (activity) => Number(activity.free) > 0,
+                  ).length
+                }
+                日間活動）
+              </p>
+            )}
           </div>
         )}
         {Object.keys(yearActivities).length === 0 && (
