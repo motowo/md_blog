@@ -70,7 +70,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     return "bg-green-500 dark:bg-green-500";
   };
 
-  // 月のラベルを生成
+  // 月のラベルを生成（1月から開始）
   const getMonthLabels = (weeks: string[][]) => {
     const months = [];
     let currentMonth = "";
@@ -80,18 +80,24 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
       const firstDate = week.find((date) => date !== "");
       if (!firstDate) return;
 
-      const monthYear = new Date(firstDate).toLocaleDateString("ja-JP", {
+      const date = new Date(firstDate);
+      const monthYear = date.toLocaleDateString("ja-JP", {
         month: "short",
       });
+      const month = date.getMonth() + 1; // 1-12
 
       // 新しい月が始まる場合のみラベルを追加
-      if (monthYear !== currentMonth) {
-        months.push({
-          label: monthYear,
-          weekIndex,
-          // 月の開始位置を週の中央に調整
-          position: weekIndex * 16 + 8, // セル幅12px + 間隔4px = 16px, 中央は+8px
-        });
+      // 年の最初の12月は除外して1月から開始
+      if (monthYear !== currentMonth && month >= 1) {
+        // 年の最初の部分にある前年12月は除外
+        if (!(month === 12 && weekIndex < 4)) {
+          months.push({
+            label: monthYear,
+            weekIndex,
+            // 月の開始位置を週の中央に調整
+            position: weekIndex * 16 + 8, // セル幅12px + 間隔4px = 16px, 中央は+8px
+          });
+        }
         currentMonth = monthYear;
       }
     });
