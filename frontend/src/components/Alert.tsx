@@ -1,32 +1,59 @@
 import React from "react";
+import { alertStyles } from "../constants/alertStyles";
 
 interface AlertProps {
   variant?: "info" | "success" | "warning" | "error";
+  size?: "sm" | "md" | "lg";
+  showIcon?: boolean;
+  onClose?: () => void;
+  closable?: boolean;
   children: React.ReactNode;
   className?: string;
+  title?: string;
 }
 
 const Alert: React.FC<AlertProps> = ({
   variant = "info",
+  size = "md",
+  showIcon = false,
+  onClose,
+  closable = false,
   children,
   className = "",
+  title,
 }) => {
-  const variantClasses = {
-    info: "bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800",
-    success:
-      "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800",
-    warning:
-      "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800",
-    error:
-      "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800",
-  };
+  const baseClasses = alertStyles.base;
+  const variantClasses = alertStyles.variant[variant];
+  const sizeClasses = alertStyles.size[size];
+  const icon = alertStyles.icon[variant];
 
   return (
     <div
-      className={`p-4 rounded-lg border ${variantClasses[variant]} ${className}`}
+      className={`${baseClasses} ${variantClasses} ${sizeClasses} ${className}`}
       role="alert"
     >
-      {children}
+      <div className="flex items-start">
+        {showIcon && (
+          <span className="mr-3 flex-shrink-0" aria-hidden="true">
+            {icon}
+          </span>
+        )}
+        <div className="flex-1">
+          {title && (
+            <h3 className="font-semibold mb-1">{title}</h3>
+          )}
+          <div>{children}</div>
+        </div>
+        {closable && onClose && (
+          <button
+            onClick={onClose}
+            className="ml-3 -mr-1 -mt-1 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            aria-label="閉じる"
+          >
+            ×
+          </button>
+        )}
+      </div>
     </div>
   );
 };
