@@ -34,6 +34,7 @@ const Input: React.FC<InputProps> = ({
               ? "border-red-500 bg-red-50 dark:bg-red-900/20 dark:border-red-400"
               : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
           }
+          ${props.readOnly ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : ""}
           text-gray-900 dark:text-gray-100
           placeholder-gray-500 dark:placeholder-gray-400
           ${className}

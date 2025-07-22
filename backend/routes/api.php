@@ -1,11 +1,12 @@
 <?php
 
+use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\ArticleController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\TagController;
 use App\Http\Controllers\API\UserController as APIUserController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -61,7 +62,31 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/user/account', [UserController::class, 'deleteAccount']);
     Route::get('/user/articles', [APIUserController::class, 'articles']);
 
+    // 管理者用: 他のユーザーの情報取得
+    Route::get('/user/{user}/activity', [UserController::class, 'getArticleActivity'])->middleware('admin');
+    Route::get('/user/{user}/articles', [APIUserController::class, 'articles'])->middleware('admin');
+
     // 決済関連のルート
     Route::post('/payments', [PaymentController::class, 'store']);
     Route::get('/payments', [PaymentController::class, 'index']);
+
+    // 管理者専用ルート
+    Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function () {
+        // ユーザー管理
+        Route::get('/users', [AdminController::class, 'getUsers']);
+        Route::get('/users/{user}', [AdminController::class, 'getUser']);
+        Route::put('/users/{user}', [AdminController::class, 'updateUser']);
+        Route::patch('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus']);
+        Route::delete('/users/{user}', [AdminController::class, 'deleteUser']);
+
+        // 記事管理
+        Route::get('/articles', [AdminController::class, 'getArticles']);
+        Route::get('/articles/{article}', [AdminController::class, 'getArticle']);
+        Route::put('/articles/{article}', [AdminController::class, 'updateArticle']);
+        Route::delete('/articles/{article}', [AdminController::class, 'deleteArticle']);
+
+        // ダッシュボード・統計
+        Route::get('/dashboard/stats', [AdminController::class, 'getDashboardStats']);
+        Route::get('/dashboard/revenue', [AdminController::class, 'getRevenueDetails']);
+    });
 });

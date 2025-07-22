@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\AvatarFile;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +18,7 @@ class UserController extends Controller
     public function profile(): JsonResponse
     {
         $user = Auth::user();
+
         return response()->json($user);
     }
 
@@ -53,7 +54,7 @@ class UserController extends Controller
 
         $user->update($request->only([
             'name',
-            'username', 
+            'username',
             'email',
             'bio',
             'career_description',
@@ -64,7 +65,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'プロフィールを更新しました',
-            'user' => $user->fresh()
+            'user' => $user->fresh(),
         ]);
     }
 
@@ -80,7 +81,7 @@ class UserController extends Controller
             'crop_data.y' => 'nullable|numeric',
             'crop_data.width' => 'nullable|numeric',
             'crop_data.height' => 'nullable|numeric',
-            'crop_data.zoom' => 'nullable|numeric|between:0.1,3'
+            'crop_data.zoom' => 'nullable|numeric|between:0.1,3',
         ]);
 
         $user = Auth::user();
@@ -93,17 +94,17 @@ class UserController extends Controller
         $height = $imageInfo[1];
 
         // Generate unique filename
-        $storedFilename = uniqid() . '.' . $file->getClientOriginalExtension();
-        
+        $storedFilename = uniqid().'.'.$file->getClientOriginalExtension();
+
         // Store the original file temporarily
-        $tempPath = $file->storeAs('temp', 'temp_' . $storedFilename, 'public');
+        $tempPath = $file->storeAs('temp', 'temp_'.$storedFilename, 'public');
         $fullTempPath = Storage::disk('public')->path($tempPath);
-        
+
         // If crop data is provided, crop the image
         if ($cropData) {
             $croppedPath = $this->cropImage($fullTempPath, $cropData, $storedFilename);
-            $path = 'avatars/' . $storedFilename;
-            
+            $path = 'avatars/'.$storedFilename;
+
             // Clean up temp file
             Storage::disk('public')->delete($tempPath);
         } else {
@@ -136,7 +137,7 @@ class UserController extends Controller
             'message' => 'アバター画像をアップロードしました',
             'avatar_file' => $avatarFile,
             'avatar_url' => Storage::url($path),
-            'user' => $user->fresh()
+            'user' => $user->fresh(),
         ]);
     }
 
@@ -146,7 +147,7 @@ class UserController extends Controller
     public function updateAvatarCrop(Request $request, AvatarFile $avatarFile): JsonResponse
     {
         $user = Auth::user();
-        
+
         if ($avatarFile->user_id !== $user->id) {
             return response()->json(['message' => '権限がありません'], 403);
         }
@@ -157,16 +158,16 @@ class UserController extends Controller
             'crop_data.y' => 'required|numeric',
             'crop_data.width' => 'required|numeric',
             'crop_data.height' => 'required|numeric',
-            'crop_data.zoom' => 'nullable|numeric|between:0.1,3'
+            'crop_data.zoom' => 'nullable|numeric|between:0.1,3',
         ]);
 
         $avatarFile->update([
-            'crop_data' => $request->input('crop_data')
+            'crop_data' => $request->input('crop_data'),
         ]);
 
         return response()->json([
             'message' => 'トリミング情報を更新しました',
-            'avatar_file' => $avatarFile->fresh()
+            'avatar_file' => $avatarFile->fresh(),
         ]);
     }
 
@@ -176,7 +177,7 @@ class UserController extends Controller
     public function deleteAvatar(AvatarFile $avatarFile): JsonResponse
     {
         $user = Auth::user();
-        
+
         if ($avatarFile->user_id !== $user->id) {
             return response()->json(['message' => '権限がありません'], 403);
         }
@@ -195,7 +196,7 @@ class UserController extends Controller
         }
 
         return response()->json([
-            'message' => 'アバター画像を削除しました'
+            'message' => 'アバター画像を削除しました',
         ]);
     }
 
@@ -210,20 +211,24 @@ class UserController extends Controller
             ->get();
 
         return response()->json([
-            'avatar_files' => $avatarFiles
+            'avatar_files' => $avatarFiles,
         ]);
     }
 
     /**
      * Get user article posting activity for heatmap.
      */
-    public function getArticleActivity(): JsonResponse
+    public function getArticleActivity(?\App\Models\User $user = null): JsonResponse
     {
-        $user = Auth::user();
+        // userパラメータが指定されていない場合は認証ユーザーを使用
+        if (! $user) {
+            $user = Auth::user();
+        }
+
         $activities = $user->getArticleActivity();
 
         return response()->json([
-            'activities' => $activities
+            'activities' => $activities,
         ]);
     }
 
@@ -239,18 +244,18 @@ class UserController extends Controller
 
         $user = Auth::user();
 
-        if (!password_verify($request->current_password, $user->password)) {
+        if (! password_verify($request->current_password, $user->password)) {
             return response()->json([
-                'message' => '現在のパスワードが正しくありません'
+                'message' => '現在のパスワードが正しくありません',
             ], 400);
         }
 
         $user->update([
-            'password' => bcrypt($request->new_password)
+            'password' => bcrypt($request->new_password),
         ]);
 
         return response()->json([
-            'message' => 'パスワードを変更しました'
+            'message' => 'パスワードを変更しました',
         ]);
     }
 
@@ -260,14 +265,14 @@ class UserController extends Controller
     public function deleteAccount(Request $request): JsonResponse
     {
         $request->validate([
-            'password' => 'required'
+            'password' => 'required',
         ]);
 
         $user = Auth::user();
 
-        if (!password_verify($request->password, $user->password)) {
+        if (! password_verify($request->password, $user->password)) {
             return response()->json([
-                'message' => 'パスワードが正しくありません'
+                'message' => 'パスワードが正しくありません',
             ], 400);
         }
 
@@ -281,7 +286,7 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json([
-            'message' => 'アカウントを削除しました'
+            'message' => 'アカウントを削除しました',
         ]);
     }
 
@@ -292,7 +297,7 @@ class UserController extends Controller
     {
         // Get image info
         $imageInfo = getimagesize($sourcePath);
-        if (!$imageInfo) {
+        if (! $imageInfo) {
             throw new \Exception('Invalid image file');
         }
 
@@ -315,7 +320,7 @@ class UserController extends Controller
                 throw new \Exception('Unsupported image format');
         }
 
-        if (!$sourceImage) {
+        if (! $sourceImage) {
             throw new \Exception('Failed to create image resource');
         }
 
@@ -327,11 +332,11 @@ class UserController extends Controller
 
         // Ensure square crop
         $cropSize = min($cropWidth, $cropHeight);
-        
+
         // Create cropped image (256x256 for avatar)
         $avatarSize = 256;
         $croppedImage = imagecreatetruecolor($avatarSize, $avatarSize);
-        
+
         // Preserve transparency for PNG
         if ($mimeType === 'image/png') {
             imagealphablending($croppedImage, false);
@@ -342,20 +347,20 @@ class UserController extends Controller
 
         // Copy and resize the cropped area
         imagecopyresampled(
-            $croppedImage, 
-            $sourceImage, 
-            0, 0, 
-            $cropX, $cropY, 
-            $avatarSize, $avatarSize, 
+            $croppedImage,
+            $sourceImage,
+            0, 0,
+            $cropX, $cropY,
+            $avatarSize, $avatarSize,
             $cropSize, $cropSize
         );
 
         // Save cropped image
-        $avatarPath = Storage::disk('public')->path('avatars/' . $filename);
-        
+        $avatarPath = Storage::disk('public')->path('avatars/'.$filename);
+
         // Ensure avatars directory exists
         $avatarDir = dirname($avatarPath);
-        if (!is_dir($avatarDir)) {
+        if (! is_dir($avatarDir)) {
             mkdir($avatarDir, 0755, true);
         }
 
@@ -376,7 +381,7 @@ class UserController extends Controller
         imagedestroy($sourceImage);
         imagedestroy($croppedImage);
 
-        if (!$saved) {
+        if (! $saved) {
             throw new \Exception('Failed to save cropped image');
         }
 

@@ -11,6 +11,7 @@ export interface User {
   x_url?: string;
   github_url?: string;
   profile_public?: boolean;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -43,7 +44,7 @@ export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginRequest) => Promise<void>;
+  login: (credentials: LoginRequest) => Promise<User>;
   register: (userData: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;

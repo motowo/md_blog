@@ -24,7 +24,7 @@ return new class extends Migration
             $table->json('crop_data')->nullable(); // cropping coordinates and zoom data
             $table->boolean('is_active')->default(false);
             $table->timestamps();
-            
+
             $table->index(['user_id', 'is_active']);
         });
     }

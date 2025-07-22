@@ -31,6 +31,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // ローカルストレージのデータが有効な場合、サーバーでトークンを検証
           try {
             const currentUser = await AuthService.getCurrentUser();
+
+            // ユーザーが無効化されているかチェック
+            if (!currentUser.is_active) {
+              console.warn("User account is inactive, logging out");
+              await AuthService.logout();
+              setUser(null);
+              return;
+            }
+
             setUser(currentUser);
           } catch (error) {
             // トークンが無効または期限切れの場合は認証状態をクリア
@@ -69,10 +78,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (credentials: LoginRequest): Promise<void> => {
+  const login = async (credentials: LoginRequest): Promise<User> => {
     try {
       const authResponse = await AuthService.login(credentials);
       setUser(authResponse.user);
+      return authResponse.user;
     } catch (error) {
       console.error("Login failed:", error);
       throw error;

@@ -187,9 +187,12 @@ class UserController extends Controller
     /**
      * ユーザーの記事一覧取得
      */
-    public function articles(Request $request)
+    public function articles(Request $request, ?\App\Models\User $user = null)
     {
-        $user = Auth::user();
+        // userパラメータが指定されていない場合は認証ユーザーを使用
+        if (! $user) {
+            $user = Auth::user();
+        }
 
         $query = $user->articles();
 
