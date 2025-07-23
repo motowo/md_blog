@@ -33,9 +33,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const currentUser = await AuthService.getCurrentUser();
 
             // ユーザーが無効化されているかチェック
-            if (!currentUser.is_active) {
+            if (currentUser && !currentUser.is_active) {
               console.warn("User account is inactive, logging out");
-              await AuthService.logout();
+              AuthService.clearAuthData();
               setUser(null);
               return;
             }
