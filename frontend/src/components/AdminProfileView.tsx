@@ -37,9 +37,9 @@ const AdminProfileView: React.FC<AdminProfileViewProps> = ({
 }) => {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  
+
   // 管理者かどうかをチェック
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
   const [activeTab, setActiveTab] = useState<
     "profile" | "articles" | "settings"
   >(initialTab);

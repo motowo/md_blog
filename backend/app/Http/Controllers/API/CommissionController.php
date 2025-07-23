@@ -164,32 +164,6 @@ class CommissionController extends Controller
         });
     }
 
-    /**
-     * 手数料レポートを取得
-     */
-    public function report(Request $request): JsonResponse
-    {
-        $validator = Validator::make($request->all(), [
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $report = $this->commissionService->calculateCommissionRevenue(
-            $request->start_date,
-            $request->end_date
-        );
-
-        return response()->json([
-            'data' => $report
-        ]);
-    }
 
     /**
      * 月次支払い処理を実行

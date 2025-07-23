@@ -4,7 +4,7 @@ import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Pagination from "../components/ui/Pagination";
-import SortableTableHeader, { type SortConfig } from "../components/ui/SortableTableHeader";
+import { type SortConfig } from "../components/ui/SortableTableHeader";
 import AdminLayout from "../components/AdminLayout";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import {
@@ -33,16 +33,19 @@ const AdminArticles: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // 並び替えパラメータを構築
-      const sortParams = sortConfig.reduce((acc, config, index) => {
-        if (config.direction) {
-          acc[`sort[${index}][field]`] = config.field;
-          acc[`sort[${index}][direction]`] = config.direction;
-        }
-        return acc;
-      }, {} as Record<string, string>);
-      
+      const sortParams = sortConfig.reduce(
+        (acc, config, index) => {
+          if (config.direction) {
+            acc[`sort[${index}][field]`] = config.field;
+            acc[`sort[${index}][direction]`] = config.direction;
+          }
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+
       const data: ArticlesResponse = await AdminService.getArticles({
         page: currentPage,
         per_page: 15,
@@ -73,28 +76,6 @@ const AdminArticles: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchQuery(searchInput);
-    setCurrentPage(1);
-  };
-
-  const handleSort = (field: string) => {
-    setSortConfig(prevConfig => {
-      const existingIndex = prevConfig.findIndex(config => config.field === field);
-      
-      if (existingIndex >= 0) {
-        const existing = prevConfig[existingIndex];
-        const newConfig = [...prevConfig];
-        
-        if (existing.direction === 'asc') {
-          newConfig[existingIndex] = { ...existing, direction: 'desc' };
-        } else if (existing.direction === 'desc') {
-          newConfig.splice(existingIndex, 1);
-        }
-        
-        return newConfig;
-      } else {
-        return [...prevConfig, { field, direction: 'asc' as const }];
-      }
-    });
     setCurrentPage(1);
   };
 
@@ -152,7 +133,6 @@ const AdminArticles: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-
         {/* フィルター・検索フォーム */}
         <Card className="mb-6">
           <CardBody>
@@ -224,133 +204,138 @@ const AdminArticles: React.FC = () => {
                   disabled={loading}
                   className="mb-4"
                 />
-                
+
                 <div className="space-y-4">
                   {articles.map((article) => (
-                  <div
-                    key={article.id}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        {/* タイトルと基本情報 */}
-                        <div className="flex items-center gap-3 mb-2">
-                          <Link
-                            to={`/articles/${article.id}`}
-                            className="text-lg font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                          >
-                            {truncateText(article.title, 80)}
-                          </Link>
-                        </div>
+                    <div
+                      key={article.id}
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          {/* タイトルと基本情報 */}
+                          <div className="flex items-center gap-3 mb-2">
+                            <Link
+                              to={`/articles/${article.id}`}
+                              className="text-lg font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                            >
+                              {truncateText(article.title, 80)}
+                            </Link>
+                          </div>
 
-                        {/* ステータスと価格のバッジ */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <span
-                            className={getBadgeClass(
-                              "articleStatus",
-                              article.status === "published"
-                                ? "published"
-                                : "draft",
-                            )}
-                          >
-                            {article.status === "published"
-                              ? "公開中"
-                              : "下書き"}
-                          </span>
-                          <span
-                            className={getBadgeClass(
-                              "priceType",
-                              article.is_paid ? "paid" : "free",
-                            )}
-                          >
-                            {article.is_paid
-                              ? `有料 ${formatCurrency(article.price || 0)}`
-                              : "無料"}
-                          </span>
-                          {article.payments_count > 0 && (
-                            <span className={getBadgeClass("metrics", "count")}>
-                              購入数: {article.payments_count}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* 作者と日付 */}
-                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <div className="flex items-center space-x-2">
-                            <div className="flex-shrink-0">
-                              {article.user.avatar_path ? (
-                                <img
-                                  src={`${API_BASE_URL}${article.user.avatar_path}`}
-                                  alt={article.user.username}
-                                  className="h-6 w-6 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                                  <svg
-                                    className="h-3 w-3 text-gray-500 dark:text-gray-400"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                  </svg>
-                                </div>
+                          {/* ステータスと価格のバッジ */}
+                          <div className="flex items-center gap-2 mb-3">
+                            <span
+                              className={getBadgeClass(
+                                "articleStatus",
+                                article.status === "published"
+                                  ? "published"
+                                  : "draft",
                               )}
+                            >
+                              {article.status === "published"
+                                ? "公開中"
+                                : "下書き"}
+                            </span>
+                            <span
+                              className={getBadgeClass(
+                                "priceType",
+                                article.is_paid ? "paid" : "free",
+                              )}
+                            >
+                              {article.is_paid
+                                ? `有料 ${formatCurrency(article.price || 0)}`
+                                : "無料"}
+                            </span>
+                            {article.payments_count > 0 && (
+                              <span
+                                className={getBadgeClass("metrics", "count")}
+                              >
+                                購入数: {article.payments_count}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* 作者と日付 */}
+                          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-shrink-0">
+                                {article.user.avatar_path ? (
+                                  <img
+                                    src={`${API_BASE_URL}${article.user.avatar_path}`}
+                                    alt={article.user.username}
+                                    className="h-6 w-6 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                    <svg
+                                      className="h-3 w-3 text-gray-500 dark:text-gray-400"
+                                      fill="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+                              <span>
+                                作者:{" "}
+                                {article.user.name || article.user.username}
+                              </span>
                             </div>
                             <span>
-                              作者: {article.user.name || article.user.username}
+                              投稿日: {formatDate(article.created_at)}
                             </span>
+                            {article.updated_at !== article.created_at && (
+                              <span>
+                                更新日: {formatDate(article.updated_at)}
+                              </span>
+                            )}
                           </div>
-                          <span>投稿日: {formatDate(article.created_at)}</span>
-                          {article.updated_at !== article.created_at && (
-                            <span>
-                              更新日: {formatDate(article.updated_at)}
-                            </span>
+
+                          {/* タグ */}
+                          {article.tags && article.tags.length > 0 && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                タグ:
+                              </span>
+                              <div className="flex flex-wrap gap-1">
+                                {article.tags.map((tag) => (
+                                  <span
+                                    key={tag.id}
+                                    className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded"
+                                  >
+                                    {tag.name}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
                           )}
                         </div>
 
-                        {/* タグ */}
-                        {article.tags && article.tags.length > 0 && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                              タグ:
-                            </span>
-                            <div className="flex flex-wrap gap-1">
-                              {article.tags.map((tag) => (
-                                <span
-                                  key={tag.id}
-                                  className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded"
-                                >
-                                  {tag.name}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 操作ボタン */}
-                      <div className="flex flex-col sm:flex-row sm:flex-col gap-2 ml-4 min-w-fit">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleToggleStatus(article)}
-                        >
-                          {article.status === "published" ? "非公開" : "公開"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeleteArticle(article)}
-                          className="text-red-600 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-600 dark:hover:bg-red-900"
-                        >
-                          削除
-                        </Button>
+                        {/* 操作ボタン */}
+                        <div className="flex flex-col sm:flex-row sm:flex-col gap-2 ml-4 min-w-fit">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleStatus(article)}
+                          >
+                            {article.status === "published" ? "非公開" : "公開"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteArticle(article)}
+                            className="text-red-600 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-600 dark:hover:bg-red-900"
+                          >
+                            削除
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
                   ))}
                 </div>
-                
+
                 {/* 下部ページネーション */}
                 <Pagination
                   currentPage={currentPage}
@@ -361,7 +346,6 @@ const AdminArticles: React.FC = () => {
                 />
               </>
             )}
-
           </CardBody>
         </Card>
       </div>

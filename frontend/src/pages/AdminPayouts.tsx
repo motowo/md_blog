@@ -47,8 +47,12 @@ interface MonthlyDetails {
 
 export function AdminPayouts() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
-  const [monthlySummaries, setMonthlySummaries] = useState<MonthlySummary[]>([]);
-  const [monthlyDetails, setMonthlyDetails] = useState<MonthlyDetails | null>(null);
+  const [monthlySummaries, setMonthlySummaries] = useState<MonthlySummary[]>(
+    [],
+  );
+  const [monthlyDetails, setMonthlyDetails] = useState<MonthlyDetails | null>(
+    null,
+  );
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -63,7 +67,7 @@ export function AdminPayouts() {
       "-" +
       String(new Date().getMonth() + 1).padStart(2, "0"),
   );
-  const [activeTab, setActiveTab] = useState<'summary' | 'pending'>('summary');
+  const [activeTab, setActiveTab] = useState<"summary" | "pending">("summary");
 
   useEffect(() => {
     fetchPayouts();
@@ -85,7 +89,8 @@ export function AdminPayouts() {
       } else {
         setError("支払い情報の取得に失敗しました");
       }
-    } catch (err) {
+    } catch (error) {
+      console.error("Failed to fetch payouts:", error);
       setError("支払い情報の取得中にエラーが発生しました");
     } finally {
       setLoading(false);
@@ -119,11 +124,14 @@ export function AdminPayouts() {
     setDetailsLoading(true);
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch(`/api/admin/payouts/monthly-details?period=${period}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `/api/admin/payouts/monthly-details?period=${period}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -179,25 +187,25 @@ export function AdminPayouts() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'paid':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'unpaid':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'failed':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case "paid":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "unpaid":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      case "failed":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'paid':
-        return '支払済';
-      case 'unpaid':
-        return '未払い';
-      case 'failed':
-        return '失敗';
+      case "paid":
+        return "支払済";
+      case "unpaid":
+        return "未払い";
+      case "failed":
+        return "失敗";
       default:
         return status;
     }
@@ -372,7 +380,9 @@ export function AdminPayouts() {
               </button>
             </div>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              指定した月の売上データを集計し、手数料を計算して<strong>未払い状態</strong>の支払い情報を作成します。<br />
+              指定した月の売上データを集計し、手数料を計算して
+              <strong>未払い状態</strong>の支払い情報を作成します。
+              <br />
               作成後は「未払い一覧」タブで内容を確認し、個別に支払い確定処理を行ってください。
             </p>
           </CardBody>
@@ -382,21 +392,21 @@ export function AdminPayouts() {
         <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="-mb-px flex space-x-8">
             <button
-              onClick={() => setActiveTab('summary')}
+              onClick={() => setActiveTab("summary")}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'summary'
-                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                activeTab === "summary"
+                  ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
               }`}
             >
               月次サマリ
             </button>
             <button
-              onClick={() => setActiveTab('pending')}
+              onClick={() => setActiveTab("pending")}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'pending'
-                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                activeTab === "pending"
+                  ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
               }`}
             >
               未払い一覧
@@ -405,7 +415,7 @@ export function AdminPayouts() {
         </div>
 
         {/* 月次サマリタブ */}
-        {activeTab === 'summary' && (
+        {activeTab === "summary" && (
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -462,17 +472,23 @@ export function AdminPayouts() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex space-x-1">
                                 {summary.paid_count > 0 && (
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor('paid')}`}>
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor("paid")}`}
+                                  >
                                     支払済 {summary.paid_count}
                                   </span>
                                 )}
                                 {summary.unpaid_count > 0 && (
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor('unpaid')}`}>
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor("unpaid")}`}
+                                  >
                                     未払い {summary.unpaid_count}
                                   </span>
                                 )}
                                 {summary.failed_count > 0 && (
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor('failed')}`}>
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor("failed")}`}
+                                  >
                                     失敗 {summary.failed_count}
                                   </span>
                                 )}
@@ -482,11 +498,16 @@ export function AdminPayouts() {
                               {formatCurrency(summary.total_amount)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                              {parseFloat(summary.avg_commission_rate).toFixed(2)}%
+                              {parseFloat(summary.avg_commission_rate).toFixed(
+                                2,
+                              )}
+                              %
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <button
-                                onClick={() => fetchMonthlyDetails(summary.period)}
+                                onClick={() =>
+                                  fetchMonthlyDetails(summary.period)
+                                }
                                 className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                               >
                                 詳細表示
@@ -576,7 +597,9 @@ export function AdminPayouts() {
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payout.status)}`}>
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payout.status)}`}
+                                >
                                   {getStatusText(payout.status)}
                                 </span>
                               </td>
@@ -593,7 +616,9 @@ export function AdminPayouts() {
                                 {parseFloat(payout.commission_rate).toFixed(2)}%
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                {payout.paid_at ? formatDate(payout.paid_at) : monthlyDetails.payout_date_formatted}
+                                {payout.paid_at
+                                  ? formatDate(payout.paid_at)
+                                  : monthlyDetails.payout_date_formatted}
                               </td>
                             </tr>
                           ))}
@@ -608,7 +633,7 @@ export function AdminPayouts() {
         )}
 
         {/* 未払い一覧タブ */}
-        {activeTab === 'pending' && (
+        {activeTab === "pending" && (
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">

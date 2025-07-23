@@ -130,29 +130,6 @@ class CommissionService
         });
     }
 
-    /**
-     * 特定期間の手数料収入を計算
-     *
-     * @param string $startDate Y-m-d形式の開始日
-     * @param string $endDate Y-m-d形式の終了日
-     * @return array
-     */
-    public function calculateCommissionRevenue($startDate, $endDate)
-    {
-        $payouts = Payout::query()
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->get();
-
-        $totalCommission = $payouts->sum('commission_amount');
-        $totalGross = $payouts->sum('gross_amount');
-
-        return [
-            'total_commission' => $totalCommission,
-            'total_gross' => $totalGross,
-            'average_commission_rate' => $totalGross > 0 ? round(($totalCommission / $totalGross) * 100, 2) : 0,
-            'payout_count' => $payouts->count(),
-        ];
-    }
 
     /**
      * 過去のデータに手数料を適用

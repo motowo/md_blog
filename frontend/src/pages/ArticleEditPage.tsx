@@ -88,7 +88,7 @@ const ArticleEditPage: React.FC = () => {
           title: articleResponse.title,
           content: articleResponse.content,
           is_paid: user?.role === "admin" ? false : articleResponse.is_paid,
-          price: user?.role === "admin" ? 0 : (articleResponse.price || 0),
+          price: user?.role === "admin" ? 0 : articleResponse.price || 0,
           tag_ids: articleResponse.tags?.map((tag) => tag.id) || [],
         });
 
@@ -129,7 +129,7 @@ const ArticleEditPage: React.FC = () => {
     };
 
     fetchData();
-  }, [id, restoreFromStorage]);
+  }, [id, restoreFromStorage, user?.role]);
 
   // 下書き復元ハンドラー
   const handleDraftRestore = (
@@ -141,9 +141,15 @@ const ArticleEditPage: React.FC = () => {
       setFormData((prev) => ({ ...prev, content: draftData.content }));
     // 管理者の場合は有料記事設定をクリア
     if (draftData.is_paid !== undefined)
-      setFormData((prev) => ({ ...prev, is_paid: user?.role === "admin" ? false : draftData.is_paid }));
+      setFormData((prev) => ({
+        ...prev,
+        is_paid: user?.role === "admin" ? false : draftData.is_paid,
+      }));
     if (draftData.price !== undefined)
-      setFormData((prev) => ({ ...prev, price: user?.role === "admin" ? 0 : draftData.price }));
+      setFormData((prev) => ({
+        ...prev,
+        price: user?.role === "admin" ? 0 : draftData.price,
+      }));
     if (draftData.selectedTags && Array.isArray(draftData.selectedTags)) {
       setSelectedTags(draftData.selectedTags);
       setFormData((prev) => ({ ...prev, tag_ids: draftData.selectedTags }));
@@ -325,10 +331,10 @@ const ArticleEditPage: React.FC = () => {
 
   // 作成者または管理者のみ編集可能
   const canEdit = user.id === article.user_id || user.role === "admin";
-  
+
   // 管理者の場合は有料記事機能を無効にする
   const isAdmin = user.role === "admin";
-  
+
   if (!canEdit) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">

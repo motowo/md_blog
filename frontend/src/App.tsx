@@ -18,7 +18,6 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminArticles from "./pages/AdminArticles";
 import AdminAccount from "./pages/AdminAccount";
 import { AdminCommissionSettings } from "./pages/AdminCommissionSettings";
-import { AdminCommissionReport } from "./pages/AdminCommissionReport";
 import { AdminPayouts } from "./pages/AdminPayouts";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -147,34 +146,15 @@ function App() {
             />
 
             {/* 管理者専用ルート */}
-            <Route
-              path="/admin"
-              element={<AdminDashboard />}
-            />
-            <Route
-              path="/admin/users"
-              element={<AdminUsers />}
-            />
-            <Route
-              path="/admin/articles"
-              element={<AdminArticles />}
-            />
-            <Route
-              path="/admin/account"
-              element={<AdminAccount />}
-            />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/articles" element={<AdminArticles />} />
+            <Route path="/admin/account" element={<AdminAccount />} />
             <Route
               path="/admin/commission-settings"
               element={<AdminCommissionSettings />}
             />
-            <Route
-              path="/admin/commission-report"
-              element={<AdminCommissionReport />}
-            />
-            <Route
-              path="/admin/payouts"
-              element={<AdminPayouts />}
-            />
+            <Route path="/admin/payouts" element={<AdminPayouts />} />
           </Routes>
         </Router>
       </AuthProvider>

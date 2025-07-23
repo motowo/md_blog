@@ -101,9 +101,15 @@ const ArticleCreatePage: React.FC = () => {
       setFormData((prev) => ({ ...prev, content: draftData.content }));
     // 管理者の場合は有料記事設定をクリア
     if (draftData.is_paid !== undefined)
-      setFormData((prev) => ({ ...prev, is_paid: user?.role === "admin" ? false : draftData.is_paid }));
+      setFormData((prev) => ({
+        ...prev,
+        is_paid: user?.role === "admin" ? false : draftData.is_paid,
+      }));
     if (draftData.price !== undefined)
-      setFormData((prev) => ({ ...prev, price: user?.role === "admin" ? 0 : draftData.price }));
+      setFormData((prev) => ({
+        ...prev,
+        price: user?.role === "admin" ? 0 : draftData.price,
+      }));
     if (draftData.selectedTags && Array.isArray(draftData.selectedTags)) {
       setSelectedTags(draftData.selectedTags);
       setFormData((prev) => ({ ...prev, tag_ids: draftData.selectedTags }));

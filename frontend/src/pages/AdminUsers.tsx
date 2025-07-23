@@ -4,7 +4,9 @@ import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Pagination from "../components/ui/Pagination";
-import SortableTableHeader, { type SortConfig } from "../components/ui/SortableTableHeader";
+import SortableTableHeader, {
+  type SortConfig,
+} from "../components/ui/SortableTableHeader";
 import UserProfileView from "../components/UserProfileView";
 import AdminLayout from "../components/AdminLayout";
 import { useAuth } from "../contexts/AuthContextDefinition";
@@ -33,16 +35,19 @@ const AdminUsers: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // 並び替えパラメータを構築
-      const sortParams = sortConfig.reduce((acc, config, index) => {
-        if (config.direction) {
-          acc[`sort[${index}][field]`] = config.field;
-          acc[`sort[${index}][direction]`] = config.direction;
-        }
-        return acc;
-      }, {} as Record<string, string>);
-      
+      const sortParams = sortConfig.reduce(
+        (acc, config, index) => {
+          if (config.direction) {
+            acc[`sort[${index}][field]`] = config.field;
+            acc[`sort[${index}][direction]`] = config.direction;
+          }
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+
       // 投稿者を確実に取得するため、大きなper_pageで取得してからフィルタリング
       const data: UsersResponse = await AdminService.getUsers({
         page: 1, // 全データを取得するため1ページ目から
@@ -50,54 +55,58 @@ const AdminUsers: React.FC = () => {
         search: searchQuery || undefined,
         ...sortParams,
       });
-      
+
       // 投稿者のみフィルタリング（roleが'author'のユーザー）
-      let filteredUsers = data.users.filter(u => u.role === 'author');
-      
+      let filteredUsers = data.users.filter((u) => u.role === "author");
+
       // クライアント側で並び替え処理（APIが対応していない場合のフォールバック）
       if (sortConfig.length > 0) {
         filteredUsers = [...filteredUsers].sort((a, b) => {
           for (const config of sortConfig) {
             if (!config.direction) continue;
-            
+
             let aValue: any = a[config.field as keyof AdminUser];
             let bValue: any = b[config.field as keyof AdminUser];
-            
+
             // 日付の場合は Date オブジェクトに変換
-            if (config.field.includes('_at') || config.field === 'created_at' || config.field === 'updated_at') {
+            if (
+              config.field.includes("_at") ||
+              config.field === "created_at" ||
+              config.field === "updated_at"
+            ) {
               aValue = new Date(aValue).getTime();
               bValue = new Date(bValue).getTime();
             }
-            
+
             // 数値の場合は数値に変換
-            if (typeof aValue === 'string' && !isNaN(Number(aValue))) {
+            if (typeof aValue === "string" && !isNaN(Number(aValue))) {
               aValue = Number(aValue);
               bValue = Number(bValue);
             }
-            
+
             // 文字列の場合は小文字で比較
-            if (typeof aValue === 'string') {
+            if (typeof aValue === "string") {
               aValue = aValue.toLowerCase();
               bValue = bValue.toLowerCase();
             }
-            
+
             let comparison = 0;
             if (aValue < bValue) comparison = -1;
             if (aValue > bValue) comparison = 1;
-            
+
             if (comparison !== 0) {
-              return config.direction === 'desc' ? -comparison : comparison;
+              return config.direction === "desc" ? -comparison : comparison;
             }
           }
           return 0;
         });
       }
-      
+
       // クライアント側でページネーション処理
       const startIndex = (currentPage - 1) * 15;
       const endIndex = startIndex + 15;
       const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
-      
+
       setUsers(paginatedUsers);
       setTotalPages(Math.ceil(filteredUsers.length / 15));
       setTotalUsers(filteredUsers.length);
@@ -125,22 +134,24 @@ const AdminUsers: React.FC = () => {
   };
 
   const handleSort = (field: string) => {
-    setSortConfig(prevConfig => {
-      const existingIndex = prevConfig.findIndex(config => config.field === field);
-      
+    setSortConfig((prevConfig) => {
+      const existingIndex = prevConfig.findIndex(
+        (config) => config.field === field,
+      );
+
       if (existingIndex >= 0) {
         const existing = prevConfig[existingIndex];
         const newConfig = [...prevConfig];
-        
-        if (existing.direction === 'asc') {
-          newConfig[existingIndex] = { ...existing, direction: 'desc' };
-        } else if (existing.direction === 'desc') {
+
+        if (existing.direction === "asc") {
+          newConfig[existingIndex] = { ...existing, direction: "desc" };
+        } else if (existing.direction === "desc") {
           newConfig.splice(existingIndex, 1);
         }
-        
+
         return newConfig;
       } else {
-        return [...prevConfig, { field, direction: 'asc' as const }];
+        return [...prevConfig, { field, direction: "asc" as const }];
       }
     });
     setCurrentPage(1);
@@ -217,7 +228,6 @@ const AdminUsers: React.FC = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-
         {/* 検索フォーム */}
         <Card className="mb-6">
           <CardBody>
@@ -401,9 +411,24 @@ const AdminUsers: React.FC = () => {
                               className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20 rounded-md transition-colors"
                               title="詳細を表示"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
                               </svg>
                             </button>
                             {targetUser.id !== user?.id && (
@@ -411,16 +436,45 @@ const AdminUsers: React.FC = () => {
                                 <button
                                   onClick={() => handleToggleStatus(targetUser)}
                                   className="p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-900/20 rounded-md transition-colors"
-                                  title={targetUser.is_active ? "無効化" : "有効化"}
+                                  title={
+                                    targetUser.is_active ? "無効化" : "有効化"
+                                  }
                                 >
                                   {targetUser.is_active ? (
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
-                                      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728"
+                                      />
+                                      <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="9"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                      />
                                     </svg>
                                   ) : (
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                      />
                                     </svg>
                                   )}
                                 </button>
@@ -429,8 +483,18 @@ const AdminUsers: React.FC = () => {
                                   className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-md transition-colors"
                                   title="削除"
                                 >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
                                   </svg>
                                 </button>
                               </>
@@ -452,7 +516,7 @@ const AdminUsers: React.FC = () => {
               disabled={loading}
               className="mb-4"
             />
-            
+
             {/* 下部ページネーション */}
             <Pagination
               currentPage={currentPage}

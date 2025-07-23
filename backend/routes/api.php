@@ -116,7 +116,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/commission-settings', [CommissionController::class, 'store']);
         Route::put('/commission-settings/{setting}', [CommissionController::class, 'update']);
         Route::delete('/commission-settings/{setting}', [CommissionController::class, 'destroy']);
-        Route::get('/commission-report', [CommissionController::class, 'report']);
         Route::post('/process-monthly-payouts', [CommissionController::class, 'processMonthlyPayouts']);
         
         // 振込管理
