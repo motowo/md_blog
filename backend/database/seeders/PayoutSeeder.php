@@ -21,8 +21,8 @@ class PayoutSeeder extends Seeder
         // CommissionServiceを使用して履歴処理を実行
         $commissionService = app(CommissionService::class);
 
-        // 2025年6月と7月の振込データを生成（タイムゾーン対応版）
-        $months = ['2025-06', '2025-07'];
+        // 2025年5月、6月、7月の振込データを生成（タイムゾーン対応版）
+        $months = ['2025-05', '2025-06', '2025-07'];
 
         foreach ($months as $yearMonth) {
             $result = $commissionService->processMonthlyPayouts($yearMonth);
@@ -36,6 +36,9 @@ class PayoutSeeder extends Seeder
 
         // 1000円未満繰越ルールを適用
         $this->applyCarryOverRule();
+
+        // 2025年6月分の振込を完了状態に更新
+        $this->completeJunePayouts();
 
         $this->command->info('タイムゾーン対応版の振込データのシードが完了しました');
     }
@@ -75,6 +78,35 @@ class PayoutSeeder extends Seeder
                     $carryOverAmount = $totalAmount;
                 }
             }
+        }
+    }
+
+    /**
+     * 2025年6月分の振込を完了状態に更新
+     */
+    private function completeJunePayouts(): void
+    {
+        // 2025年6月分の振込データを完了状態に更新
+        $junePayouts = Payout::where('period', '2025-06')
+            ->where('status', 'unpaid')
+            ->where('amount', '>=', 1000) // 1000円以上のみ振込対象
+            ->get();
+
+        $completedCount = 0;
+        
+        foreach ($junePayouts as $payout) {
+            $payout->update([
+                'status' => 'paid',
+                'paid_at' => now()->setDate(2025, 7, 15)->setTime(10, 0), // 2025年7月15日に振込完了
+                'updated_at' => now()->setDate(2025, 7, 15)->setTime(10, 0),
+            ]);
+            $completedCount++;
+        }
+
+        if ($completedCount > 0) {
+            $this->command->info("2025年6月分振込完了: {$completedCount}件を paid 状態に更新");
+        } else {
+            $this->command->info("2025年6月分: 振込対象データがありませんでした");
         }
     }
 }

@@ -51,7 +51,13 @@ export interface Payout {
   commission_rate: string;
   status: "unpaid" | "paid" | "failed";
   paid_at: string | null;
-  bank_account_info: any;
+  bank_account_info: {
+    bank_name: string;
+    branch_name: string;
+    account_type: string;
+    account_number: string;
+    account_holder: string;
+  } | null;
   created_at: string;
   updated_at: string;
 }

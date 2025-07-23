@@ -81,7 +81,12 @@ const PayoutManagement: React.FC = () => {
     };
 
     return (
-      <span className={getBadgeClass("paymentStatus", status as any)}>
+      <span
+        className={getBadgeClass(
+          "paymentStatus",
+          status as "unpaid" | "paid" | "failed",
+        )}
+      >
         {statusMap[status] || status}
       </span>
     );
