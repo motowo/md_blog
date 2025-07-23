@@ -93,16 +93,17 @@ apiClient.interceptors.response.use(
       // 自動認証確認系のAPI以外では、自動的にローカルストレージをクリアしない
       // ユーザーアクション系のAPIエラーは呼び出し元でハンドリングする
       const isAutoAuthRequest =
+        error.config?.url === "/user" || // getCurrentUser API
         (error.config?.url?.includes("/user/profile") &&
           error.config?.method?.toLowerCase() === "get") ||
         error.config?.url?.includes("/user/activity");
 
       // アバターアップロード等のユーザーアクションでは自動ログアウトしない
+      // ただし、/user APIは認証確認なので自動ログアウト対象とする
       const isUserAction =
         error.config?.url?.includes("/user/avatar") ||
         error.config?.url?.includes("/user/avatars") ||
         error.config?.url?.includes("/user/profile") ||
-        error.config?.url === "/user" || // getCurrentUser API
         (error.config?.method?.toLowerCase() === "post" &&
           error.config?.url?.includes("/user/")) ||
         (error.config?.method?.toLowerCase() === "put" &&
