@@ -99,10 +99,11 @@ const ArticleCreatePage: React.FC = () => {
       setFormData((prev) => ({ ...prev, title: draftData.title }));
     if (draftData.content !== undefined)
       setFormData((prev) => ({ ...prev, content: draftData.content }));
+    // 管理者の場合は有料記事設定をクリア
     if (draftData.is_paid !== undefined)
-      setFormData((prev) => ({ ...prev, is_paid: draftData.is_paid }));
+      setFormData((prev) => ({ ...prev, is_paid: user?.role === "admin" ? false : draftData.is_paid }));
     if (draftData.price !== undefined)
-      setFormData((prev) => ({ ...prev, price: draftData.price }));
+      setFormData((prev) => ({ ...prev, price: user?.role === "admin" ? 0 : draftData.price }));
     if (draftData.selectedTags && Array.isArray(draftData.selectedTags)) {
       setSelectedTags(draftData.selectedTags);
       setFormData((prev) => ({ ...prev, tag_ids: draftData.selectedTags }));
@@ -176,8 +177,8 @@ const ArticleCreatePage: React.FC = () => {
       const submitData = {
         title: formData.title,
         content: formData.content,
-        is_paid: formData.is_paid,
-        price: formData.price,
+        is_paid: user?.role === "admin" ? false : formData.is_paid,
+        price: user?.role === "admin" ? 0 : formData.price,
         status: status,
       };
 
@@ -243,6 +244,9 @@ const ArticleCreatePage: React.FC = () => {
       </div>
     );
   }
+
+  // 管理者の場合は有料記事機能を無効にする
+  const isAdmin = user.role === "admin";
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -328,41 +332,43 @@ const ArticleCreatePage: React.FC = () => {
             </h2>
           </CardHeader>
           <CardBody className="space-y-4">
-            {/* 有料設定 */}
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="is_paid"
-                  checked={formData.is_paid}
-                  onChange={handleInputChange("is_paid")}
-                  disabled={isSubmitting}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="is_paid"
-                  className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  有料記事にする
-                </label>
-              </div>
-
-              {formData.is_paid && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    価格（円）
-                  </label>
-                  <Input
-                    type="number"
-                    value={formData.price}
-                    onChange={handleInputChange("price")}
-                    min="1"
-                    placeholder="100"
+            {/* 有料設定（管理者の場合は非表示） */}
+            {!isAdmin && (
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="is_paid"
+                    checked={formData.is_paid}
+                    onChange={handleInputChange("is_paid")}
                     disabled={isSubmitting}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
+                  <label
+                    htmlFor="is_paid"
+                    className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    有料記事にする
+                  </label>
                 </div>
-              )}
-            </div>
+
+                {formData.is_paid && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      価格（円）
+                    </label>
+                    <Input
+                      type="number"
+                      value={formData.price}
+                      onChange={handleInputChange("price")}
+                      min="1"
+                      placeholder="100"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* タグ選択 */}
             <div>
