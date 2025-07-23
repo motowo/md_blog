@@ -61,6 +61,17 @@ class ArticleController extends Controller
             'preview_content' => 'nullable|string',
         ]);
 
+        // 有料記事の場合は振込口座チェック
+        if ($request->is_paid) {
+            $user = Auth::user();
+            if (!$user->hasActiveBankAccount()) {
+                return response()->json([
+                    'message' => '有料記事を投稿するには振込口座の登録が必要です',
+                    'errors' => ['bank_account' => ['振込口座を登録してください']]
+                ], 422);
+            }
+        }
+
         $article = Article::create([
             'user_id' => Auth::id(),
             'title' => $request->title,
@@ -170,6 +181,17 @@ class ArticleController extends Controller
             'price' => 'nullable|numeric|min:0',
             'preview_content' => 'nullable|string',
         ]);
+
+        // 有料記事への変更の場合は振込口座チェック
+        if ($request->is_paid && !$article->is_paid) {
+            $user = Auth::user();
+            if (!$user->hasActiveBankAccount()) {
+                return response()->json([
+                    'message' => '有料記事にするには振込口座の登録が必要です',
+                    'errors' => ['bank_account' => ['振込口座を登録してください']]
+                ], 422);
+            }
+        }
 
         $article->update($request->only([
             'title',

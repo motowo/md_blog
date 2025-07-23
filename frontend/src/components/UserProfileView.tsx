@@ -13,6 +13,9 @@ import { paymentApi, type PaymentHistoryItem } from "../api/payment";
 import ActivityHeatmap from "./ActivityHeatmap";
 import AvatarUpload from "./AvatarUpload";
 import { CreditCardManager } from "./CreditCardManager";
+import { BankAccountManager } from "./BankAccountManager";
+import SalesManagement from "../pages/SalesManagement";
+import PayoutManagement from "../pages/PayoutManagement";
 import type { Article } from "../types/article";
 import type { User } from "../types/auth";
 import type { ApiError } from "../types/auth";
@@ -28,7 +31,15 @@ interface UserProfileViewProps {
   onAvatarDelete?: () => Promise<void>;
   onAccountDelete?: () => Promise<void>;
   showPaymentTab?: boolean;
-  initialTab?: "profile" | "articles" | "purchases" | "payment" | "settings";
+  initialTab?:
+    | "profile"
+    | "articles"
+    | "purchases"
+    | "payment"
+    | "bank-account"
+    | "sales"
+    | "payouts"
+    | "settings";
 }
 
 const UserProfileView: React.FC<UserProfileViewProps> = ({
@@ -43,7 +54,14 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
 }) => {
   const { isDark, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<
-    "profile" | "articles" | "purchases" | "payment" | "settings"
+    | "profile"
+    | "articles"
+    | "purchases"
+    | "payment"
+    | "bank-account"
+    | "sales"
+    | "payouts"
+    | "settings"
   >(initialTab);
   const [userArticles, setUserArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
@@ -296,6 +314,42 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
               }`}
             >
               支払い方法
+            </button>
+          )}
+          {!isReadOnly && (
+            <button
+              onClick={() => setActiveTab("bank-account")}
+              className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "bank-account"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+              }`}
+            >
+              振込口座
+            </button>
+          )}
+          {!isReadOnly && user?.role === "author" && (
+            <button
+              onClick={() => setActiveTab("sales")}
+              className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "sales"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+              }`}
+            >
+              売上管理
+            </button>
+          )}
+          {!isReadOnly && user?.role === "author" && (
+            <button
+              onClick={() => setActiveTab("payouts")}
+              className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "payouts"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+              }`}
+            >
+              入金管理
             </button>
           )}
           {!isReadOnly && (
@@ -732,6 +786,33 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
         <div className="space-y-6">
           <CreditCardManager />
         </div>
+      )}
+
+      {/* 振込口座タブ */}
+      {activeTab === "bank-account" && !isReadOnly && (
+        <div className="space-y-6">
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                振込口座管理
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                有料記事の売上を受け取るための振込口座を管理します
+              </p>
+            </div>
+            <BankAccountManager />
+          </div>
+        </div>
+      )}
+
+      {/* 売上管理タブ */}
+      {activeTab === "sales" && !isReadOnly && user?.role === "author" && (
+        <SalesManagement />
+      )}
+
+      {/* 入金管理タブ */}
+      {activeTab === "payouts" && !isReadOnly && user?.role === "author" && (
+        <PayoutManagement />
       )}
 
       {/* アカウント設定タブ */}

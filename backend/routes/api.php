@@ -3,7 +3,10 @@
 use App\Http\Controllers\API\AdminController;
 use App\Http\Controllers\API\ArticleController;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\BankAccountController;
+use App\Http\Controllers\API\CommissionController;
 use App\Http\Controllers\API\CreditCardController;
+use App\Http\Controllers\API\SalesController;
 use App\Http\Controllers\API\TagController;
 use App\Http\Controllers\API\UserController as APIUserController;
 use App\Http\Controllers\PaymentController;
@@ -76,6 +79,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/credit-card', [CreditCardController::class, 'store']);
     Route::delete('/credit-card', [CreditCardController::class, 'destroy']);
 
+    // 振込口座管理
+    Route::get('/bank-accounts', [BankAccountController::class, 'index']);
+    Route::post('/bank-accounts', [BankAccountController::class, 'store']);
+    Route::put('/bank-accounts/{id}', [BankAccountController::class, 'update']);
+    Route::delete('/bank-accounts/{id}', [BankAccountController::class, 'destroy']);
+    Route::patch('/bank-accounts/{id}/activate', [BankAccountController::class, 'activate']);
+    
+    // 売上管理
+    Route::get('/sales', [SalesController::class, 'index']);
+    Route::get('/sales/monthly', [SalesController::class, 'monthlySummary']);
+    Route::get('/sales/payouts', [SalesController::class, 'payouts']);
+    Route::get('/sales/payout-schedule', [SalesController::class, 'payoutSchedule']);
+
     // 管理者専用ルート
     Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function () {
         // ユーザー管理
@@ -94,5 +110,17 @@ Route::middleware('auth:sanctum')->group(function () {
         // ダッシュボード・統計
         Route::get('/dashboard/stats', [AdminController::class, 'getDashboardStats']);
         Route::get('/dashboard/revenue', [AdminController::class, 'getRevenueDetails']);
+
+        // 手数料管理
+        Route::get('/commission-settings', [CommissionController::class, 'index']);
+        Route::post('/commission-settings', [CommissionController::class, 'store']);
+        Route::put('/commission-settings/{setting}', [CommissionController::class, 'update']);
+        Route::get('/commission-report', [CommissionController::class, 'report']);
+        Route::post('/process-monthly-payouts', [CommissionController::class, 'processMonthlyPayouts']);
+        
+        // 振込管理
+        Route::get('/pending-payouts', [CommissionController::class, 'getPendingPayouts']);
+        Route::patch('/payouts/{id}/confirm', [CommissionController::class, 'confirmPayout']);
+        Route::post('/payouts/bulk-confirm', [CommissionController::class, 'bulkConfirmPayouts']);
     });
 });

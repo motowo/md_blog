@@ -15,8 +15,11 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             TagSeeder::class,
+            BankAccountSeeder::class, // ユーザー作成後、記事作成前に実行
             ArticleSeeder::class,
             CreditCardSeeder::class,
+            CommissionSettingSeeder::class,
+            PaymentSeeder::class, // 記事作成後に実行
         ]);
     }
 }

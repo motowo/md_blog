@@ -17,6 +17,7 @@ const UserMyPage: React.FC = () => {
     | "articles"
     | "purchases"
     | "payment"
+    | "bank-account"
     | "settings"
     | null;
   const initialTab = tabParam || "profile";
