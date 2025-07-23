@@ -27,7 +27,7 @@ const AdminArticles: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalArticles, setTotalArticles] = useState(0);
-  const [sortConfig, setSortConfig] = useState<SortConfig[]>([]);
+  const [sortConfig] = useState<SortConfig[]>([]);
 
   const fetchArticles = useCallback(async () => {
     try {
@@ -263,7 +263,7 @@ const AdminArticles: React.FC = () => {
                                 {article.user.avatar_path ? (
                                   <img
                                     src={`${API_BASE_URL}${article.user.avatar_path}`}
-                                    alt={article.user.username}
+                                    alt={article.user.name}
                                     className="h-6 w-6 rounded-full object-cover"
                                   />
                                 ) : (

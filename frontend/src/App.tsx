@@ -10,6 +10,7 @@ import { ArticleDetailPage } from "./pages/ArticleDetailPage";
 import ArticleCreatePage from "./pages/ArticleCreatePage";
 import ArticleEditPage from "./pages/ArticleEditPage";
 import UserMyPage from "./pages/UserMyPage";
+import UserPublicProfilePage from "./pages/UserPublicProfilePage";
 import PaymentHistoryPage from "./pages/PaymentHistoryPage";
 import SalesManagement from "./pages/SalesManagement";
 import PayoutManagement from "./pages/PayoutManagement";
@@ -87,6 +88,16 @@ function App() {
                     <UserMyPage />
                   </Layout>
                 </ProtectedRoute>
+              }
+            />
+
+            {/* 公開プロフィール表示（認証不要） */}
+            <Route
+              path="/users/:username"
+              element={
+                <Layout>
+                  <UserPublicProfilePage />
+                </Layout>
               }
             />
 

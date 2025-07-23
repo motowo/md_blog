@@ -28,7 +28,7 @@ class BankAccountTest extends TestCase
         if ($response->status() !== 201) {
             dump($response->json());
         }
-        
+
         $response->assertStatus(201)
             ->assertJsonStructure([
                 'message',
@@ -40,7 +40,7 @@ class BankAccountTest extends TestCase
                     'account_number',
                     'account_holder_name',
                     'is_active',
-                ]
+                ],
             ]);
 
         $this->assertDatabaseHas('bank_accounts', [
@@ -54,7 +54,7 @@ class BankAccountTest extends TestCase
     {
         $user = User::factory()->create();
         $bankAccount = BankAccount::factory()->create(['user_id' => $user->id]);
-        
+
         Sanctum::actingAs($user);
 
         $response = $this->getJson('/api/bank-accounts');
@@ -70,8 +70,8 @@ class BankAccountTest extends TestCase
                         'account_number',
                         'account_holder_name',
                         'is_active',
-                    ]
-                ]
+                    ],
+                ],
             ]);
     }
 
@@ -79,7 +79,7 @@ class BankAccountTest extends TestCase
     {
         $user = User::factory()->create();
         $bankAccount = BankAccount::factory()->create(['user_id' => $user->id]);
-        
+
         Sanctum::actingAs($user);
 
         $response = $this->putJson("/api/bank-accounts/{$bankAccount->id}", [
@@ -90,7 +90,7 @@ class BankAccountTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'message',
-                'data'
+                'data',
             ]);
 
         $this->assertDatabaseHas('bank_accounts', [
@@ -104,7 +104,7 @@ class BankAccountTest extends TestCase
     {
         $user = User::factory()->create();
         $bankAccount = BankAccount::factory()->create(['user_id' => $user->id]);
-        
+
         Sanctum::actingAs($user);
 
         $response = $this->deleteJson("/api/bank-accounts/{$bankAccount->id}");
@@ -121,7 +121,7 @@ class BankAccountTest extends TestCase
         $user = User::factory()->create();
         $bankAccount1 = BankAccount::factory()->create(['user_id' => $user->id, 'is_active' => true]);
         $bankAccount2 = BankAccount::factory()->create(['user_id' => $user->id, 'is_active' => false]);
-        
+
         Sanctum::actingAs($user);
 
         $response = $this->patchJson("/api/bank-accounts/{$bankAccount2->id}/activate");
@@ -146,7 +146,7 @@ class BankAccountTest extends TestCase
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
         $bankAccount = BankAccount::factory()->create(['user_id' => $user2->id]);
-        
+
         Sanctum::actingAs($user1);
 
         $response = $this->putJson("/api/bank-accounts/{$bankAccount->id}", [

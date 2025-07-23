@@ -3,14 +3,12 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\BankAccount;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class BankAccountController extends Controller
 {
-
     /**
      * ユーザーの振込口座一覧を取得
      */
@@ -19,7 +17,7 @@ class BankAccountController extends Controller
         $bankAccounts = $request->user()->bankAccounts()->latest()->get();
 
         return response()->json([
-            'data' => $bankAccounts
+            'data' => $bankAccounts,
         ]);
     }
 
@@ -46,7 +44,7 @@ class BankAccountController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'バリデーションエラーが発生しました',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -64,7 +62,7 @@ class BankAccountController extends Controller
 
         return response()->json([
             'message' => '振込口座を登録しました',
-            'data' => $bankAccount
+            'data' => $bankAccount,
         ], 201);
     }
 
@@ -86,7 +84,7 @@ class BankAccountController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'バリデーションエラーが発生しました',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -95,12 +93,12 @@ class BankAccountController extends Controller
             'branch_name',
             'account_type',
             'account_number',
-            'account_holder_name'
+            'account_holder_name',
         ]));
 
         return response()->json([
             'message' => '振込口座を更新しました',
-            'data' => $bankAccount
+            'data' => $bankAccount,
         ]);
     }
 
@@ -110,11 +108,11 @@ class BankAccountController extends Controller
     public function destroy(Request $request, $id): JsonResponse
     {
         $bankAccount = $request->user()->bankAccounts()->findOrFail($id);
-        
+
         $bankAccount->delete();
 
         return response()->json([
-            'message' => '振込口座を削除しました'
+            'message' => '振込口座を削除しました',
         ]);
     }
 
@@ -132,7 +130,7 @@ class BankAccountController extends Controller
 
         return response()->json([
             'message' => '振込口座をアクティブにしました',
-            'data' => $bankAccount
+            'data' => $bankAccount,
         ]);
     }
 }

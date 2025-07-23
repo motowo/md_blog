@@ -113,7 +113,8 @@ export function AdminPayouts() {
       } else {
         setError("月次サマリの取得に失敗しました");
       }
-    } catch (err) {
+    } catch (error) {
+      console.error("月次サマリ取得エラー:", error);
       setError("月次サマリの取得中にエラーが発生しました");
     } finally {
       setSummaryLoading(false);
@@ -140,7 +141,8 @@ export function AdminPayouts() {
       } else {
         setError("月次詳細の取得に失敗しました");
       }
-    } catch (err) {
+    } catch (error) {
+      console.error("月次詳細取得エラー:", error);
       setError("月次詳細の取得中にエラーが発生しました");
     } finally {
       setDetailsLoading(false);
@@ -165,7 +167,8 @@ export function AdminPayouts() {
         const errorData = await response.json();
         setError(errorData.message || "支払いの確定に失敗しました");
       }
-    } catch (err) {
+    } catch (error) {
+      console.error("支払い確定エラー:", error);
       setError("支払いの確定中にエラーが発生しました");
     }
   };
@@ -241,7 +244,8 @@ export function AdminPayouts() {
         const errorData = await response.json();
         setError(errorData.message || "一括確定に失敗しました");
       }
-    } catch (err) {
+    } catch (error) {
+      console.error("一括確定エラー:", error);
       setError("一括確定中にエラーが発生しました");
     } finally {
       setProcessing(false);
@@ -277,7 +281,8 @@ export function AdminPayouts() {
         const errorData = await response.json();
         setError(errorData.message || "月次処理に失敗しました");
       }
-    } catch (err) {
+    } catch (error) {
+      console.error("月次処理エラー:", error);
       setError("月次処理中にエラーが発生しました");
     } finally {
       setMonthlyProcessing(false);

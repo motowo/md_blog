@@ -34,13 +34,14 @@ class ApplyCommissionToHistoricalData extends Command
             $result = $commissionService->applyCommissionToHistoricalData();
 
             if ($result['success']) {
-                $this->info("✅ 手数料適用が完了しました");
+                $this->info('✅ 手数料適用が完了しました');
                 $this->info("更新されたレコード数: {$result['updated_count']}件");
             } else {
                 $this->error('❌ 手数料適用に失敗しました');
             }
         } catch (\Exception $e) {
-            $this->error('エラーが発生しました: ' . $e->getMessage());
+            $this->error('エラーが発生しました: '.$e->getMessage());
+
             return 1;
         }
 

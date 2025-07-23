@@ -14,7 +14,7 @@ class CommissionService
     /**
      * 月次の支払い処理を実行
      *
-     * @param string $yearMonth Y-m形式の年月
+     * @param  string  $yearMonth  Y-m形式の年月
      * @return array 処理結果
      */
     public function processMonthlyPayouts($yearMonth)
@@ -24,7 +24,7 @@ class CommissionService
             $existingPayouts = Payout::where('period', $yearMonth)->get();
             $processedUserIds = [];
             $skippedUserIds = [];
-            
+
             foreach ($existingPayouts as $existingPayout) {
                 if ($existingPayout->status === 'paid') {
                     // 支払済みのユーザーはスキップ
@@ -57,17 +57,17 @@ class CommissionService
 
             foreach ($authorPayments as $authorPayment) {
                 $userId = $authorPayment->user_id;
-                
+
                 // 支払済みのユーザーはスキップ
                 if (in_array($userId, $skippedUserIds)) {
                     continue;
                 }
 
                 // 手数料率を取得（月末時点の設定を使用）
-                $endDate = Carbon::parse($yearMonth . '-01', TimeZoneHelper::JAPAN_TIMEZONE)->endOfMonth();
+                $endDate = Carbon::parse($yearMonth.'-01', TimeZoneHelper::JAPAN_TIMEZONE)->endOfMonth();
                 $commissionSetting = CommissionSetting::getActiveSettingForDate($endDate->format('Y-m-d'));
-                
-                if (!$commissionSetting) {
+
+                if (! $commissionSetting) {
                     throw new \Exception('手数料設定が見つかりません');
                 }
 
@@ -130,7 +130,6 @@ class CommissionService
         });
     }
 
-
     /**
      * 過去のデータに手数料を適用
      *
@@ -145,10 +144,10 @@ class CommissionService
 
             foreach ($payouts as $payout) {
                 // 該当期間の手数料設定を取得
-                $periodDate = Carbon::parse($payout->period . '-01')->endOfMonth();
+                $periodDate = Carbon::parse($payout->period.'-01')->endOfMonth();
                 $commissionSetting = CommissionSetting::getActiveSettingForDate($periodDate->format('Y-m-d'));
 
-                if (!$commissionSetting) {
+                if (! $commissionSetting) {
                     // デフォルトの手数料率（10%）を使用
                     $commissionRate = 10.00;
                 } else {

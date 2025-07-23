@@ -58,7 +58,8 @@ class BankAccount extends Model
         if (strlen($this->account_number) <= 4) {
             return $this->account_number;
         }
-        return str_repeat('*', strlen($this->account_number) - 4) . substr($this->account_number, -4);
+
+        return str_repeat('*', strlen($this->account_number) - 4).substr($this->account_number, -4);
     }
 
     /**

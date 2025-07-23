@@ -48,6 +48,52 @@ components:
           example: "https://example.com/avatar.jpg"
         bio:
           type: string
+
+    PublicUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "田中太郎"
+        username:
+          type: string
+          example: "tanaka"
+        bio:
+          type: string
+          nullable: true
+          example: "フルスタックエンジニアです"
+        career_description:
+          type: string
+          nullable: true
+          example: "10年以上のWeb開発経験"
+        x_url:
+          type: string
+          nullable: true
+          example: "https://twitter.com/tanaka"
+        github_url:
+          type: string
+          nullable: true
+          example: "https://github.com/tanaka"
+        avatar_path:
+          type: string
+          nullable: true
+          example: "avatars/user123.jpg"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00Z"
+        articles_count:
+          type: integer
+          example: 25
+        public_articles_count:
+          type: integer
+          example: 23
+        paid_articles_count:
+          type: integer
+          example: 12
           nullable: true
           example: "フルスタックエンジニア"
         career_description:
@@ -1193,6 +1239,39 @@ paths:
                       "2024-01-20": 1
                       "2024-02-05": 3
 
+  # 公開プロフィールAPI
+  /users/{username}:
+    get:
+      tags:
+        - Public Profile
+      summary: 公開プロフィール取得
+      description: 指定されたユーザー名の公開プロフィールを取得します
+      parameters:
+        - name: username
+          in: path
+          required: true
+          description: ユーザー名
+          schema:
+            type: string
+            example: "tanaka"
+      responses:
+        '200':
+          description: プロフィール取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUser'
+        '404':
+          description: ユーザーが見つからないか、プロフィールが非公開
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "このユーザーのプロフィールは非公開です"
+
   # 管理者API
   /admin/dashboard:
     get:
@@ -1620,6 +1699,96 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  # プロフィール表示API
+  /users:
+    get:
+      tags:
+        - Public Profiles
+      summary: 公開プロフィールユーザー一覧取得
+      description: 公開設定されているユーザーの一覧を取得します
+      parameters:
+        - name: search
+          in: query
+          description: 検索キーワード（名前、ユーザー名、自己紹介で検索）
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          description: ソート基準
+          schema:
+            type: string
+            enum: [name, created_at, articles_count]
+            default: articles_count
+        - name: sort_order
+          in: query
+          description: ソート順
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: per_page
+          in: query
+          description: 1ページあたりの件数（最大50）
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 12
+        - name: page
+          in: query
+          description: ページ番号
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicUser'
+                  current_page:
+                    type: integer
+                  last_page:
+                    type: integer
+                  per_page:
+                    type: integer
+                  total:
+                    type: integer
+
+  /users/{username}:
+    get:
+      tags:
+        - Public Profiles
+      summary: 公開プロフィール詳細取得
+      description: 指定されたユーザーの公開プロフィールを取得します
+      parameters:
+        - name: username
+          in: path
+          required: true
+          description: ユーザー名
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUser'
+        '404':
+          description: ユーザーが見つからない、または非公開プロフィール
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 tags:
   - name: Authentication
     description: 認証関連API
@@ -1633,5 +1802,7 @@ tags:
     description: クレジットカード管理API
   - name: User Management
     description: ユーザー管理API
+  - name: Public Profiles
+    description: 公開プロフィール表示API
   - name: Admin
     description: 管理者専用API

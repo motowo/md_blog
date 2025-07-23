@@ -29,6 +29,10 @@ Route::get('articles/recent', [ArticleController::class, 'recent']);
 // 記事詳細（オプション認証：ログイン済みの場合は認証情報を取得）
 Route::get('articles/{article}', [ArticleController::class, 'show']);
 
+// ユーザー関連のルート（認証不要：公開プロフィール）
+Route::get('users', [UserController::class, 'publicUsersList']);
+Route::get('users/{username}', [UserController::class, 'publicProfile']);
+
 // タグ関連のルート（認証必要・管理者のみ：作成・更新・削除）
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('tags', [TagController::class, 'store']);
@@ -85,7 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/bank-accounts/{id}', [BankAccountController::class, 'update']);
     Route::delete('/bank-accounts/{id}', [BankAccountController::class, 'destroy']);
     Route::patch('/bank-accounts/{id}/activate', [BankAccountController::class, 'activate']);
-    
+
     // 売上管理
     Route::get('/sales', [SalesController::class, 'index']);
     Route::get('/sales/monthly', [SalesController::class, 'monthlySummary']);
@@ -117,7 +121,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/commission-settings/{setting}', [CommissionController::class, 'update']);
         Route::delete('/commission-settings/{setting}', [CommissionController::class, 'destroy']);
         Route::post('/process-monthly-payouts', [CommissionController::class, 'processMonthlyPayouts']);
-        
+
         // 振込管理
         Route::get('/pending-payouts', [CommissionController::class, 'getPendingPayouts']);
         Route::get('/payouts/monthly-summary', [CommissionController::class, 'getMonthlySummary']);
