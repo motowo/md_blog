@@ -121,7 +121,16 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>{article.user.username}</span>
+                {article.user.profile_public ? (
+                  <Link
+                    to={`/users/${article.user.username}`}
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                  >
+                    {article.user.name}
+                  </Link>
+                ) : (
+                  <span>{article.user.name}</span>
+                )}
                 {/* 自分の記事の場合はアイコンを表示 */}
                 {user && user.id === article.user_id && (
                   <span

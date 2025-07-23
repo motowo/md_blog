@@ -210,7 +210,7 @@ class ArticleCrudTest extends TestCase
     {
         // ユーザーに振込口座を設定
         BankAccount::factory()->create(['user_id' => $this->user->id, 'is_active' => true]);
-        
+
         Sanctum::actingAs($this->user);
 
         $response = $this->postJson('/api/articles', [
@@ -226,7 +226,7 @@ class ArticleCrudTest extends TestCase
                     'title' => 'Test Paid Article',
                     'is_paid' => true,
                     'price' => '1000.00',
-                ]
+                ],
             ]);
     }
 
@@ -234,7 +234,7 @@ class ArticleCrudTest extends TestCase
     {
         // 振込口座を設定
         BankAccount::factory()->create(['user_id' => $this->user->id, 'is_active' => true]);
-        
+
         // 無料記事を作成
         $article = Article::factory()->create([
             'user_id' => $this->user->id,

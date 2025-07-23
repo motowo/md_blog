@@ -23,6 +23,113 @@ class UserController extends Controller
     }
 
     /**
+     * Get public user profile by username.
+     */
+    public function publicProfile(string $username): JsonResponse
+    {
+        $user = User::where('username', $username)->first();
+
+        // ユーザーが存在しない場合
+        if (! $user) {
+            return response()->json([
+                'message' => 'ユーザーが見つかりません',
+            ], 404);
+        }
+
+        // プロフィールが非公開の場合
+        if (! $user->profile_public) {
+            return response()->json([
+                'message' => 'このユーザーのプロフィールは非公開です',
+            ], 404);
+        }
+
+        // 公開プロフィール情報のみを返す
+        $publicData = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'username' => $user->username,
+            'bio' => $user->bio,
+            'career_description' => $user->career_description,
+            'x_url' => $user->x_url,
+            'github_url' => $user->github_url,
+            'avatar_path' => $user->avatar_path,
+            'created_at' => $user->created_at,
+            // 統計情報を追加
+            'articles_count' => $user->articles()->where('status', 'published')->count(),
+            'public_articles_count' => $user->articles()->where('status', 'published')->where('is_paid', false)->count(),
+            'paid_articles_count' => $user->articles()->where('status', 'published')->where('is_paid', true)->count(),
+        ];
+
+        return response()->json($publicData);
+    }
+
+    /**
+     * Get public users list with search functionality.
+     */
+    public function publicUsersList(Request $request): JsonResponse
+    {
+        $query = User::where('profile_public', true)
+            ->where('role', 'author'); // 投稿者のみ表示
+
+        // 検索クエリがある場合
+        if ($request->has('search') && ! empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('username', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('bio', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        // 並び替え
+        $sortBy = $request->get('sort_by', 'articles_count');
+        $sortOrder = $request->get('sort_order', 'desc');
+
+        switch ($sortBy) {
+            case 'name':
+                $query->orderBy('name', $sortOrder);
+                break;
+            case 'created_at':
+                $query->orderBy('created_at', $sortOrder);
+                break;
+            case 'articles_count':
+            default:
+                // 記事数でソート（サブクエリを使用）
+                $query->withCount(['articles' => function ($q) {
+                    $q->where('status', 'published');
+                }])->orderBy('articles_count', $sortOrder);
+                break;
+        }
+
+        // ページネーション
+        $perPage = min($request->get('per_page', 12), 50); // 最大50件
+        $users = $query->paginate($perPage);
+
+        // レスポンス用にデータを整形
+        $usersData = $users->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'bio' => $user->bio,
+                'avatar_path' => $user->avatar_path,
+                'created_at' => $user->created_at,
+                'articles_count' => $user->articles()->where('status', 'published')->count(),
+                'public_articles_count' => $user->articles()->where('status', 'published')->where('is_paid', false)->count(),
+                'paid_articles_count' => $user->articles()->where('status', 'published')->where('is_paid', true)->count(),
+            ];
+        });
+
+        return response()->json([
+            'data' => $usersData,
+            'current_page' => $users->currentPage(),
+            'last_page' => $users->lastPage(),
+            'per_page' => $users->perPage(),
+            'total' => $users->total(),
+        ]);
+    }
+
+    /**
      * Update user profile.
      */
     public function updateProfile(Request $request): JsonResponse

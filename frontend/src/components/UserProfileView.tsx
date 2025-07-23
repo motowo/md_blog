@@ -390,7 +390,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                     {user.avatar_path ? (
                       <img
                         src={`${API_BASE_URL}${user.avatar_path}`}
-                        alt={user.username}
+                        alt={user.name}
                         className="h-32 w-32 rounded-full object-cover"
                       />
                     ) : (

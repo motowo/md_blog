@@ -261,7 +261,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                             {user.avatar_path ? (
                               <img
                                 src={`http://localhost:8000${user.avatar_path}`}
-                                alt={user.username}
+                                alt={user.name}
                                 className="h-32 w-32 rounded-full object-cover"
                               />
                             ) : (
@@ -560,7 +560,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                               {payment.article.title}
                             </h3>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
-                              <span>著者: {payment.article.user.username}</span>
+                              <span>著者: {payment.article.user.name}</span>
                               <span className="mx-2">•</span>
                               <span>
                                 購入日:{" "}

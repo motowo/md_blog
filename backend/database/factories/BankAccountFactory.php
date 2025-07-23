@@ -19,7 +19,7 @@ class BankAccountFactory extends Factory
         return [
             'user_id' => \App\Models\User::factory(),
             'bank_name' => $this->faker->randomElement(['みずほ銀行', '三菱UFJ銀行', '三井住友銀行', 'りそな銀行']),
-            'branch_name' => $this->faker->city . '支店',
+            'branch_name' => $this->faker->city.'支店',
             'account_type' => $this->faker->randomElement(['普通', '当座']),
             'account_number' => $this->faker->numerify('#######'),
             'account_holder_name' => $this->faker->name(),

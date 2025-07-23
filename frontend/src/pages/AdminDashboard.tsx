@@ -243,7 +243,7 @@ const AdminDashboard: React.FC = () => {
                           {payment.article.title}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          購入者: {payment.user.username}
+                          購入者: {payment.user.name}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-500">
                           {formatDate(payment.created_at)}

@@ -27,7 +27,7 @@ class CommissionSetting extends Model
     /**
      * 指定日時点で有効な手数料設定を取得
      *
-     * @param string $date Y-m-d形式の日付
+     * @param  string  $date  Y-m-d形式の日付
      * @return CommissionSetting|null
      */
     public static function getActiveSettingForDate($date)

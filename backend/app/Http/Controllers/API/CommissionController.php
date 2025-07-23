@@ -5,8 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\CommissionSetting;
 use App\Services\CommissionService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class CommissionController extends Controller
@@ -26,7 +26,7 @@ class CommissionController extends Controller
         $settings = CommissionSetting::orderBy('applicable_from', 'desc')->get();
 
         return response()->json([
-            'data' => $settings
+            'data' => $settings,
         ]);
     }
 
@@ -44,13 +44,13 @@ class CommissionController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         return \DB::transaction(function () use ($request) {
             // 指定された月の1日を日付文字列として設定
-            $applicableFrom = $request->applicable_from_month . '-01';
+            $applicableFrom = $request->applicable_from_month.'-01';
 
             // 既存の有効な手数料設定（適用終了日がnull）を取得
             $existingSetting = CommissionSetting::where('is_active', true)
@@ -73,13 +73,13 @@ class CommissionController extends Controller
                 $applicableToForExisting = $startDate->subDay()->format('Y-m-d');
 
                 $existingSetting->update([
-                    'applicable_to' => $applicableToForExisting
+                    'applicable_to' => $applicableToForExisting,
                 ]);
             }
 
             return response()->json([
                 'message' => '手数料設定を作成しました',
-                'data' => $setting
+                'data' => $setting,
             ], 201);
         });
     }
@@ -101,7 +101,7 @@ class CommissionController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -109,7 +109,7 @@ class CommissionController extends Controller
 
         return response()->json([
             'message' => '手数料設定を更新しました',
-            'data' => $setting
+            'data' => $setting,
         ]);
     }
 
@@ -119,51 +119,50 @@ class CommissionController extends Controller
     public function destroy($id): JsonResponse
     {
         $setting = CommissionSetting::findOrFail($id);
-        
+
         // 未来適用の設定のみ削除可能
         $today = now()->format('Y-m-d');
         if ($setting->applicable_from <= $today) {
             return response()->json([
-                'message' => '過去または現在有効な設定は削除できません'
+                'message' => '過去または現在有効な設定は削除できません',
             ], 403);
         }
-        
+
         return \DB::transaction(function () use ($setting) {
             // 削除する設定の前の設定を取得
             $previousSetting = CommissionSetting::where('is_active', true)
                 ->where('applicable_to', \Carbon\Carbon::parse($setting->applicable_from)->subDay()->format('Y-m-d'))
                 ->first();
-            
+
             // 削除する設定の次の設定を取得
             $nextSetting = CommissionSetting::where('is_active', true)
                 ->where('applicable_from', '>', $setting->applicable_from)
                 ->orderBy('applicable_from')
                 ->first();
-            
+
             // 前の設定の終了日を調整
             if ($previousSetting) {
                 if ($nextSetting) {
                     // 次の設定がある場合は、その前日まで延長
                     $previousSetting->update([
-                        'applicable_to' => \Carbon\Carbon::parse($nextSetting->applicable_from)->subDay()->format('Y-m-d')
+                        'applicable_to' => \Carbon\Carbon::parse($nextSetting->applicable_from)->subDay()->format('Y-m-d'),
                     ]);
                 } else {
                     // 次の設定がない場合は無期限に
                     $previousSetting->update([
-                        'applicable_to' => null
+                        'applicable_to' => null,
                     ]);
                 }
             }
-            
+
             // 設定を削除
             $setting->delete();
-            
+
             return response()->json([
-                'message' => '手数料設定を削除しました'
+                'message' => '手数料設定を削除しました',
             ]);
         });
     }
-
 
     /**
      * 月次支払い処理を実行
@@ -177,7 +176,7 @@ class CommissionController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -186,32 +185,32 @@ class CommissionController extends Controller
 
             // 詳細な処理結果メッセージを作成
             $messageDetails = [];
-            
+
             if ($result['newly_created_count'] > 0) {
                 $messageDetails[] = "{$result['newly_created_count']}件の新規支払い情報を作成";
             }
-            
+
             if ($result['updated_count'] > 0) {
                 $messageDetails[] = "{$result['updated_count']}件の未払い支払い情報を更新";
             }
-            
+
             if ($result['skipped_count'] > 0) {
                 $messageDetails[] = "{$result['skipped_count']}件の支払済み情報をスキップ";
             }
-            
+
             $detailMessage = empty($messageDetails) ? '処理対象がありませんでした' : implode('、', $messageDetails);
-            $actionMessage = ($result['newly_created_count'] > 0 || $result['updated_count'] > 0) 
-                ? '「未払い一覧」タブで確認し、支払い確定処理を行ってください。' 
+            $actionMessage = ($result['newly_created_count'] > 0 || $result['updated_count'] > 0)
+                ? '「未払い一覧」タブで確認し、支払い確定処理を行ってください。'
                 : '';
 
             return response()->json([
                 'message' => "月次支払い処理が完了しました。{$detailMessage}。{$actionMessage}",
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => '処理中にエラーが発生しました',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -227,7 +226,7 @@ class CommissionController extends Controller
             ->get();
 
         return response()->json([
-            'data' => $payouts
+            'data' => $payouts,
         ]);
     }
 
@@ -255,7 +254,7 @@ class CommissionController extends Controller
             ->get();
 
         return response()->json([
-            'data' => $summaries
+            'data' => $summaries,
         ]);
     }
 
@@ -271,7 +270,7 @@ class CommissionController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -283,7 +282,7 @@ class CommissionController extends Controller
         // 振込日を計算（翌月の15日）
         $periodDate = \Carbon\Carbon::createFromFormat('Y-m', $request->period);
         $payoutDate = $periodDate->copy()->addMonth()->day(15);
-        
+
         // 土日の場合は前の平日に調整
         while ($payoutDate->isWeekend()) {
             $payoutDate->subDay();
@@ -305,18 +304,18 @@ class CommissionController extends Controller
 
         if ($payout->status !== 'unpaid') {
             return response()->json([
-                'message' => 'この支払いは既に処理済みです'
+                'message' => 'この支払いは既に処理済みです',
             ], 400);
         }
 
         $payout->update([
             'status' => 'paid',
-            'paid_at' => now()
+            'paid_at' => now(),
         ]);
 
         return response()->json([
             'message' => '支払いを確定しました',
-            'data' => $payout->load('user')
+            'data' => $payout->load('user'),
         ]);
     }
 
@@ -333,7 +332,7 @@ class CommissionController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -347,11 +346,11 @@ class CommissionController extends Controller
             ->where('status', 'unpaid')
             ->update([
                 'status' => 'paid',
-                'paid_at' => now()
+                'paid_at' => now(),
             ]);
 
         return response()->json([
-            'message' => "{$updatedCount}件の支払いを確定しました"
+            'message' => "{$updatedCount}件の支払いを確定しました",
         ]);
     }
 }
