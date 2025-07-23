@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
-import AdminLayout from "./components/AdminLayout";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -150,59 +149,31 @@ function App() {
             {/* 管理者専用ルート */}
             <Route
               path="/admin"
-              element={
-                <AdminLayout>
-                  <AdminDashboard />
-                </AdminLayout>
-              }
+              element={<AdminDashboard />}
             />
             <Route
               path="/admin/users"
-              element={
-                <AdminLayout>
-                  <AdminUsers />
-                </AdminLayout>
-              }
+              element={<AdminUsers />}
             />
             <Route
               path="/admin/articles"
-              element={
-                <AdminLayout>
-                  <AdminArticles />
-                </AdminLayout>
-              }
+              element={<AdminArticles />}
             />
             <Route
               path="/admin/account"
-              element={
-                <AdminLayout>
-                  <AdminAccount />
-                </AdminLayout>
-              }
+              element={<AdminAccount />}
             />
             <Route
               path="/admin/commission-settings"
-              element={
-                <AdminLayout>
-                  <AdminCommissionSettings />
-                </AdminLayout>
-              }
+              element={<AdminCommissionSettings />}
             />
             <Route
               path="/admin/commission-report"
-              element={
-                <AdminLayout>
-                  <AdminCommissionReport />
-                </AdminLayout>
-              }
+              element={<AdminCommissionReport />}
             />
             <Route
               path="/admin/payouts"
-              element={
-                <AdminLayout>
-                  <AdminPayouts />
-                </AdminLayout>
-              }
+              element={<AdminPayouts />}
             />
           </Routes>
         </Router>

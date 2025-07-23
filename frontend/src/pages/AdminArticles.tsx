@@ -3,6 +3,9 @@ import { Navigate, Link } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import Pagination from "../components/ui/Pagination";
+import SortableTableHeader, { type SortConfig } from "../components/ui/SortableTableHeader";
+import AdminLayout from "../components/AdminLayout";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import {
   AdminService,
@@ -19,20 +22,33 @@ const AdminArticles: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalArticles, setTotalArticles] = useState(0);
+  const [sortConfig, setSortConfig] = useState<SortConfig[]>([]);
 
   const fetchArticles = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // 並び替えパラメータを構築
+      const sortParams = sortConfig.reduce((acc, config, index) => {
+        if (config.direction) {
+          acc[`sort[${index}][field]`] = config.field;
+          acc[`sort[${index}][direction]`] = config.direction;
+        }
+        return acc;
+      }, {} as Record<string, string>);
+      
       const data: ArticlesResponse = await AdminService.getArticles({
         page: currentPage,
         per_page: 15,
         search: searchQuery || undefined,
         status: statusFilter || undefined,
+        ...sortParams,
       });
       setArticles(data.articles);
       setTotalPages(data.pagination.last_page);
@@ -43,7 +59,7 @@ const AdminArticles: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchQuery, statusFilter]);
+  }, [currentPage, searchQuery, statusFilter, sortConfig]);
 
   useEffect(() => {
     fetchArticles();
@@ -56,8 +72,30 @@ const AdminArticles: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setSearchQuery(searchInput);
     setCurrentPage(1);
-    fetchArticles();
+  };
+
+  const handleSort = (field: string) => {
+    setSortConfig(prevConfig => {
+      const existingIndex = prevConfig.findIndex(config => config.field === field);
+      
+      if (existingIndex >= 0) {
+        const existing = prevConfig[existingIndex];
+        const newConfig = [...prevConfig];
+        
+        if (existing.direction === 'asc') {
+          newConfig[existingIndex] = { ...existing, direction: 'desc' };
+        } else if (existing.direction === 'desc') {
+          newConfig.splice(existingIndex, 1);
+        }
+        
+        return newConfig;
+      } else {
+        return [...prevConfig, { field, direction: 'asc' as const }];
+      }
+    });
+    setCurrentPage(1);
   };
 
   const handleToggleStatus = async (article: AdminArticle) => {
@@ -103,28 +141,17 @@ const AdminArticles: React.FC = () => {
 
   if (loading && articles.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* ヘッダー */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            記事管理
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            全記事の管理と設定
-          </p>
-        </div>
+    <AdminLayout>
+      <div className="space-y-6">
 
         {/* フィルター・検索フォーム */}
         <Card className="mb-6">
@@ -133,8 +160,8 @@ const AdminArticles: React.FC = () => {
               <div className="flex-1 min-w-64">
                 <Input
                   type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="記事タイトル、内容、作者で検索..."
                 />
               </div>
@@ -188,8 +215,18 @@ const AdminArticles: React.FC = () => {
                   : "記事が投稿されていません"}
               </p>
             ) : (
-              <div className="space-y-4">
-                {articles.map((article) => (
+              <>
+                {/* 上部ページネーション */}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  disabled={loading}
+                  className="mb-4"
+                />
+                
+                <div className="space-y-4">
+                  {articles.map((article) => (
                   <div
                     key={article.id}
                     className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow"
@@ -311,40 +348,24 @@ const AdminArticles: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                
+                {/* 下部ページネーション */}
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  disabled={loading}
+                  className="mt-6"
+                />
+              </>
             )}
 
-            {/* ページネーション */}
-            {totalPages > 1 && (
-              <div className="mt-6 flex justify-center">
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    前へ
-                  </Button>
-                  <span className="flex items-center px-4 text-gray-700 dark:text-gray-300">
-                    {currentPage} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      setCurrentPage(Math.min(totalPages, currentPage + 1))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    次へ
-                  </Button>
-                </div>
-              </div>
-            )}
           </CardBody>
         </Card>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

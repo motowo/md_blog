@@ -4,6 +4,7 @@ import { AdminService, type DashboardResponse } from "../utils/adminApi";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import { Navigate } from "react-router-dom";
 import { formatCurrency } from "../utils/currency";
+import AdminLayout from "../components/AdminLayout";
 
 const AdminDashboard: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -48,31 +49,27 @@ const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <div className="text-red-500 mb-4 text-lg">{error}</div>
-            <button
-              onClick={fetchDashboardData}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-            >
-              再試行
-            </button>
-          </div>
+      <AdminLayout>
+        <div className="text-center py-12">
+          <div className="text-red-500 mb-4 text-lg">{error}</div>
+          <button
+            onClick={fetchDashboardData}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+          >
+            再試行
+          </button>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
@@ -83,20 +80,11 @@ const AdminDashboard: React.FC = () => {
   const { stats, recent_payments, monthly_revenue } = dashboardData;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* ヘッダー */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            管理者ダッシュボード
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            サイト全体の統計情報と最近の活動
-          </p>
-        </div>
+    <AdminLayout>
+      <div className="space-y-6">
 
         {/* 統計カード */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* 総ユーザー数 */}
           <Card>
             <CardBody>
@@ -307,7 +295,7 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

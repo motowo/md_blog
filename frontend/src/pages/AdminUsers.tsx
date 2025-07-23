@@ -3,14 +3,16 @@ import { Navigate } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import Pagination from "../components/ui/Pagination";
+import SortableTableHeader, { type SortConfig } from "../components/ui/SortableTableHeader";
 import UserProfileView from "../components/UserProfileView";
+import AdminLayout from "../components/AdminLayout";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import {
   AdminService,
   type AdminUser,
   type UsersResponse,
 } from "../utils/adminApi";
-import { getBadgeClass } from "../constants/badgeStyles";
 import { API_BASE_URL } from "../utils/api";
 
 const AdminUsers: React.FC = () => {
@@ -19,31 +21,93 @@ const AdminUsers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [sortConfig, setSortConfig] = useState<SortConfig[]>([]);
 
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // 並び替えパラメータを構築
+      const sortParams = sortConfig.reduce((acc, config, index) => {
+        if (config.direction) {
+          acc[`sort[${index}][field]`] = config.field;
+          acc[`sort[${index}][direction]`] = config.direction;
+        }
+        return acc;
+      }, {} as Record<string, string>);
+      
+      // 投稿者を確実に取得するため、大きなper_pageで取得してからフィルタリング
       const data: UsersResponse = await AdminService.getUsers({
-        page: currentPage,
-        per_page: 15,
+        page: 1, // 全データを取得するため1ページ目から
+        per_page: 1000, // 大きな値で全ユーザーを取得
         search: searchQuery || undefined,
+        ...sortParams,
       });
-      setUsers(data.users);
-      setTotalPages(data.pagination.last_page);
-      setTotalUsers(data.pagination.total);
+      
+      // 投稿者のみフィルタリング（roleが'author'のユーザー）
+      let filteredUsers = data.users.filter(u => u.role === 'author');
+      
+      // クライアント側で並び替え処理（APIが対応していない場合のフォールバック）
+      if (sortConfig.length > 0) {
+        filteredUsers = [...filteredUsers].sort((a, b) => {
+          for (const config of sortConfig) {
+            if (!config.direction) continue;
+            
+            let aValue: any = a[config.field as keyof AdminUser];
+            let bValue: any = b[config.field as keyof AdminUser];
+            
+            // 日付の場合は Date オブジェクトに変換
+            if (config.field.includes('_at') || config.field === 'created_at' || config.field === 'updated_at') {
+              aValue = new Date(aValue).getTime();
+              bValue = new Date(bValue).getTime();
+            }
+            
+            // 数値の場合は数値に変換
+            if (typeof aValue === 'string' && !isNaN(Number(aValue))) {
+              aValue = Number(aValue);
+              bValue = Number(bValue);
+            }
+            
+            // 文字列の場合は小文字で比較
+            if (typeof aValue === 'string') {
+              aValue = aValue.toLowerCase();
+              bValue = bValue.toLowerCase();
+            }
+            
+            let comparison = 0;
+            if (aValue < bValue) comparison = -1;
+            if (aValue > bValue) comparison = 1;
+            
+            if (comparison !== 0) {
+              return config.direction === 'desc' ? -comparison : comparison;
+            }
+          }
+          return 0;
+        });
+      }
+      
+      // クライアント側でページネーション処理
+      const startIndex = (currentPage - 1) * 15;
+      const endIndex = startIndex + 15;
+      const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+      
+      setUsers(paginatedUsers);
+      setTotalPages(Math.ceil(filteredUsers.length / 15));
+      setTotalUsers(filteredUsers.length);
     } catch (err) {
       console.error("Users fetch failed:", err);
-      setError("ユーザー一覧の取得に失敗しました");
+      setError("投稿者一覧の取得に失敗しました");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchQuery]);
+  }, [currentPage, searchQuery, sortConfig]);
 
   useEffect(() => {
     fetchUsers();
@@ -56,8 +120,30 @@ const AdminUsers: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setSearchQuery(searchInput);
     setCurrentPage(1);
-    fetchUsers();
+  };
+
+  const handleSort = (field: string) => {
+    setSortConfig(prevConfig => {
+      const existingIndex = prevConfig.findIndex(config => config.field === field);
+      
+      if (existingIndex >= 0) {
+        const existing = prevConfig[existingIndex];
+        const newConfig = [...prevConfig];
+        
+        if (existing.direction === 'asc') {
+          newConfig[existingIndex] = { ...existing, direction: 'desc' };
+        } else if (existing.direction === 'desc') {
+          newConfig.splice(existingIndex, 1);
+        }
+        
+        return newConfig;
+      } else {
+        return [...prevConfig, { field, direction: 'asc' as const }];
+      }
+    });
+    setCurrentPage(1);
   };
 
   const handleViewUser = (targetUser: AdminUser) => {
@@ -106,33 +192,31 @@ const AdminUsers: React.FC = () => {
   };
 
   const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("ja-JP");
+    if (!dateString) return "未ログイン";
+    return new Date(dateString).toLocaleString("ja-JP", {
+      timeZone: "Asia/Tokyo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   };
 
   if (loading && users.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* ヘッダー */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            ユーザー管理
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            登録ユーザーの一覧と管理
-          </p>
-        </div>
+    <AdminLayout>
+      <div className="space-y-6">
 
         {/* 検索フォーム */}
         <Card className="mb-6">
@@ -141,9 +225,9 @@ const AdminUsers: React.FC = () => {
               <div className="flex-1">
                 <Input
                   type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ユーザー名、名前、メールアドレスで検索..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="投稿者名、名前、メールアドレスで検索..."
                 />
               </div>
               <Button type="submit" variant="primary" loading={loading}>
@@ -170,12 +254,12 @@ const AdminUsers: React.FC = () => {
           <CardHeader>
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                ユーザー一覧
+                投稿者一覧
               </h2>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {totalUsers.toLocaleString()}件中{" "}
+                投稿者 {totalUsers.toLocaleString()}名中{" "}
                 {Math.min((currentPage - 1) * 15 + 1, totalUsers)}-
-                {Math.min(currentPage * 15, totalUsers)}件を表示
+                {Math.min(currentPage * 15, totalUsers)}名を表示
               </span>
             </div>
           </CardHeader>
@@ -183,33 +267,57 @@ const AdminUsers: React.FC = () => {
             {users.length === 0 ? (
               <p className="text-center text-gray-500 dark:text-gray-400 py-8">
                 {searchQuery
-                  ? "検索条件に一致するユーザーが見つかりません"
-                  : "ユーザーが登録されていません"}
+                  ? "検索条件に一致する投稿者が見つかりません"
+                  : "投稿者が登録されていません"}
               </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
-                        ユーザー
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
-                        ロール・状態
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                      <SortableTableHeader
+                        field="name"
+                        sortConfig={sortConfig}
+                        onSort={handleSort}
+                      >
+                        投稿者
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        field="is_active"
+                        sortConfig={sortConfig}
+                        onSort={handleSort}
+                      >
+                        状態
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        field="articles_count"
+                        sortConfig={sortConfig}
+                        onSort={handleSort}
+                      >
                         記事数
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        field="payments_count"
+                        sortConfig={sortConfig}
+                        onSort={handleSort}
+                      >
                         購入数
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        field="last_login_at"
+                        sortConfig={sortConfig}
+                        onSort={handleSort}
+                      >
                         最終ログイン
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        field="created_at"
+                        sortConfig={sortConfig}
+                        onSort={handleSort}
+                      >
                         登録日
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">
+                      </SortableTableHeader>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white text-center">
                         操作
                       </th>
                     </tr>
@@ -259,29 +367,17 @@ const AdminUsers: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex flex-col space-y-1">
-                            <span
-                              className={getBadgeClass(
-                                "userRole",
-                                targetUser.role === "admin" ? "admin" : "user",
-                              )}
-                            >
-                              {targetUser.role === "admin"
-                                ? "管理者"
-                                : "投稿者"}
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className={`w-3 h-3 rounded-full ${
+                                targetUser.is_active
+                                  ? "bg-green-400"
+                                  : "bg-red-400"
+                              }`}
+                            />
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              {targetUser.is_active ? "有効" : "無効"}
                             </span>
-                            <div className="flex items-center space-x-1">
-                              <div
-                                className={`w-2 h-2 rounded-full ${
-                                  targetUser.is_active
-                                    ? "bg-green-400"
-                                    : "bg-red-400"
-                                }`}
-                              />
-                              <span className="text-xs text-gray-600 dark:text-gray-400">
-                                {targetUser.is_active ? "有効" : "無効"}
-                              </span>
-                            </div>
                           </div>
                         </td>
                         <td className="py-3 px-4 text-gray-900 dark:text-white">
@@ -299,32 +395,44 @@ const AdminUsers: React.FC = () => {
                           {formatDate(targetUser.created_at)}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex flex-col sm:flex-row gap-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
+                          <div className="flex items-center justify-center space-x-2">
+                            <button
                               onClick={() => handleViewUser(targetUser)}
+                              className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                              title="詳細を表示"
                             >
-                              参照
-                            </Button>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
                             {targetUser.id !== user?.id && (
                               <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
+                                <button
                                   onClick={() => handleToggleStatus(targetUser)}
-                                  className="text-orange-600 border-orange-300 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-600 dark:hover:bg-orange-900"
+                                  className="p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-900/20 rounded-md transition-colors"
+                                  title={targetUser.is_active ? "無効化" : "有効化"}
                                 >
-                                  {targetUser.is_active ? "無効化" : "有効化"}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
+                                  {targetUser.is_active ? (
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728" />
+                                      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+                                    </svg>
+                                  ) : (
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                  )}
+                                </button>
+                                <button
                                   onClick={() => handleDeleteUser(targetUser)}
-                                  className="text-red-600 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-600 dark:hover:bg-red-900"
+                                  className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                                  title="削除"
                                 >
-                                  削除
-                                </Button>
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
                               </>
                             )}
                           </div>
@@ -336,32 +444,23 @@ const AdminUsers: React.FC = () => {
               </div>
             )}
 
-            {/* ページネーション */}
-            {totalPages > 1 && (
-              <div className="mt-6 flex justify-center">
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    前へ
-                  </Button>
-                  <span className="flex items-center px-4 text-gray-700 dark:text-gray-300">
-                    {currentPage} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      setCurrentPage(Math.min(totalPages, currentPage + 1))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    次へ
-                  </Button>
-                </div>
-              </div>
-            )}
+            {/* 上部ページネーション */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              disabled={loading}
+              className="mb-4"
+            />
+            
+            {/* 下部ページネーション */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              disabled={loading}
+              className="mt-6"
+            />
           </CardBody>
         </Card>
 
@@ -398,7 +497,7 @@ const AdminUsers: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContextDefinition";
+import AdminLayout from "../components/AdminLayout";
 import AdminProfileView from "../components/AdminProfileView";
 import { UserService, type CropData } from "../utils/userApi";
 import type { ApiError } from "../types/auth";
@@ -119,35 +120,25 @@ const AdminAccount: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">ユーザー情報を読み込み中...</div>
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-gray-500">ユーザー情報を読み込み中...</div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* ヘッダー */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            アカウント設定
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            管理者アカウントの設定とプロフィール管理
-          </p>
-        </div>
-
-        <AdminProfileView
-          user={user}
-          onSave={updateUser}
-          onAvatarUpdate={handleAvatarUpload}
-          onAvatarDelete={handleAvatarDelete}
-          onAccountDelete={handleAccountDelete}
-          initialTab="profile"
-        />
-      </div>
-    </div>
+    <AdminLayout>
+      <AdminProfileView
+        user={user}
+        onSave={updateUser}
+        onAvatarUpdate={handleAvatarUpload}
+        onAvatarDelete={handleAvatarDelete}
+        onAccountDelete={handleAccountDelete}
+        initialTab="profile"
+      />
+    </AdminLayout>
   );
 };
 
