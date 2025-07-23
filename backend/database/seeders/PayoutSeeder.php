@@ -93,7 +93,7 @@ class PayoutSeeder extends Seeder
             ->get();
 
         $completedCount = 0;
-        
+
         foreach ($junePayouts as $payout) {
             $payout->update([
                 'status' => 'paid',
@@ -106,7 +106,7 @@ class PayoutSeeder extends Seeder
         if ($completedCount > 0) {
             $this->command->info("2025年6月分振込完了: {$completedCount}件を paid 状態に更新");
         } else {
-            $this->command->info("2025年6月分: 振込対象データがありませんでした");
+            $this->command->info('2025年6月分: 振込対象データがありませんでした');
         }
     }
 }

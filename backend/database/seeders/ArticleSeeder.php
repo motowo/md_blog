@@ -20,11 +20,13 @@ class ArticleSeeder extends Seeder
 
         if ($users->isEmpty()) {
             $this->command->error('一般ユーザーが見つかりません。先にUserSeederを実行してください。');
+
             return;
         }
 
         if ($tags->isEmpty()) {
             $this->command->error('タグが見つかりません。先にTagSeederを実行してください。');
+
             return;
         }
 
@@ -215,31 +217,32 @@ class ArticleSeeder extends Seeder
         $endDate = Carbon::create(2025, 6, 30);
 
         foreach ($userPatterns as $email => $pattern) {
-            if (!$pattern['user'] || $pattern['pattern'] === 'no_posts') {
+            if (! $pattern['user'] || $pattern['pattern'] === 'no_posts') {
                 if ($pattern['pattern'] === 'no_posts') {
                     $this->command->info("投稿なしユーザー: {$email}");
                 }
+
                 continue;
             }
 
             $user = $pattern['user'];
             $totalPosts = $pattern['2024_posts'] + $pattern['2025_posts'];
-            
+
             $this->command->info("記事作成開始: {$user->name} ({$pattern['pattern']})");
 
             // Markdown完全ガイド記事を各ユーザーに作成
             $this->createMarkdownGuideArticle($user, $tags, $startDate);
-            
+
             // 専門分野に応じた記事を作成
             $this->createSpecialtyArticles($user, $pattern, $tags, $startDate, $endDate, $totalPosts - 1);
-            
+
             $totalArticles += $totalPosts;
             $this->command->info("記事作成完了: {$user->name} - 作成予定: {$totalPosts}記事");
         }
 
-        $this->command->info("=== 記事作成完了 ===");
+        $this->command->info('=== 記事作成完了 ===');
         $this->command->info("作成予定記事数: {$totalArticles}");
-        $this->command->info("実際作成数: " . Article::count());
+        $this->command->info('実際作成数: '.Article::count());
     }
 
     /**
@@ -249,8 +252,8 @@ class ArticleSeeder extends Seeder
     {
         $title = 'Markdown完全ガイド：見出しからコードブロックまで【実践編】';
         $content = $this->getMarkdownGuideContent();
-        
-        $article = new Article();
+
+        $article = new Article;
         $article->title = $title;
         $article->content = $content;
         $article->user_id = $user->id;
@@ -277,27 +280,27 @@ class ArticleSeeder extends Seeder
     {
         $specialty = $pattern['specialty'];
         $isPaidPattern = $pattern['pattern'] !== 'free_only';
-        
+
         // 記事テンプレート定義
         $templates = $this->getArticleTemplates($specialty);
-        
+
         for ($i = 0; $i < $articleCount; $i++) {
             // 固定アルゴリズムで日付を分散
             $dayOffset = (int) (($i / $articleCount) * $startDate->diffInDays($endDate));
             $articleDate = $startDate->copy()->addDays($dayOffset);
-            
+
             // 2024年6月以降の記事のみ作成
             if ($articleDate->lt(Carbon::create(2024, 6, 1))) {
                 $articleDate = Carbon::create(2024, 6, 1)->addDays($i % 30);
             }
-            
+
             $template = $templates[$i % count($templates)];
-            
-            $article = new Article();
+
+            $article = new Article;
             $article->title = $this->generateVariedTitle($template['title'], $i);
             $article->content = $this->generateVariedContent($template['content'], $specialty, $i);
             $article->user_id = $user->id;
-            
+
             // 価格設定（無料専門以外）
             if ($isPaidPattern && ($i % 2 === 0)) { // 50%を有料に
                 $article->is_paid = true;
@@ -306,14 +309,14 @@ class ArticleSeeder extends Seeder
                 $article->is_paid = false;
                 $article->price = 0;
             }
-            
+
             // ステータス（10%を下書きに）
             $article->status = ($i % 10 === 9) ? 'draft' : 'published';
-            
+
             $article->created_at = $articleDate;
             $article->updated_at = $articleDate;
             $article->save();
-            
+
             // タグ付与
             $this->attachTags($article, $template['tags'], $tags);
         }
@@ -372,14 +375,14 @@ class ArticleSeeder extends Seeder
     private function generateVariedTitle($baseTitle, $index): string
     {
         $variations = [
-            '【2024年最新】' . $baseTitle,
-            $baseTitle . ' - 実践ガイド',
-            $baseTitle . ' 完全攻略',
-            $baseTitle . ' 入門から応用まで',
-            '現場で使える ' . $baseTitle,
-            $baseTitle . ' のベストプラクティス',
-            '初心者向け ' . $baseTitle . ' 解説',
-            $baseTitle . ' 徹底解説',
+            '【2024年最新】'.$baseTitle,
+            $baseTitle.' - 実践ガイド',
+            $baseTitle.' 完全攻略',
+            $baseTitle.' 入門から応用まで',
+            '現場で使える '.$baseTitle,
+            $baseTitle.' のベストプラクティス',
+            '初心者向け '.$baseTitle.' 解説',
+            $baseTitle.' 徹底解説',
         ];
 
         return $variations[$index % count($variations)];
@@ -398,7 +401,7 @@ class ArticleSeeder extends Seeder
         ];
 
         $sections = [
-            "\n\n## 基本概念の理解\n\n" . $baseContent,
+            "\n\n## 基本概念の理解\n\n".$baseContent,
             "\n\n## 実装手順\n\n```javascript\n// サンプルコード\nfunction example() {\n  return 'Hello World';\n}\n```",
             "\n\n## ベストプラクティス\n\n- 効率的な開発手法\n- パフォーマンス最適化\n- セキュリティ対策",
             "\n\n## トラブルシューティング\n\nよくある問題とその解決方法について説明します。",
@@ -407,7 +410,7 @@ class ArticleSeeder extends Seeder
 
         $intro = $intros[$index % count($intros)];
         $content = $intro;
-        
+
         // セクションをランダムに2-3個追加
         $sectionCount = 2 + ($index % 2);
         for ($i = 0; $i < $sectionCount; $i++) {
@@ -529,12 +532,12 @@ Markdownは覚えやすく、読みやすい記法です。この記事で紹介
         $this->command->info("無料記事: {$freeArticles}");
         $this->command->info("下書き: {$draftArticles}");
         $this->command->info("公開済み: {$publishedArticles}");
-        $this->command->info("平均価格: " . round($averagePrice) . '円');
+        $this->command->info('平均価格: '.round($averagePrice).'円');
 
         // 年別統計
         $articles2024 = Article::whereBetween('created_at', ['2024-01-01', '2024-12-31'])->count();
         $articles2025 = Article::whereBetween('created_at', ['2025-01-01', '2025-12-31'])->count();
-        
+
         $this->command->info('=== 年別統計 ===');
         $this->command->info("2024年: {$articles2024}記事");
         $this->command->info("2025年: {$articles2025}記事");
