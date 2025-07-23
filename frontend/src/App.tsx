@@ -12,10 +12,15 @@ import ArticleCreatePage from "./pages/ArticleCreatePage";
 import ArticleEditPage from "./pages/ArticleEditPage";
 import UserMyPage from "./pages/UserMyPage";
 import PaymentHistoryPage from "./pages/PaymentHistoryPage";
+import SalesManagement from "./pages/SalesManagement";
+import PayoutManagement from "./pages/PayoutManagement";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminArticles from "./pages/AdminArticles";
 import AdminAccount from "./pages/AdminAccount";
+import { AdminCommissionSettings } from "./pages/AdminCommissionSettings";
+import { AdminCommissionReport } from "./pages/AdminCommissionReport";
+import { AdminPayouts } from "./pages/AdminPayouts";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
@@ -99,6 +104,30 @@ function App() {
               }
             />
 
+            {/* 売上管理（認証が必要） */}
+            <Route
+              path="/sales"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <SalesManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 売上入金管理（認証が必要） */}
+            <Route
+              path="/payouts"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PayoutManagement />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
             {/* 保護されたルート（認証が必要） */}
             <Route
               path="/dashboard"
@@ -148,6 +177,30 @@ function App() {
               element={
                 <AdminLayout>
                   <AdminAccount />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/commission-settings"
+              element={
+                <AdminLayout>
+                  <AdminCommissionSettings />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/commission-report"
+              element={
+                <AdminLayout>
+                  <AdminCommissionReport />
+                </AdminLayout>
+              }
+            />
+            <Route
+              path="/admin/payouts"
+              element={
+                <AdminLayout>
+                  <AdminPayouts />
                 </AdminLayout>
               }
             />

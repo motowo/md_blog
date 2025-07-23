@@ -103,6 +103,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the bank accounts for the user.
+     */
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(BankAccount::class);
+    }
+
+    /**
+     * Get the active bank account for the user.
+     */
+    public function activeBankAccount()
+    {
+        return $this->bankAccounts()->active()->first();
+    }
+
+    /**
+     * Check if the user has an active bank account.
+     */
+    public function hasActiveBankAccount(): bool
+    {
+        return $this->activeBankAccount() !== null;
+    }
+
+    /**
      * Check if the user has purchased the given article.
      */
     public function hasPurchased(Article $article): bool

@@ -267,7 +267,8 @@ class ArticleSeeder extends Seeder
         $selectedTags = $this->selectTags(['マークダウン', 'ドキュメント'], $tags, 2);
 
         // 固定値でcreated_at時間に基づいて決定
-        $isPaid = $pattern !== 'free_only' && ($dateTime->day + $dateTime->hour) % 2 === 1;
+        // 振込口座がないユーザーは有料記事を作成できない
+        $isPaid = $pattern !== 'free_only' && ($dateTime->day + $dateTime->hour) % 2 === 1 && $user->hasActiveBankAccount();
         $status = ($dateTime->day + $dateTime->hour + $dateTime->minute) % 10 === 1 ? 'draft' : 'published';
 
         $article = Article::create([
@@ -301,7 +302,8 @@ class ArticleSeeder extends Seeder
         $selectedTags = $this->selectTags($template['tags'], $tags, $tagCount);
 
         // 固定値でcreated_at時間とインデックスに基づいて決定
-        $isPaid = $this->determineIsPaidFixed($pattern, $dateTime, $articleIndex);
+        // 振込口座がないユーザーは有料記事を作成できない
+        $isPaid = $this->determineIsPaidFixed($pattern, $dateTime, $articleIndex) && $user->hasActiveBankAccount();
         $status = ($dateTime->day + $dateTime->hour + $articleIndex) % 10 === 1 ? 'draft' : 'published';
 
         $article = Article::create([
