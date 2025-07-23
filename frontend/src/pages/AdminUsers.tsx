@@ -65,8 +65,10 @@ const AdminUsers: React.FC = () => {
           for (const config of sortConfig) {
             if (!config.direction) continue;
 
-            let aValue: any = a[config.field as keyof AdminUser];
-            let bValue: any = b[config.field as keyof AdminUser];
+            let aValue: string | number | Date | null =
+              a[config.field as keyof AdminUser];
+            let bValue: string | number | Date | null =
+              b[config.field as keyof AdminUser];
 
             // 日付の場合は Date オブジェクトに変換
             if (

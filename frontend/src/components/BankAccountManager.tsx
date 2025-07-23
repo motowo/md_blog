@@ -41,8 +41,10 @@ export function BankAccountManager() {
     try {
       const response = await apiClient.get("/bank-accounts");
       setAccounts(response.data.data);
-    } catch (err: any) {
-      setError(err.message || "振込口座情報の取得に失敗しました");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "振込口座情報の取得に失敗しました",
+      );
     } finally {
       setLoading(false);
     }
@@ -123,8 +125,10 @@ export function BankAccountManager() {
       setSuccess(response.data.message);
       resetForm();
       fetchAccounts();
-    } catch (err: any) {
-      setError(err.message || "振込口座の保存に失敗しました");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "振込口座の保存に失敗しました",
+      );
     }
   };
 
@@ -149,8 +153,10 @@ export function BankAccountManager() {
       const response = await apiClient.delete(`/bank-accounts/${id}`);
       setSuccess(response.data.message);
       fetchAccounts();
-    } catch (err: any) {
-      setError(err.message || "振込口座の削除に失敗しました");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "振込口座の削除に失敗しました",
+      );
     }
   };
 
@@ -159,8 +165,10 @@ export function BankAccountManager() {
       const response = await apiClient.patch(`/bank-accounts/${id}/activate`);
       setSuccess(response.data.message);
       fetchAccounts();
-    } catch (err: any) {
-      setError(err.message || "振込口座の有効化に失敗しました");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "振込口座の有効化に失敗しました",
+      );
     }
   };
 
