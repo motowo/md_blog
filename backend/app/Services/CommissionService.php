@@ -20,6 +20,21 @@ class CommissionService
     public function processMonthlyPayouts($yearMonth)
     {
         return DB::transaction(function () use ($yearMonth) {
+            // 既存の支払いデータをチェック
+            $existingPayouts = Payout::where('period', $yearMonth)->get();
+            $processedUserIds = [];
+            $skippedUserIds = [];
+            
+            foreach ($existingPayouts as $existingPayout) {
+                if ($existingPayout->status === 'paid') {
+                    // 支払済みのユーザーはスキップ
+                    $skippedUserIds[] = $existingPayout->user_id;
+                } else {
+                    // 未払いまたは失敗の場合は再処理対象
+                    $processedUserIds[] = $existingPayout->user_id;
+                }
+            }
+
             // TimeZoneHelperを使用してJSTベースの月範囲を取得
             [$sql, $startUTC, $endUTC] = TimeZoneHelper::monthRangeFilterSql('payments.paid_at', $yearMonth);
 
@@ -37,8 +52,17 @@ class CommissionService
                 ->get();
 
             $results = [];
+            $newlyProcessedUserIds = [];
+            $updatedUserIds = [];
 
             foreach ($authorPayments as $authorPayment) {
+                $userId = $authorPayment->user_id;
+                
+                // 支払済みのユーザーはスキップ
+                if (in_array($userId, $skippedUserIds)) {
+                    continue;
+                }
+
                 // 手数料率を取得（月末時点の設定を使用）
                 $endDate = Carbon::parse($yearMonth . '-01', TimeZoneHelper::JAPAN_TIMEZONE)->endOfMonth();
                 $commissionSetting = CommissionSetting::getActiveSettingForDate($endDate->format('Y-m-d'));
@@ -52,33 +76,55 @@ class CommissionService
                 $commissionAmount = round($grossAmount * ($commissionRate / 100), 2);
                 $netAmount = $grossAmount - $commissionAmount;
 
-                // Payoutレコードを作成または更新
-                $payout = Payout::updateOrCreate(
-                    [
-                        'user_id' => $authorPayment->user_id,
-                        'period' => $yearMonth,
-                    ],
-                    [
+                // 既存レコードがあるかチェック
+                $existingPayout = Payout::where('user_id', $userId)
+                    ->where('period', $yearMonth)
+                    ->first();
+
+                if ($existingPayout) {
+                    // 既存レコードを更新（未払いまたは失敗の場合のみ）
+                    $existingPayout->update([
                         'gross_amount' => $grossAmount,
                         'commission_rate' => $commissionRate,
                         'commission_amount' => $commissionAmount,
                         'amount' => $netAmount,
                         'status' => 'unpaid',
-                    ]
-                );
+                        'paid_at' => null, // 失敗から未払いに戻す場合に備えて
+                    ]);
+                    $updatedUserIds[] = $userId;
+                } else {
+                    // 新規作成
+                    Payout::create([
+                        'user_id' => $userId,
+                        'period' => $yearMonth,
+                        'gross_amount' => $grossAmount,
+                        'commission_rate' => $commissionRate,
+                        'commission_amount' => $commissionAmount,
+                        'amount' => $netAmount,
+                        'status' => 'unpaid',
+                    ]);
+                    $newlyProcessedUserIds[] = $userId;
+                }
 
                 $results[] = [
-                    'user_id' => $authorPayment->user_id,
+                    'user_id' => $userId,
                     'gross_amount' => $grossAmount,
                     'commission_amount' => $commissionAmount,
                     'net_amount' => $netAmount,
                     'payment_count' => $authorPayment->payment_count,
+                    'action' => $existingPayout ? 'updated' : 'created',
                 ];
             }
 
+            $totalProcessed = count($newlyProcessedUserIds) + count($updatedUserIds);
+            $totalSkipped = count($skippedUserIds);
+
             return [
                 'success' => true,
-                'processed_count' => count($results),
+                'processed_count' => $totalProcessed,
+                'newly_created_count' => count($newlyProcessedUserIds),
+                'updated_count' => count($updatedUserIds),
+                'skipped_count' => $totalSkipped,
                 'payouts' => $results,
             ];
         });

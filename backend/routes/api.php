@@ -121,6 +121,8 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // 振込管理
         Route::get('/pending-payouts', [CommissionController::class, 'getPendingPayouts']);
+        Route::get('/payouts/monthly-summary', [CommissionController::class, 'getMonthlySummary']);
+        Route::get('/payouts/monthly-details', [CommissionController::class, 'getMonthlyDetails']);
         Route::patch('/payouts/{id}/confirm', [CommissionController::class, 'confirmPayout']);
         Route::post('/payouts/bulk-confirm', [CommissionController::class, 'bulkConfirmPayouts']);
     });

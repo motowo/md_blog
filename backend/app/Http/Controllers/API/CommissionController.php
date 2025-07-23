@@ -210,8 +210,28 @@ class CommissionController extends Controller
         try {
             $result = $this->commissionService->processMonthlyPayouts($request->year_month);
 
+            // 詳細な処理結果メッセージを作成
+            $messageDetails = [];
+            
+            if ($result['newly_created_count'] > 0) {
+                $messageDetails[] = "{$result['newly_created_count']}件の新規支払い情報を作成";
+            }
+            
+            if ($result['updated_count'] > 0) {
+                $messageDetails[] = "{$result['updated_count']}件の未払い支払い情報を更新";
+            }
+            
+            if ($result['skipped_count'] > 0) {
+                $messageDetails[] = "{$result['skipped_count']}件の支払済み情報をスキップ";
+            }
+            
+            $detailMessage = empty($messageDetails) ? '処理対象がありませんでした' : implode('、', $messageDetails);
+            $actionMessage = ($result['newly_created_count'] > 0 || $result['updated_count'] > 0) 
+                ? '「未払い一覧」タブで確認し、支払い確定処理を行ってください。' 
+                : '';
+
             return response()->json([
-                'message' => '月次支払い処理が完了しました',
+                'message' => "月次支払い処理が完了しました。{$detailMessage}。{$actionMessage}",
                 'data' => $result
             ]);
         } catch (\Exception $e) {
@@ -234,6 +254,71 @@ class CommissionController extends Controller
 
         return response()->json([
             'data' => $payouts
+        ]);
+    }
+
+    /**
+     * 振込履歴の月次サマリを取得
+     */
+    public function getMonthlySummary(): JsonResponse
+    {
+        $summaries = \App\Models\Payout::with('user')
+            ->selectRaw('
+                period,
+                COUNT(*) as total_count,
+                COUNT(CASE WHEN status = "paid" THEN 1 END) as paid_count,
+                COUNT(CASE WHEN status = "unpaid" THEN 1 END) as unpaid_count,
+                COUNT(CASE WHEN status = "failed" THEN 1 END) as failed_count,
+                SUM(amount) as total_amount,
+                SUM(CASE WHEN status = "paid" THEN amount ELSE 0 END) as paid_amount,
+                SUM(CASE WHEN status = "unpaid" THEN amount ELSE 0 END) as unpaid_amount,
+                SUM(gross_amount) as total_gross_amount,
+                SUM(commission_amount) as total_commission_amount,
+                AVG(commission_rate) as avg_commission_rate
+            ')
+            ->groupBy('period')
+            ->orderBy('period', 'desc')
+            ->get();
+
+        return response()->json([
+            'data' => $summaries
+        ]);
+    }
+
+    /**
+     * 指定月の振込詳細を取得
+     */
+    public function getMonthlyDetails(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'period' => 'required|date_format:Y-m',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $payouts = \App\Models\Payout::with('user')
+            ->where('period', $request->period)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // 振込日を計算（翌月の15日）
+        $periodDate = \Carbon\Carbon::createFromFormat('Y-m', $request->period);
+        $payoutDate = $periodDate->copy()->addMonth()->day(15);
+        
+        // 土日の場合は前の平日に調整
+        while ($payoutDate->isWeekend()) {
+            $payoutDate->subDay();
+        }
+
+        return response()->json([
+            'data' => $payouts,
+            'payout_date' => $payoutDate->format('Y-m-d'),
+            'payout_date_formatted' => $payoutDate->format('Y年n月j日'),
         ]);
     }
 
