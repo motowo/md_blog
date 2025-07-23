@@ -64,6 +64,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'remember_me' => 'nullable|boolean',
         ]);
 
         if (! Auth::attempt($request->only('email', 'password'))) {
@@ -82,7 +83,14 @@ class AuthController extends Controller
             ]);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // Remember me機能に応じてトークンの有効期限を設定
+        $rememberMe = $request->boolean('remember_me', false);
+        $tokenName = $rememberMe ? 'auth_token_persistent' : 'auth_token';
+        
+        // Remember meが有効な場合は30日、無効な場合は7日の有効期限
+        $expiresAt = $rememberMe ? now()->addDays(30) : now()->addDays(7);
+        
+        $token = $user->createToken($tokenName, ['*'], $expiresAt)->plainTextToken;
 
         return response()->json([
             'message' => 'Login successful',
