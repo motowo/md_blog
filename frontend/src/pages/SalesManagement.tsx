@@ -13,10 +13,6 @@ const SalesManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
 
-  useEffect(() => {
-    fetchSales();
-  }, [selectedMonth, currentPage, fetchSales]);
-
   const fetchSales = useCallback(async () => {
     try {
       setLoading(true);
@@ -44,6 +40,10 @@ const SalesManagement: React.FC = () => {
       setLoading(false);
     }
   }, [selectedMonth, currentPage]);
+
+  useEffect(() => {
+    fetchSales();
+  }, [selectedMonth, currentPage, fetchSales]);
 
   const formatDate = (dateString: string) => {
     // バックエンドから既にJST形式で受け取るので、そのまま表示

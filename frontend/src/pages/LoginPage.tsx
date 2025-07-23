@@ -22,6 +22,7 @@ const LoginPage: React.FC = () => {
     email: "",
     password: "",
   });
+  const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [generalError, setGeneralError] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -71,7 +72,10 @@ const LoginPage: React.FC = () => {
     setGeneralError("");
 
     try {
-      const loginUser = await login(formData);
+      const loginUser = await login({
+        ...formData,
+        remember_me: rememberMe,
+      });
 
       // リダイレクト先がある場合はそちらに、なければ役割に応じて遷移
       if (state?.from) {
@@ -159,6 +163,23 @@ const LoginPage: React.FC = () => {
                 placeholder="パスワードを入力"
                 required
               />
+
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700"
+                />
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-900 dark:text-gray-300"
+                >
+                  ログイン状態を保持する
+                </label>
+              </div>
 
               {generalError && (
                 <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-md border border-red-200 dark:border-red-800">

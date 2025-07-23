@@ -33,9 +33,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const currentUser = await AuthService.getCurrentUser();
 
             // ユーザーが無効化されているかチェック
-            if (!currentUser.is_active) {
+            if (currentUser && !currentUser.is_active) {
               console.warn("User account is inactive, logging out");
-              await AuthService.logout();
+              AuthService.clearAuthData();
               setUser(null);
               return;
             }
@@ -47,11 +47,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               "Token verification failed, clearing auth state:",
               error,
             );
-            try {
-              await AuthService.logout(); // ローカルストレージをクリア
-            } catch (logoutError) {
-              console.error("Failed to clear auth state:", logoutError);
-            }
+            // APIインターセプターでローカルストレージがクリアされるため、直接clearAuthDataを呼ぶ
+            AuthService.clearAuthData();
             setUser(null);
           }
         } else {
@@ -62,14 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error("Failed to initialize auth:", error);
         // 初期化エラーの場合も認証状態をクリア
         setUser(null);
-        try {
-          await AuthService.logout();
-        } catch (logoutError) {
-          console.error(
-            "Failed to clear auth state after init error:",
-            logoutError,
-          );
-        }
+        AuthService.clearAuthData();
       } finally {
         setIsLoading(false);
       }

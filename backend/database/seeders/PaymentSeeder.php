@@ -24,6 +24,7 @@ class PaymentSeeder extends Seeder
 
         if ($paidArticles->isEmpty()) {
             $this->command->info('2024年6月以降の有料記事が存在しないため、決済データをスキップします');
+
             return;
         }
 
@@ -32,12 +33,13 @@ class PaymentSeeder extends Seeder
 
         if ($buyers->isEmpty()) {
             $this->command->info('購入者となるユーザーが存在しないため、決済データをスキップします');
+
             return;
         }
 
         // 手数料設定を確認
         $commissionSettings = CommissionSetting::orderBy('created_at')->get();
-        
+
         $paymentCount = 0;
         $commissionBoundaryTests = 0;
 
@@ -46,14 +48,14 @@ class PaymentSeeder extends Seeder
             $articleDate = Carbon::parse($article->created_at);
             $purchaseWindowStart = $articleDate;
             $purchaseWindowEnd = $articleDate->copy()->addWeek();
-            
+
             // 各記事に対して固定アルゴリズムで購入者を設定（記事人気度に応じて0-8人）
             $popularity = $this->calculateArticlePopularity($article, $articleIndex);
             $purchaseCount = min(8, max(0, $popularity));
-            
+
             // 手数料境界テスト: 特定の記事で手数料変更前後の購入を作成
             $isCommissionBoundaryTest = ($articleIndex % 50 === 0) && $commissionBoundaryTests < 5;
-            
+
             for ($i = 0; $i < $purchaseCount; $i++) {
                 $buyerIndex = ($articleIndex * 7 + $i * 3) % $buyers->count(); // 固定アルゴリズム
                 $buyer = $buyers[$buyerIndex];
@@ -73,7 +75,7 @@ class PaymentSeeder extends Seeder
                 $dayOffset = ($i % 7); // 0-6日の範囲
                 $hourOffset = (8 + ($i * 3) % 12); // 8-19時の範囲
                 $purchaseDate = $purchaseWindowStart->copy()->addDays($dayOffset)->setTime($hourOffset, 0);
-                
+
                 // 手数料境界テスト：手数料変更タイミング前後で購入
                 if ($isCommissionBoundaryTest && $i < 2) {
                     $commissionChangeDate = Carbon::create(2024, 12, 1); // 仮の手数料変更日
@@ -96,7 +98,7 @@ class PaymentSeeder extends Seeder
                     'user_id' => $buyer->id,
                     'article_id' => $article->id,
                     'amount' => $article->price,
-                    'transaction_id' => 'txn_fixed_' . str_pad($articleIndex, 4, '0', STR_PAD_LEFT) . '_' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                    'transaction_id' => 'txn_fixed_'.str_pad($articleIndex, 4, '0', STR_PAD_LEFT).'_'.str_pad($i, 2, '0', STR_PAD_LEFT),
                     'status' => 'success',
                     'paid_at' => $purchaseDate,
                     'created_at' => $purchaseDate,
@@ -132,7 +134,7 @@ class PaymentSeeder extends Seeder
         // 投稿者のアクティビティレベルによる補正
         $authorEmailSuffix = substr($article->user->email, 0, 1);
         $authorPopularityBonus = 0;
-        
+
         // 固定パターンでの人気度ボーナス
         if (in_array($authorEmailSuffix, ['t', 's', 'i'])) { // 田中、佐藤、伊藤等
             $authorPopularityBonus = 2;
@@ -177,7 +179,7 @@ class PaymentSeeder extends Seeder
             $monthlyRevenue = Payment::whereYear('paid_at', $month->year)
                 ->whereMonth('paid_at', $month->month)
                 ->sum('amount');
-            
+
             if ($monthlyPayments > 0) {
                 $this->command->info("{$month->format('Y-m')}: {$monthlyPayments}件, ¥".number_format($monthlyRevenue));
             }
@@ -190,9 +192,9 @@ class PaymentSeeder extends Seeder
                 Carbon::create(2024, 12, 2, 14, 0),
             ])
             ->count();
-        
+
         if ($commissionTestPayments > 0) {
-            $this->command->info("=== 手数料境界テストデータ ===");
+            $this->command->info('=== 手数料境界テストデータ ===');
             $this->command->info("手数料変更前後の購入: {$commissionTestPayments}件");
         }
 
@@ -200,9 +202,9 @@ class PaymentSeeder extends Seeder
         $weeklyPurchases = Payment::join('articles', 'payments.article_id', '=', 'articles.id')
             ->whereRaw('payments.paid_at BETWEEN articles.created_at AND DATE_ADD(articles.created_at, INTERVAL 7 DAY)')
             ->count();
-        
-        $this->command->info("=== 購入期間テスト ===");
+
+        $this->command->info('=== 購入期間テスト ===');
         $this->command->info("記事投稿1週間以内購入: {$weeklyPurchases}件 / {$totalPayments}件");
-        $this->command->info("適合率: " . round(($weeklyPurchases / max(1, $totalPayments)) * 100, 1) . "%");
+        $this->command->info('適合率: '.round(($weeklyPurchases / max(1, $totalPayments)) * 100, 1).'%');
     }
 }

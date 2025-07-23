@@ -45,8 +45,13 @@ export class AuthService {
 
   // 現在のユーザー情報を取得
   static async getCurrentUser(): Promise<User> {
-    const response = await apiClient.get<{ user: User }>("/user");
-    const user = response.data.user;
+    const response = await apiClient.get<User>("/user");
+    const user = response.data;
+
+    // ユーザーデータの基本検証
+    if (!user || typeof user !== "object" || !user.id) {
+      throw new Error("Invalid user data received from server");
+    }
 
     // ユーザー情報を更新
     localStorage.setItem("user", JSON.stringify(user));
