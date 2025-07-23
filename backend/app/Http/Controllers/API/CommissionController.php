@@ -16,13 +16,6 @@ class CommissionController extends Controller
     public function __construct(CommissionService $commissionService)
     {
         $this->commissionService = $commissionService;
-        $this->middleware('auth:sanctum');
-        $this->middleware(function ($request, $next) {
-            if ($request->user()->role !== 'admin') {
-                return response()->json(['message' => 'Unauthorized'], 403);
-            }
-            return $next($request);
-        });
     }
 
     /**
@@ -44,8 +37,7 @@ class CommissionController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'rate' => 'required|numeric|min:0|max:100',
-            'applicable_from' => 'required|date|after_or_equal:today',
-            'applicable_to' => 'nullable|date|after:applicable_from',
+            'applicable_from_month' => 'required|date_format:Y-m',
             'description' => 'nullable|string|max:255',
         ]);
 
@@ -56,37 +48,40 @@ class CommissionController extends Controller
             ], 422);
         }
 
-        // 重複する期間がないかチェック
-        $existingSettings = CommissionSetting::where('is_active', true)
-            ->where(function ($query) use ($request) {
-                $query->where(function ($q) use ($request) {
-                    $q->where('applicable_from', '<=', $request->applicable_from)
-                      ->where(function ($q2) use ($request) {
-                          $q2->whereNull('applicable_to')
-                             ->orWhere('applicable_to', '>=', $request->applicable_from);
-                      });
-                });
-            })
-            ->exists();
+        return \DB::transaction(function () use ($request) {
+            // 指定された月の1日を日付文字列として設定
+            $applicableFrom = $request->applicable_from_month . '-01';
 
-        if ($existingSettings) {
+            // 既存の有効な手数料設定（適用終了日がnull）を取得
+            $existingSetting = CommissionSetting::where('is_active', true)
+                ->whereNull('applicable_to')
+                ->first();
+
+            // 新しい設定を作成
+            $setting = CommissionSetting::create([
+                'rate' => $request->rate,
+                'applicable_from' => $applicableFrom,
+                'applicable_to' => null,
+                'description' => $request->description,
+                'is_active' => true,
+            ]);
+
+            // 既存設定の適用終了日を新しい設定の前日に設定
+            if ($existingSetting) {
+                // 新しい設定の前日を計算
+                $startDate = \Carbon\Carbon::createFromFormat('Y-m-d', $applicableFrom);
+                $applicableToForExisting = $startDate->subDay()->format('Y-m-d');
+
+                $existingSetting->update([
+                    'applicable_to' => $applicableToForExisting
+                ]);
+            }
+
             return response()->json([
-                'message' => '指定された期間に既に有効な手数料設定が存在します'
-            ], 409);
-        }
-
-        $setting = CommissionSetting::create([
-            'rate' => $request->rate,
-            'applicable_from' => $request->applicable_from,
-            'applicable_to' => $request->applicable_to,
-            'description' => $request->description,
-            'is_active' => true,
-        ]);
-
-        return response()->json([
-            'message' => '手数料設定を作成しました',
-            'data' => $setting
-        ], 201);
+                'message' => '手数料設定を作成しました',
+                'data' => $setting
+            ], 201);
+        });
     }
 
     /**
@@ -116,6 +111,57 @@ class CommissionController extends Controller
             'message' => '手数料設定を更新しました',
             'data' => $setting
         ]);
+    }
+
+    /**
+     * 手数料設定を削除
+     */
+    public function destroy($id): JsonResponse
+    {
+        $setting = CommissionSetting::findOrFail($id);
+        
+        // 未来適用の設定のみ削除可能
+        $today = now()->format('Y-m-d');
+        if ($setting->applicable_from <= $today) {
+            return response()->json([
+                'message' => '過去または現在有効な設定は削除できません'
+            ], 403);
+        }
+        
+        return \DB::transaction(function () use ($setting) {
+            // 削除する設定の前の設定を取得
+            $previousSetting = CommissionSetting::where('is_active', true)
+                ->where('applicable_to', \Carbon\Carbon::parse($setting->applicable_from)->subDay()->format('Y-m-d'))
+                ->first();
+            
+            // 削除する設定の次の設定を取得
+            $nextSetting = CommissionSetting::where('is_active', true)
+                ->where('applicable_from', '>', $setting->applicable_from)
+                ->orderBy('applicable_from')
+                ->first();
+            
+            // 前の設定の終了日を調整
+            if ($previousSetting) {
+                if ($nextSetting) {
+                    // 次の設定がある場合は、その前日まで延長
+                    $previousSetting->update([
+                        'applicable_to' => \Carbon\Carbon::parse($nextSetting->applicable_from)->subDay()->format('Y-m-d')
+                    ]);
+                } else {
+                    // 次の設定がない場合は無期限に
+                    $previousSetting->update([
+                        'applicable_to' => null
+                    ]);
+                }
+            }
+            
+            // 設定を削除
+            $setting->delete();
+            
+            return response()->json([
+                'message' => '手数料設定を削除しました'
+            ]);
+        });
     }
 
     /**
