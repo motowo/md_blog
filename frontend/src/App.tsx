@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
-import AdminLayout from "./components/AdminLayout";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -19,7 +18,6 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminArticles from "./pages/AdminArticles";
 import AdminAccount from "./pages/AdminAccount";
 import { AdminCommissionSettings } from "./pages/AdminCommissionSettings";
-import { AdminCommissionReport } from "./pages/AdminCommissionReport";
 import { AdminPayouts } from "./pages/AdminPayouts";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -148,62 +146,15 @@ function App() {
             />
 
             {/* 管理者専用ルート */}
-            <Route
-              path="/admin"
-              element={
-                <AdminLayout>
-                  <AdminDashboard />
-                </AdminLayout>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <AdminLayout>
-                  <AdminUsers />
-                </AdminLayout>
-              }
-            />
-            <Route
-              path="/admin/articles"
-              element={
-                <AdminLayout>
-                  <AdminArticles />
-                </AdminLayout>
-              }
-            />
-            <Route
-              path="/admin/account"
-              element={
-                <AdminLayout>
-                  <AdminAccount />
-                </AdminLayout>
-              }
-            />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/articles" element={<AdminArticles />} />
+            <Route path="/admin/account" element={<AdminAccount />} />
             <Route
               path="/admin/commission-settings"
-              element={
-                <AdminLayout>
-                  <AdminCommissionSettings />
-                </AdminLayout>
-              }
+              element={<AdminCommissionSettings />}
             />
-            <Route
-              path="/admin/commission-report"
-              element={
-                <AdminLayout>
-                  <AdminCommissionReport />
-                </AdminLayout>
-              }
-            />
-            <Route
-              path="/admin/payouts"
-              element={
-                <AdminLayout>
-                  <AdminPayouts />
-                </AdminLayout>
-              }
-            />
+            <Route path="/admin/payouts" element={<AdminPayouts />} />
           </Routes>
         </Router>
       </AuthProvider>

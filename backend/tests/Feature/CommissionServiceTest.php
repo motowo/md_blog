@@ -82,39 +82,6 @@ class CommissionServiceTest extends TestCase
         $this->assertEquals(10.00, $payout->commission_rate);
     }
 
-    public function test_commission_revenue_calculation()
-    {
-        $service = new CommissionService();
-        
-        // テストデータを作成（created_atを明示的に設定）
-        $testDate = now();
-        
-        Payout::factory()->create([
-            'gross_amount' => 1000,
-            'commission_amount' => 100,
-            'commission_rate' => 10.00,
-            'created_at' => $testDate,
-            'updated_at' => $testDate,
-        ]);
-        
-        Payout::factory()->create([
-            'gross_amount' => 2000,
-            'commission_amount' => 200,
-            'commission_rate' => 10.00,
-            'created_at' => $testDate,
-            'updated_at' => $testDate,
-        ]);
-
-        $report = $service->calculateCommissionRevenue(
-            $testDate->format('Y-m-d'),
-            $testDate->format('Y-m-d')
-        );
-        
-        $this->assertEquals(300, $report['total_commission']);
-        $this->assertEquals(3000, $report['total_gross']);
-        $this->assertEquals(10.00, $report['average_commission_rate']);
-        $this->assertEquals(2, $report['payout_count']);
-    }
 
     public function test_historical_data_commission_application()
     {

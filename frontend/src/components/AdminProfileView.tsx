@@ -37,6 +37,9 @@ const AdminProfileView: React.FC<AdminProfileViewProps> = ({
 }) => {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  // 管理者かどうかをチェック
+  const isAdmin = user?.role === "admin";
   const [activeTab, setActiveTab] = useState<
     "profile" | "articles" | "settings"
   >(initialTab);
@@ -361,90 +364,95 @@ const AdminProfileView: React.FC<AdminProfileViewProps> = ({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    経歴・キャリア（任意）
-                  </label>
-                  <textarea
-                    value={profileData.career_description}
-                    onChange={(e) =>
-                      setProfileData({
-                        ...profileData,
-                        career_description: e.target.value,
-                      })
-                    }
-                    placeholder="経歴やキャリアについて詳しく記載してください"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows={4}
-                  />
-                </div>
+                {/* 管理者の場合は経歴・キャリア、SNS URL、プロフィール公開設定を非表示 */}
+                {!isAdmin && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        経歴・キャリア（任意）
+                      </label>
+                      <textarea
+                        value={profileData.career_description}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            career_description: e.target.value,
+                          })
+                        }
+                        placeholder="経歴やキャリアについて詳しく記載してください"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows={4}
+                      />
+                    </div>
 
-                <Input
-                  label="X URL（任意）"
-                  type="url"
-                  value={profileData.x_url}
-                  onChange={(e) =>
-                    setProfileData({
-                      ...profileData,
-                      x_url: e.target.value,
-                    })
-                  }
-                  placeholder="https://x.com/username"
-                />
-
-                <Input
-                  label="GitHub URL（任意）"
-                  type="url"
-                  value={profileData.github_url}
-                  onChange={(e) =>
-                    setProfileData({
-                      ...profileData,
-                      github_url: e.target.value,
-                    })
-                  }
-                  placeholder="https://github.com/username"
-                />
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    プロフィール公開設定（任意）
-                  </label>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      非公開
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
+                    <Input
+                      label="X URL（任意）"
+                      type="url"
+                      value={profileData.x_url}
+                      onChange={(e) =>
                         setProfileData({
                           ...profileData,
-                          profile_public: !profileData.profile_public,
+                          x_url: e.target.value,
                         })
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        profileData.profile_public
-                          ? "bg-blue-600"
-                          : "bg-gray-200 dark:bg-gray-600"
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          profileData.profile_public
-                            ? "translate-x-6"
-                            : "translate-x-1"
-                        }`}
-                      />
-                    </button>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      公開
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    {profileData.profile_public
-                      ? "✅ プロフィールが他のユーザーに表示されます"
-                      : "🔒 プロフィールは非公開です"}
-                  </p>
-                </div>
+                      placeholder="https://x.com/username"
+                    />
+
+                    <Input
+                      label="GitHub URL（任意）"
+                      type="url"
+                      value={profileData.github_url}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          github_url: e.target.value,
+                        })
+                      }
+                      placeholder="https://github.com/username"
+                    />
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        プロフィール公開設定（任意）
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          非公開
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProfileData({
+                              ...profileData,
+                              profile_public: !profileData.profile_public,
+                            })
+                          }
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                            profileData.profile_public
+                              ? "bg-blue-600"
+                              : "bg-gray-200 dark:bg-gray-600"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              profileData.profile_public
+                                ? "translate-x-6"
+                                : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          公開
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        {profileData.profile_public
+                          ? "✅ プロフィールが他のユーザーに表示されます"
+                          : "🔒 プロフィールは非公開です"}
+                      </p>
+                    </div>
+                  </>
+                )}
 
                 <div className="pt-4">
                   <Button type="submit" variant="primary" loading={loading}>
@@ -460,15 +468,17 @@ const AdminProfileView: React.FC<AdminProfileViewProps> = ({
       {/* 記事管理タブ */}
       {activeTab === "articles" && (
         <div className="space-y-6">
-          {/* アクティビティヒートマップ */}
-          <Card>
-            <CardBody>
-              <ActivityHeatmap
-                activities={activityData}
-                onYearChange={fetchActivityData}
-              />
-            </CardBody>
-          </Card>
+          {/* アクティビティヒートマップ（管理者の場合は非表示） */}
+          {!isAdmin && (
+            <Card>
+              <CardBody>
+                <ActivityHeatmap
+                  activities={activityData}
+                  onYearChange={fetchActivityData}
+                />
+              </CardBody>
+            </Card>
+          )}
 
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">

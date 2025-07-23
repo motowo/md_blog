@@ -115,11 +115,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/commission-settings', [CommissionController::class, 'index']);
         Route::post('/commission-settings', [CommissionController::class, 'store']);
         Route::put('/commission-settings/{setting}', [CommissionController::class, 'update']);
-        Route::get('/commission-report', [CommissionController::class, 'report']);
+        Route::delete('/commission-settings/{setting}', [CommissionController::class, 'destroy']);
         Route::post('/process-monthly-payouts', [CommissionController::class, 'processMonthlyPayouts']);
         
         // 振込管理
         Route::get('/pending-payouts', [CommissionController::class, 'getPendingPayouts']);
+        Route::get('/payouts/monthly-summary', [CommissionController::class, 'getMonthlySummary']);
+        Route::get('/payouts/monthly-details', [CommissionController::class, 'getMonthlyDetails']);
         Route::patch('/payouts/{id}/confirm', [CommissionController::class, 'confirmPayout']);
         Route::post('/payouts/bulk-confirm', [CommissionController::class, 'bulkConfirmPayouts']);
     });
