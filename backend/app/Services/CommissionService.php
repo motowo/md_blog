@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\TimeZoneHelper;
 use App\Models\CommissionSetting;
 use App\Models\Payment;
 use App\Models\Payout;
@@ -18,10 +19,10 @@ class CommissionService
      */
     public function processMonthlyPayouts($yearMonth)
     {
-        $startDate = Carbon::parse($yearMonth . '-01')->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
+        return DB::transaction(function () use ($yearMonth) {
+            // TimeZoneHelperを使用してJSTベースの月範囲を取得
+            [$sql, $startUTC, $endUTC] = TimeZoneHelper::monthRangeFilterSql('payments.paid_at', $yearMonth);
 
-        return DB::transaction(function () use ($startDate, $endDate, $yearMonth) {
             // 該当月の成功した決済を著者ごとに集計
             $authorPayments = Payment::query()
                 ->select(
@@ -31,7 +32,7 @@ class CommissionService
                 )
                 ->join('articles', 'payments.article_id', '=', 'articles.id')
                 ->where('payments.status', 'success')
-                ->whereBetween('payments.paid_at', [$startDate, $endDate])
+                ->whereRaw($sql, [$startUTC, $endUTC])
                 ->groupBy('articles.user_id')
                 ->get();
 
@@ -39,6 +40,7 @@ class CommissionService
 
             foreach ($authorPayments as $authorPayment) {
                 // 手数料率を取得（月末時点の設定を使用）
+                $endDate = Carbon::parse($yearMonth . '-01', TimeZoneHelper::JAPAN_TIMEZONE)->endOfMonth();
                 $commissionSetting = CommissionSetting::getActiveSettingForDate($endDate->format('Y-m-d'));
                 
                 if (!$commissionSetting) {

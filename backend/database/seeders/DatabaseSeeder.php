@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             CreditCardSeeder::class,
             CommissionSettingSeeder::class,
             PaymentSeeder::class, // 記事作成後に実行
+            PayoutSeeder::class, // 決済データ作成後に実行
         ]);
     }
 }

@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\SaleResource;
+use App\Http\Resources\PayoutResource;
+use App\Helpers\TimeZoneHelper;
 use App\Models\Payment;
 use App\Models\Payout;
 use App\Models\CommissionSetting;
@@ -19,11 +22,46 @@ class SalesController extends Controller
     {
         $user = Auth::user();
         
-        // 月でフィルタリング
+        // 共通の条件を定義
+        $commonConditions = function($query) use ($user, $request) {
+            $query->join('articles', 'payments.article_id', '=', 'articles.id')
+                  ->where('articles.user_id', $user->id)
+                  ->where('payments.status', 'success');
+                  
+            if ($request->has('month')) {
+                $month = $request->input('month'); // YYYY-MM形式
+                // JST基準での正確な月範囲フィルタリング
+                [$sql, $startUTC, $endUTC] = TimeZoneHelper::monthRangeFilterSql('payments.paid_at', $month);
+                $query->whereRaw($sql, [$startUTC, $endUTC]);
+            }
+        };
+        
+        // 集計情報（全データ対象）
+        $summaryQuery = Payment::query();
+        $commonConditions($summaryQuery);
+        
+        $summaryData = $summaryQuery->selectRaw('
+            SUM(payments.amount) as total_sales,
+            COUNT(payments.id) as total_count
+        ')->first();
+        
+        $summary = [
+            'total_sales' => $summaryData->total_sales ?? 0,
+            'total_count' => $summaryData->total_count ?? 0,
+        ];
+        
+        if ($summary['total_sales'] > 0) {
+            // 平均手数料率を計算
+            $avgCommissionRate = 10; // デフォルト値
+            $summary['total_commission'] = $summary['total_sales'] * ($avgCommissionRate / 100);
+            $summary['total_net'] = $summary['total_sales'] - $summary['total_commission'];
+        } else {
+            $summary['total_commission'] = 0;
+            $summary['total_net'] = 0;
+        }
+        
+        // ページネーション用クエリ（表示用）
         $query = Payment::query()
-            ->join('articles', 'payments.article_id', '=', 'articles.id')
-            ->where('articles.user_id', $user->id)
-            ->where('payments.status', 'success')
             ->select([
                 'payments.*',
                 'articles.title as article_title',
@@ -31,12 +69,11 @@ class SalesController extends Controller
             ])
             ->with(['user', 'article']);
             
-        if ($request->has('month')) {
-            $month = $request->input('month'); // YYYY-MM形式
-            $query->whereRaw('DATE_FORMAT(payments.paid_at, "%Y-%m") = ?', [$month]);
-        }
+        $commonConditions($query);
         
-        $sales = $query->orderBy('payments.paid_at', 'desc')->paginate(20);
+        // ページネーション（pageパラメータを明示的に指定）
+        $page = $request->input('page', 1);
+        $sales = $query->orderBy('payments.paid_at', 'desc')->paginate(20, ['*'], 'page', $page);
         
         // 各売上に手数料情報を追加
         $sales->getCollection()->transform(function ($sale) {
@@ -51,24 +88,14 @@ class SalesController extends Controller
             return $sale;
         });
         
-        // 集計情報
-        $summary = [
-            'total_sales' => $query->sum('payments.amount'),
-            'total_count' => $query->count(),
-        ];
-        
-        if ($summary['total_sales'] > 0) {
-            // 平均手数料率を計算
-            $avgCommissionRate = 10; // デフォルト値
-            $summary['total_commission'] = $summary['total_sales'] * ($avgCommissionRate / 100);
-            $summary['total_net'] = $summary['total_sales'] - $summary['total_commission'];
-        } else {
-            $summary['total_commission'] = 0;
-            $summary['total_net'] = 0;
-        }
-        
         return response()->json([
-            'data' => $sales,
+            'data' => [
+                'data' => SaleResource::collection($sales->items()),
+                'current_page' => $sales->currentPage(),
+                'last_page' => $sales->lastPage(),
+                'per_page' => $sales->perPage(),
+                'total' => $sales->total(),
+            ],
             'summary' => $summary
         ]);
     }
@@ -85,7 +112,7 @@ class SalesController extends Controller
             ->where('articles.user_id', $user->id)
             ->where('payments.status', 'success')
             ->selectRaw('
-                DATE_FORMAT(payments.paid_at, "%Y-%m") as month,
+                ' . TimeZoneHelper::monthFilterSql('payments.paid_at') . ' as month,
                 COUNT(*) as sales_count,
                 SUM(payments.amount) as total_amount
             ')
@@ -134,7 +161,13 @@ class SalesController extends Controller
         ];
         
         return response()->json([
-            'data' => $payouts,
+            'data' => [
+                'data' => PayoutResource::collection($payouts->items()),
+                'current_page' => $payouts->currentPage(),
+                'last_page' => $payouts->lastPage(),
+                'per_page' => $payouts->perPage(),
+                'total' => $payouts->total(),
+            ],
             'summary' => $summary
         ]);
     }

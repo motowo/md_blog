@@ -43,7 +43,7 @@ export function AdminCommissionReport() {
         const errorData = await response.json();
         setError(errorData.message || "レポートの取得に失敗しました");
       }
-    } catch (err) {
+    } catch {
       setError("レポートの取得中にエラーが発生しました");
     } finally {
       setLoading(false);

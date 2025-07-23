@@ -1,4 +1,4 @@
-import { apiClient } from '../utils/api';
+import { apiClient } from "../utils/api";
 
 export interface SaleItem {
   id: number;
@@ -49,7 +49,7 @@ export interface Payout {
   gross_amount: string;
   commission_amount: string;
   commission_rate: string;
-  status: 'unpaid' | 'paid' | 'failed';
+  status: "unpaid" | "paid" | "failed";
   paid_at: string | null;
   bank_account_info: any;
   created_at: string;
@@ -70,23 +70,28 @@ export interface PayoutScheduleItem {
   carry_over_amount: number;
   total_amount: number;
   scheduled_date: string | null;
-  status: 'scheduled' | 'carry_over';
+  status: "scheduled" | "carry_over";
 }
 
 export const salesApi = {
   // 売上履歴取得
-  async getSales(month?: string) {
-    const params = month ? { month } : undefined;
+  async getSales(month?: string, page?: number) {
+    const params: { month?: string; page?: number } = {};
+    if (month) params.month = month;
+    if (page) params.page = page;
+
     const response = await apiClient.get<{
       data: { data: SaleItem[]; current_page: number; last_page: number };
       summary: SalesSummary;
-    }>('/sales', { params });
+    }>("/sales", { params });
     return response.data;
   },
 
   // 月別売上集計取得
   async getMonthlySummary() {
-    const response = await apiClient.get<{ data: MonthlySale[] }>('/sales/monthly');
+    const response = await apiClient.get<{ data: MonthlySale[] }>(
+      "/sales/monthly",
+    );
     return response.data;
   },
 
@@ -95,7 +100,7 @@ export const salesApi = {
     const response = await apiClient.get<{
       data: { data: Payout[]; current_page: number; last_page: number };
       summary: PayoutSummary;
-    }>('/sales/payouts');
+    }>("/sales/payouts");
     return response.data;
   },
 
@@ -104,7 +109,7 @@ export const salesApi = {
     const response = await apiClient.get<{
       data: PayoutScheduleItem[];
       carry_over_balance: number;
-    }>('/sales/payout-schedule');
+    }>("/sales/payout-schedule");
     return response.data;
   },
 };
