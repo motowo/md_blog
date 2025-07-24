@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
+            AvatarSeeder::class, // ユーザー作成後、ランダムアバターを生成
             TagSeeder::class,
             BankAccountSeeder::class, // ユーザー作成後、記事作成前に実行
             ArticleSeeder::class,

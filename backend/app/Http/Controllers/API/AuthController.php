@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AvatarService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -38,6 +39,10 @@ class AuthController extends Controller
             'name' => $request->name ?: $request->username, // 名前が空の場合はユーザー名を使用
             'role' => 'author', // 全ユーザーを投稿者として登録
         ]);
+
+        // デフォルトアバターを生成
+        $avatarService = new AvatarService();
+        $avatarService->generateDefaultAvatar($user);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
