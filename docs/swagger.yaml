@@ -42,10 +42,6 @@ components:
           type: string
           enum: [author, admin]
           example: "author"
-        profile_image_url:
-          type: string
-          nullable: true
-          example: "https://example.com/avatar.jpg"
         bio:
           type: string
 
