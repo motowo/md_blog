@@ -148,6 +148,14 @@ export class ArticleService {
     return response.data.data;
   }
 
+  // 注目記事取得（過去1ヶ月の売上上位）
+  static async getTrendingArticles(limit: number = 10): Promise<Article[]> {
+    const response = await apiClient.get<{ data: Article[] }>(
+      `/articles/trending?limit=${limit}`,
+    );
+    return response.data.data;
+  }
+
   // 記事にタグを付ける（認証必要・記事作成者のみ）
   static async updateArticleTags(
     articleId: number,

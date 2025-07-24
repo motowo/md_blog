@@ -130,7 +130,46 @@
 
 ## 次期実装予定 🚧
 
-### 🔥 最高優先度（即座に着手すべき）
+### ✅ トップページカルーセル機能の実装完了（最新）
+
+#### 🎯 新着記事・注目記事カルーセル実装
+- **新着記事カルーセル**: 記事作成日時順で最新10件を3件表示、1件ずつスライド、自動再生
+- **注目記事カルーセル**: 過去1ヶ月の売上上位10件を3件表示、同様のカルーセル動作
+- **UXデザイン改善**: 視認性に優れたインディケーター、ナビゲーションボタン、位置表示
+
+#### 🔧 技術実装詳細
+- **バックエンドAPI拡張**: ArticleController にrecent()・trending()メソッド追加
+  - `GET /api/articles/recent`: 作成日時順、デフォルト10件取得
+  - `GET /api/articles/trending`: 過去1ヶ月売上順、デフォルト10件取得
+- **カルーセルコンポーネント**: ThreeItemCarousel実装、自動再生・手動操作対応
+- **APIルート追加**: /api/articles/trending ルート新設
+- **フロントエンド連携**: ArticleService拡張、HomePage統合
+
+#### 🎨 UXデザイン最適化
+- **視認性改善**: インディケーターの境界線・シャドウ追加で背景色に依存しない表示
+- **インタラクション**: ホバー時の青色ハイライト、スムーズなアニメーション
+- **ナビゲーション**: 大きなクリック可能エリア、現在位置の明確な表示
+- **自動再生**: 5秒間隔、マウスホバー時一時停止機能
+
+#### 🔍 注目記事のSQL実装
+```sql
+SELECT articles.*, COALESCE(SUM(payments.amount), 0) as total_sales
+FROM articles 
+LEFT JOIN payments ON articles.id = payments.article_id 
+  AND payments.status = 'success' 
+  AND payments.created_at >= :one_month_ago
+WHERE articles.status = 'published' 
+  AND articles.is_paid = true
+GROUP BY articles.id 
+ORDER BY total_sales DESC 
+LIMIT 10
+```
+
+#### 📱 UI改善
+- **「すべて見る」ボタン削除**: ヘッダーナビゲーションとの重複解消
+- **シンプルなセクション**: 新着記事・注目記事のタイトルのみ表示
+
+### 🔥 最高優先度（次回着手予定）
 - 高機能Markdownエディタ拡張（リアルタイムプレビュー、シンタックスハイライト、画像アップロード）
 - 記事検索機能強化（キーワード・高度絞り込み、タグ検索）
 
