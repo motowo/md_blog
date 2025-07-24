@@ -3,7 +3,6 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import Button from "./ui/Button";
-import Input from "./ui/Input";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 
 // PrismJS core - 必ず最初にインポート
@@ -16,7 +15,9 @@ interface CodeBlockProps {
   className?: string;
 }
 
-// PrismJS言語を動的にロード（ArticleDetailPageと同じ）
+// SUPPORTED_LANGUAGESは constants/languages.ts で定義されています
+
+// PrismJS言語を動的にロード（強化版）
 const loadPrismLanguage = async (language: string): Promise<void> => {
   try {
     switch (language) {
@@ -26,17 +27,14 @@ const loadPrismLanguage = async (language: string): Promise<void> => {
         break;
       case "typescript":
       case "ts":
-        // TypeScriptはJavaScriptに依存するため、先にJavaScriptを読み込む
         await import("prismjs/components/prism-javascript");
         await import("prismjs/components/prism-typescript");
         break;
       case "jsx":
-        // JSXはJavaScriptに依存するため、先にJavaScriptを読み込む
         await import("prismjs/components/prism-javascript");
         await import("prismjs/components/prism-jsx");
         break;
       case "tsx":
-        // TSXはTypeScriptとJSXに依存するため、必要な依存関係を先に読み込む
         await import("prismjs/components/prism-javascript");
         await import("prismjs/components/prism-typescript");
         await import("prismjs/components/prism-jsx");
@@ -63,11 +61,28 @@ const loadPrismLanguage = async (language: string): Promise<void> => {
       case "cs":
         await import("prismjs/components/prism-csharp");
         break;
+      case "cpp":
+      case "c++":
+        await import("prismjs/components/prism-c");
+        await import("prismjs/components/prism-cpp");
+        break;
+      case "c":
+        await import("prismjs/components/prism-c");
+        break;
       case "css":
         await import("prismjs/components/prism-css");
         break;
       case "scss":
+      case "sass":
+        await import("prismjs/components/prism-css");
         await import("prismjs/components/prism-scss");
+        break;
+      case "html":
+        await import("prismjs/components/prism-markup");
+        break;
+      case "xml":
+        await import("prismjs/components/prism-markup");
+        await import("prismjs/components/prism-xml-doc");
         break;
       case "json":
         await import("prismjs/components/prism-json");
@@ -78,6 +93,7 @@ const loadPrismLanguage = async (language: string): Promise<void> => {
         break;
       case "bash":
       case "shell":
+      case "sh":
         await import("prismjs/components/prism-bash");
         break;
       case "sql":
@@ -87,8 +103,27 @@ const loadPrismLanguage = async (language: string): Promise<void> => {
       case "dockerfile":
         await import("prismjs/components/prism-docker");
         break;
+      case "markdown":
+      case "md":
+        await import("prismjs/components/prism-markdown");
+        break;
+      case "nginx":
+        await import("prismjs/components/prism-nginx");
+        break;
+      case "apache":
+        await import("prismjs/components/prism-apacheconf");
+        break;
+      case "vim":
+        await import("prismjs/components/prism-vim");
+        break;
+      case "diff":
+        await import("prismjs/components/prism-diff");
+        break;
+      case "git":
+        await import("prismjs/components/prism-git");
+        break;
       default:
-        // デフォルトのプレーンテキストとして処理
+        // サポートされていない言語の場合はplaintextとして扱う
         break;
     }
   } catch (error) {
@@ -173,24 +208,23 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children, className }) => {
 export interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
-  onTitleChange?: (title: string) => void;
-  title?: string;
   placeholder?: string;
   className?: string;
   showPreview?: boolean;
   disabled?: boolean;
+  defaultViewMode?: "split" | "tab";
 }
 
 const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   value,
   onChange,
-  onTitleChange,
-  title = "",
   placeholder = "Markdownで記事を書いてください...",
   className = "",
   showPreview = true,
   disabled = false,
+  defaultViewMode = "split",
 }) => {
+  const [viewMode, setViewMode] = useState<"split" | "tab">(defaultViewMode);
   const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -214,7 +248,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     }
   };
 
-  // ツールバーボタンのクリックハンドラ
+  // ツールバーボタンのクリックハンドラ（強化版）
   const insertText = (insertValue: string, cursorOffset = 0) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -232,7 +266,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         insertValue.replace("SELECTED", selectedText) +
         value.substring(end);
       newCursorPos =
-        start + insertValue.replace("SELECTED", "").length + cursorOffset;
+        start +
+        insertValue.replace("SELECTED", selectedText).length +
+        cursorOffset;
     } else {
       newValue = value.substring(0, start) + insertValue + value.substring(end);
       newCursorPos = start + insertValue.length + cursorOffset;
@@ -244,6 +280,34 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       textarea.focus();
       textarea.selectionStart = textarea.selectionEnd = newCursorPos;
     }, 0);
+  };
+
+  // 特殊な挿入処理
+  const insertTable = () => {
+    const tableTemplate = `| Header 1 | Header 2 | Header 3 |
+|----------|----------|----------|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |`;
+    insertText(tableTemplate, -tableTemplate.length + 10);
+  };
+
+  const insertCodeBlock = (language = "javascript") => {
+    const codeTemplate = `\`\`\`${language}\n// コードをここに入力\n\`\`\``;
+    insertText(codeTemplate, -7);
+  };
+
+  const insertMath = () => {
+    const mathTemplate = `$$
+E = mc^2
+$$`;
+    insertText(mathTemplate, -6);
+  };
+
+  const insertChecklist = () => {
+    const checklistTemplate = `- [ ] タスク1
+- [ ] タスク2
+- [x] 完了済みタスク`;
+    insertText(checklistTemplate);
   };
 
   const components = {
@@ -314,55 +378,94 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
   return (
     <div className={`markdown-editor ${className}`}>
-      {/* タイトル入力 */}
-      {onTitleChange && (
-        <div className="mb-4">
-          <Input
-            type="text"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="記事のタイトル"
-            className="text-xl font-bold"
-            disabled={disabled}
-          />
-        </div>
-      )}
-
       <Card>
         {showPreview && (
           <CardHeader className="pb-0">
-            <div className="flex space-x-1 border-b border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setActiveTab("write")}
-                className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
-                  activeTab === "write"
-                    ? "bg-white dark:bg-gray-800 border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                }`}
-                disabled={disabled}
-              >
-                ✏️ 編集
-              </button>
-              <button
-                onClick={() => setActiveTab("preview")}
-                className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
-                  activeTab === "preview"
-                    ? "bg-white dark:bg-gray-800 border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                }`}
-                disabled={disabled}
-              >
-                👁️ プレビュー
-              </button>
+            <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    表示モード:
+                  </span>
+                  {/* トグルスイッチ */}
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      id="viewModeToggle"
+                      checked={viewMode === "split"}
+                      onChange={(e) =>
+                        setViewMode(e.target.checked ? "split" : "tab")
+                      }
+                      disabled={disabled}
+                      className="sr-only"
+                    />
+                    <label
+                      htmlFor="viewModeToggle"
+                      className={`flex items-center cursor-pointer ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+                    >
+                      <span className="mr-3 text-sm text-gray-700 dark:text-gray-300">
+                        📋 タブ表示
+                      </span>
+                      <div
+                        className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
+                          viewMode === "split"
+                            ? "bg-blue-600"
+                            : "bg-gray-300 dark:bg-gray-600"
+                        }`}
+                      >
+                        <div
+                          className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${
+                            viewMode === "split"
+                              ? "translate-x-7"
+                              : "translate-x-0"
+                          }`}
+                        />
+                      </div>
+                      <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                        📝 分割表示
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {viewMode === "tab" && (
+                <div className="flex space-x-1">
+                  <button
+                    onClick={() => setActiveTab("write")}
+                    className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
+                      activeTab === "write"
+                        ? "bg-white dark:bg-gray-800 border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                    disabled={disabled}
+                  >
+                    ✏️ 編集
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("preview")}
+                    className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
+                      activeTab === "preview"
+                        ? "bg-white dark:bg-gray-800 border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                    disabled={disabled}
+                  >
+                    👁️ プレビュー
+                  </button>
+                </div>
+              )}
             </div>
           </CardHeader>
         )}
 
         <CardBody>
-          {(!showPreview || activeTab === "write") && (
-            <div className="space-y-3">
-              {/* ツールバー */}
-              <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          {viewMode === "split" && showPreview ? (
+            // 分割表示モード
+            <div className="space-y-4">
+              {/* 強化されたツールバー（分割表示では上部に配置） */}
+              <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+                {/* テキスト装飾グループ */}
                 <Button
                   type="button"
                   variant="outline"
@@ -370,6 +473,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("**SELECTED**", -2)}
                   disabled={disabled}
                   className="text-xs"
+                  title="太字"
                 >
                   <strong>B</strong>
                 </Button>
@@ -380,6 +484,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("*SELECTED*", -1)}
                   disabled={disabled}
                   className="text-xs italic"
+                  title="斜体"
                 >
                   I
                 </Button>
@@ -387,9 +492,48 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
+                  onClick={() => insertText("~~SELECTED~~", -2)}
+                  disabled={disabled}
+                  className="text-xs line-through"
+                  title="取り消し線"
+                >
+                  S
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertText("`SELECTED`", -1)}
+                  disabled={disabled}
+                  className="text-xs font-mono"
+                  title="インラインコード"
+                >
+                  `code`
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertText("==SELECTED==", -2)}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="ハイライト"
+                >
+                  HL
+                </Button>
+
+                {/* 区切り線 */}
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                {/* 見出しグループ */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => insertText("# ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="見出し1"
                 >
                   H1
                 </Button>
@@ -400,6 +544,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("## ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="見出し2"
                 >
                   H2
                 </Button>
@@ -410,6 +555,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("### ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="見出し3"
                 >
                   H3
                 </Button>
@@ -417,9 +563,26 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
+                  onClick={() => insertText("#### ")}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="見出し4"
+                >
+                  H4
+                </Button>
+
+                {/* 区切り線 */}
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                {/* リストグループ */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => insertText("- ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="箇条書きリスト"
                 >
                   • リスト
                 </Button>
@@ -430,6 +593,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("1. ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="番号付きリスト"
                 >
                   1. 番号
                 </Button>
@@ -437,21 +601,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => insertText("[リンクテキスト](URL)", -1)}
+                  onClick={insertChecklist}
                   disabled={disabled}
                   className="text-xs"
+                  title="チェックリスト"
                 >
-                  🔗 リンク
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => insertText("```javascript\nコード\n```", -4)}
-                  disabled={disabled}
-                  className="text-xs"
-                >
-                  💻 コード
+                  ☑ TODO
                 </Button>
                 <Button
                   type="button"
@@ -460,42 +615,449 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("> ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="引用"
                 >
                   " 引用
                 </Button>
+
+                {/* 区切り線 */}
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                {/* リンク・挿入グループ */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertText("[リンクテキスト](URL)", -1)}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="リンク"
+                >
+                  🔗 リンク
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertText("![画像の説明](画像URL)", -1)}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="画像"
+                >
+                  🖼️ 画像
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={insertTable}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="表"
+                >
+                  📊 表
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertText("---\n")}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="水平線"
+                >
+                  ➖ 区切り
+                </Button>
+
+                {/* 区切り線 */}
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                {/* コード・数式グループ */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertCodeBlock("javascript")}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="JavaScriptコードブロック"
+                >
+                  💻 JS
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertCodeBlock("python")}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="Pythonコードブロック"
+                >
+                  🐍 Python
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertCodeBlock("bash")}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="Bashコードブロック"
+                >
+                  💾 Bash
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={insertMath}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="数式"
+                >
+                  📏 数式
+                </Button>
               </div>
 
-              {/* エディタ */}
-              <textarea
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={placeholder}
-                disabled={disabled}
-                className="w-full h-96 p-4 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm leading-relaxed"
-              />
-            </div>
-          )}
+              {/* 分割エディタとプレビューエリア */}
+              <div className="flex gap-4" style={{ minHeight: "600px" }}>
+                {/* 左側：エディタ */}
+                <div className="flex-1">
+                  <textarea
+                    ref={textareaRef}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={placeholder}
+                    disabled={disabled}
+                    className="w-full h-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm leading-relaxed"
+                    style={{ minHeight: "600px" }}
+                  />
+                </div>
 
-          {showPreview && activeTab === "preview" && (
-            <div className="prose prose-lg max-w-none dark:prose-invert">
-              <div className="min-h-96 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-                {value ? (
-                  <ReactMarkdown
-                    components={components}
-                    rehypePlugins={[rehypeRaw]}
-                    remarkPlugins={[remarkGfm]}
+                {/* 右側：プレビュー */}
+                <div className="flex-1">
+                  <div
+                    className="h-full overflow-y-auto p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                    style={{ minHeight: "600px" }}
                   >
-                    {value}
-                  </ReactMarkdown>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 italic">
-                    プレビューを表示するには、左側の「編集」タブでMarkdownを入力してください。
-                  </p>
-                )}
+                    <div className="prose prose-lg max-w-none dark:prose-invert">
+                      {value ? (
+                        <ReactMarkdown
+                          components={components}
+                          rehypePlugins={[rehypeRaw]}
+                          remarkPlugins={[remarkGfm]}
+                        >
+                          {value}
+                        </ReactMarkdown>
+                      ) : (
+                        <p className="text-gray-500 dark:text-gray-400 italic">
+                          Markdownを入力するとここにプレビューが表示されます。
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+          ) : (
+            // タブ表示モード（従来の動作）
+            <>
+              {(!showPreview || activeTab === "write") && (
+                <div className="space-y-3">
+                  {/* 強化されたツールバー（タブ表示） */}
+                  <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    {/* テキスト装飾グループ */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("**SELECTED**", -2)}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="太字"
+                    >
+                      <strong>B</strong>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("*SELECTED*", -1)}
+                      disabled={disabled}
+                      className="text-xs italic"
+                      title="斜体"
+                    >
+                      I
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("~~SELECTED~~", -2)}
+                      disabled={disabled}
+                      className="text-xs line-through"
+                      title="取り消し線"
+                    >
+                      S
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("`SELECTED`", -1)}
+                      disabled={disabled}
+                      className="text-xs font-mono"
+                      title="インラインコード"
+                    >
+                      `code`
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("==SELECTED==", -2)}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="ハイライト"
+                    >
+                      HL
+                    </Button>
+
+                    {/* 区切り線 */}
+                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                    {/* 見出しグループ */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("# ")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="見出し1"
+                    >
+                      H1
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("## ")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="見出し2"
+                    >
+                      H2
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("### ")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="見出し3"
+                    >
+                      H3
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("#### ")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="見出し4"
+                    >
+                      H4
+                    </Button>
+
+                    {/* 区切り線 */}
+                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                    {/* リストグループ */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("- ")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="箇条書きリスト"
+                    >
+                      • リスト
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("1. ")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="番号付きリスト"
+                    >
+                      1. 番号
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={insertChecklist}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="チェックリスト"
+                    >
+                      ☑ TODO
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("> ")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="引用"
+                    >
+                      " 引用
+                    </Button>
+
+                    {/* 区切り線 */}
+                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                    {/* リンク・挿入グループ */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("[リンクテキスト](URL)", -1)}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="リンク"
+                    >
+                      🔗 リンク
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("![画像の説明](画像URL)", -1)}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="画像"
+                    >
+                      🖼️ 画像
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={insertTable}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="表"
+                    >
+                      📊 表
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("---\n")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="水平線"
+                    >
+                      ➖ 区切り
+                    </Button>
+
+                    {/* 区切り線 */}
+                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                    {/* コード・数式グループ */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertCodeBlock("javascript")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="JavaScriptコードブロック"
+                    >
+                      💻 JS
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertCodeBlock("python")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="Pythonコードブロック"
+                    >
+                      🐍 Python
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertCodeBlock("bash")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="Bashコードブロック"
+                    >
+                      💾 Bash
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={insertMath}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="数式"
+                    >
+                      📏 数式
+                    </Button>
+                  </div>
+
+                  {/* エディタ */}
+                  <textarea
+                    ref={textareaRef}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={placeholder}
+                    disabled={disabled}
+                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm leading-relaxed"
+                    style={{ minHeight: "500px" }}
+                  />
+                </div>
+              )}
+
+              {showPreview && activeTab === "preview" && (
+                <div className="prose prose-lg max-w-none dark:prose-invert">
+                  <div
+                    className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                    style={{ minHeight: "500px" }}
+                  >
+                    {value ? (
+                      <ReactMarkdown
+                        components={components}
+                        rehypePlugins={[rehypeRaw]}
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {value}
+                      </ReactMarkdown>
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 italic">
+                        プレビューを表示するには、左側の「編集」タブでMarkdownを入力してください。
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardBody>
       </Card>

@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Button from "../components/ui/Button";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import UserProfileView from "../components/UserProfileView";
 import { UserService, type CropData } from "../utils/userApi";
@@ -134,16 +133,9 @@ const UserMyPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            マイページ
-          </h1>
-          {initialTab === "articles" && (
-            <Button variant="primary" onClick={() => navigate("/articles/new")}>
-              新しい記事を作成
-            </Button>
-          )}
-        </div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          マイページ
+        </h1>
       </div>
 
       <UserProfileView
