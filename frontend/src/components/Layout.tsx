@@ -18,11 +18,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  const avatarUrl = user?.avatar_path?.startsWith("http")
-    ? user.avatar_path
-    : user?.avatar_path
-      ? `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/storage/${user.avatar_path}`
-      : null;
+  // avatar_urlがある場合はそれを使用（サーバー側で生成されたURL）
+  const avatarUrl = user?.avatar_url || null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
