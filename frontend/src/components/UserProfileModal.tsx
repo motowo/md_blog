@@ -278,9 +278,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                           </div>
                         ) : (
                           <AvatarUpload
-                            currentAvatar={
-                              user.avatar_path || user.profile_image_url
-                            }
+                            currentAvatar={user.avatar_path}
                             onUpload={() => {}}
                             onDelete={() => {}}
                             loading={avatarUploading}

@@ -31,7 +31,6 @@
 | `email_verified_at` | TIMESTAMP    | Nullable       | メール認証日時                     |
 | `password`       | VARCHAR(255) | Not Null       | パスワード (ハッシュ化)            |
 | `role`           | ENUM('author', 'admin') | Not Null, Default: 'author' | ロール (投稿者, 管理者) |
-| `profile_image_url` | VARCHAR(255) | Nullable       | プロフィール画像URL                |
 | `bio`            | TEXT         | Nullable       | 自己紹介                           |
 | `career_description` | TEXT         | Nullable       | 経歴・キャリア説明                 |
 | `x_url`          | VARCHAR(255) | Nullable       | X(旧Twitter)URL                    |
@@ -136,7 +135,6 @@ erDiagram
         timestamp email_verified_at
         varchar password
         enum role
-        varchar profile_image_url
         text bio
         text career_description
         varchar x_url

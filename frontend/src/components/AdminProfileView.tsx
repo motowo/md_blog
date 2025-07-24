@@ -289,7 +289,7 @@ const AdminProfileView: React.FC<AdminProfileViewProps> = ({
             <CardBody>
               <div className="text-center">
                 <AvatarUpload
-                  currentAvatar={user?.avatar_path || user?.profile_image_url}
+                  currentAvatar={user?.avatar_path}
                   onUpload={handleAvatarUpload}
                   onDelete={handleAvatarDelete}
                   loading={avatarUploading}
