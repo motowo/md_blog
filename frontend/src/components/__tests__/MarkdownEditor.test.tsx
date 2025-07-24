@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import MarkdownEditor from "../MarkdownEditor";
+import { SUPPORTED_LANGUAGES } from "../../constants/languages";
 
 describe("MarkdownEditor", () => {
   const mockOnChange = vi.fn();
@@ -38,6 +39,120 @@ describe("MarkdownEditor", () => {
     // タブが表示される
     expect(screen.getByText("✏️ 編集")).toBeInTheDocument();
     expect(screen.getByText("👁️ プレビュー")).toBeInTheDocument();
+  });
+
+  it("shows enhanced toolbar with horizontal layout", () => {
+    render(
+      <MarkdownEditor
+        value=""
+        onChange={mockOnChange}
+        defaultViewMode="split"
+      />,
+    );
+
+    // ツールバーボタンが横並びで表示される
+    expect(screen.getByTitle("太字")).toBeInTheDocument();
+    expect(screen.getByTitle("斜体")).toBeInTheDocument();
+    expect(screen.getByTitle("取り消し線")).toBeInTheDocument();
+    expect(screen.getByTitle("インラインコード")).toBeInTheDocument();
+    expect(screen.getByTitle("ハイライト")).toBeInTheDocument();
+
+    // 見出しボタン
+    expect(screen.getByTitle("見出し1")).toBeInTheDocument();
+    expect(screen.getByTitle("見出し2")).toBeInTheDocument();
+    expect(screen.getByTitle("見出し3")).toBeInTheDocument();
+    expect(screen.getByTitle("見出し4")).toBeInTheDocument();
+
+    // リスト・構造ボタン
+    expect(screen.getByTitle("箇条書きリスト")).toBeInTheDocument();
+    expect(screen.getByTitle("番号付きリスト")).toBeInTheDocument();
+    expect(screen.getByTitle("チェックリスト")).toBeInTheDocument();
+    expect(screen.getByTitle("引用")).toBeInTheDocument();
+
+    // 挿入ボタン
+    expect(screen.getByTitle("リンク")).toBeInTheDocument();
+    expect(screen.getByTitle("画像")).toBeInTheDocument();
+    expect(screen.getByTitle("表")).toBeInTheDocument();
+    expect(screen.getByTitle("水平線")).toBeInTheDocument();
+
+    // コード・数式ボタン
+    expect(screen.getByTitle("JavaScriptコードブロック")).toBeInTheDocument();
+    expect(screen.getByTitle("Pythonコードブロック")).toBeInTheDocument();
+    expect(screen.getByTitle("Bashコードブロック")).toBeInTheDocument();
+    expect(screen.getByTitle("数式")).toBeInTheDocument();
+
+    // グループ名ラベルが表示されないことを確認
+    expect(screen.queryByText("テキスト:")).not.toBeInTheDocument();
+    expect(screen.queryByText("見出し:")).not.toBeInTheDocument();
+    expect(screen.queryByText("リスト:")).not.toBeInTheDocument();
+    expect(screen.queryByText("挿入:")).not.toBeInTheDocument();
+    expect(screen.queryByText("コード:")).not.toBeInTheDocument();
+  });
+
+  it("supports enhanced syntax highlighting languages", () => {
+    // サポートされている言語の一部をテスト
+    expect(SUPPORTED_LANGUAGES).toContainEqual({
+      code: "javascript",
+      name: "JavaScript",
+      aliases: ["js"],
+    });
+    expect(SUPPORTED_LANGUAGES).toContainEqual({
+      code: "typescript",
+      name: "TypeScript",
+      aliases: ["ts"],
+    });
+    expect(SUPPORTED_LANGUAGES).toContainEqual({
+      code: "python",
+      name: "Python",
+      aliases: ["py"],
+    });
+    expect(SUPPORTED_LANGUAGES).toContainEqual({
+      code: "rust",
+      name: "Rust",
+      aliases: ["rs"],
+    });
+    expect(SUPPORTED_LANGUAGES).toContainEqual({
+      code: "cpp",
+      name: "C++",
+      aliases: ["c++"],
+    });
+    expect(SUPPORTED_LANGUAGES).toContainEqual({
+      code: "markdown",
+      name: "Markdown",
+      aliases: ["md"],
+    });
+
+    // 27言語をサポートしていることを確認
+    expect(SUPPORTED_LANGUAGES).toHaveLength(27);
+  });
+
+  it("can insert enhanced markdown elements", () => {
+    render(
+      <MarkdownEditor
+        value=""
+        onChange={mockOnChange}
+        defaultViewMode="split"
+      />,
+    );
+
+    // 取り消し線ボタンをクリック
+    const strikethroughButton = screen.getByTitle("取り消し線");
+    fireEvent.click(strikethroughButton);
+    expect(mockOnChange).toHaveBeenCalledWith("~~~~");
+
+    // ハイライトボタンをクリック
+    mockOnChange.mockClear();
+    const highlightButton = screen.getByTitle("ハイライト");
+    fireEvent.click(highlightButton);
+    expect(mockOnChange).toHaveBeenCalledWith("====");
+
+    // チェックリストボタンをクリック
+    mockOnChange.mockClear();
+    const checklistButton = screen.getByTitle("チェックリスト");
+    fireEvent.click(checklistButton);
+    expect(mockOnChange).toHaveBeenCalledWith(
+      "- [ ] タスク1\n- [ ] タスク2\n- [x] 完了済みタスク",
+    );
   });
 
   it("toolbar buttons work in split view", () => {

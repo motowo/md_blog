@@ -15,7 +15,9 @@ interface CodeBlockProps {
   className?: string;
 }
 
-// PrismJS言語を動的にロード（ArticleDetailPageと同じ）
+// SUPPORTED_LANGUAGESは constants/languages.ts で定義されています
+
+// PrismJS言語を動的にロード（強化版）
 const loadPrismLanguage = async (language: string): Promise<void> => {
   try {
     switch (language) {
@@ -25,17 +27,14 @@ const loadPrismLanguage = async (language: string): Promise<void> => {
         break;
       case "typescript":
       case "ts":
-        // TypeScriptはJavaScriptに依存するため、先にJavaScriptを読み込む
         await import("prismjs/components/prism-javascript");
         await import("prismjs/components/prism-typescript");
         break;
       case "jsx":
-        // JSXはJavaScriptに依存するため、先にJavaScriptを読み込む
         await import("prismjs/components/prism-javascript");
         await import("prismjs/components/prism-jsx");
         break;
       case "tsx":
-        // TSXはTypeScriptとJSXに依存するため、必要な依存関係を先に読み込む
         await import("prismjs/components/prism-javascript");
         await import("prismjs/components/prism-typescript");
         await import("prismjs/components/prism-jsx");
@@ -62,11 +61,28 @@ const loadPrismLanguage = async (language: string): Promise<void> => {
       case "cs":
         await import("prismjs/components/prism-csharp");
         break;
+      case "cpp":
+      case "c++":
+        await import("prismjs/components/prism-c");
+        await import("prismjs/components/prism-cpp");
+        break;
+      case "c":
+        await import("prismjs/components/prism-c");
+        break;
       case "css":
         await import("prismjs/components/prism-css");
         break;
       case "scss":
+      case "sass":
+        await import("prismjs/components/prism-css");
         await import("prismjs/components/prism-scss");
+        break;
+      case "html":
+        await import("prismjs/components/prism-markup");
+        break;
+      case "xml":
+        await import("prismjs/components/prism-markup");
+        await import("prismjs/components/prism-xml-doc");
         break;
       case "json":
         await import("prismjs/components/prism-json");
@@ -77,6 +93,7 @@ const loadPrismLanguage = async (language: string): Promise<void> => {
         break;
       case "bash":
       case "shell":
+      case "sh":
         await import("prismjs/components/prism-bash");
         break;
       case "sql":
@@ -86,8 +103,27 @@ const loadPrismLanguage = async (language: string): Promise<void> => {
       case "dockerfile":
         await import("prismjs/components/prism-docker");
         break;
+      case "markdown":
+      case "md":
+        await import("prismjs/components/prism-markdown");
+        break;
+      case "nginx":
+        await import("prismjs/components/prism-nginx");
+        break;
+      case "apache":
+        await import("prismjs/components/prism-apacheconf");
+        break;
+      case "vim":
+        await import("prismjs/components/prism-vim");
+        break;
+      case "diff":
+        await import("prismjs/components/prism-diff");
+        break;
+      case "git":
+        await import("prismjs/components/prism-git");
+        break;
       default:
-        // デフォルトのプレーンテキストとして処理
+        // サポートされていない言語の場合はplaintextとして扱う
         break;
     }
   } catch (error) {
@@ -212,7 +248,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     }
   };
 
-  // ツールバーボタンのクリックハンドラ
+  // ツールバーボタンのクリックハンドラ（強化版）
   const insertText = (insertValue: string, cursorOffset = 0) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
@@ -230,7 +266,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         insertValue.replace("SELECTED", selectedText) +
         value.substring(end);
       newCursorPos =
-        start + insertValue.replace("SELECTED", "").length + cursorOffset;
+        start +
+        insertValue.replace("SELECTED", selectedText).length +
+        cursorOffset;
     } else {
       newValue = value.substring(0, start) + insertValue + value.substring(end);
       newCursorPos = start + insertValue.length + cursorOffset;
@@ -242,6 +280,34 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       textarea.focus();
       textarea.selectionStart = textarea.selectionEnd = newCursorPos;
     }, 0);
+  };
+
+  // 特殊な挿入処理
+  const insertTable = () => {
+    const tableTemplate = `| Header 1 | Header 2 | Header 3 |
+|----------|----------|----------|
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |`;
+    insertText(tableTemplate, -tableTemplate.length + 10);
+  };
+
+  const insertCodeBlock = (language = "javascript") => {
+    const codeTemplate = `\`\`\`${language}\n// コードをここに入力\n\`\`\``;
+    insertText(codeTemplate, -7);
+  };
+
+  const insertMath = () => {
+    const mathTemplate = `$$
+E = mc^2
+$$`;
+    insertText(mathTemplate, -6);
+  };
+
+  const insertChecklist = () => {
+    const checklistTemplate = `- [ ] タスク1
+- [ ] タスク2
+- [x] 完了済みタスク`;
+    insertText(checklistTemplate);
   };
 
   const components = {
@@ -315,7 +381,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       <Card>
         {showPreview && (
           <CardHeader className="pb-0">
-            <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -397,8 +463,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           {viewMode === "split" && showPreview ? (
             // 分割表示モード
             <div className="space-y-4">
-              {/* ツールバー（分割表示では上部に配置） */}
+              {/* 強化されたツールバー（分割表示では上部に配置） */}
               <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+                {/* テキスト装飾グループ */}
                 <Button
                   type="button"
                   variant="outline"
@@ -406,6 +473,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("**SELECTED**", -2)}
                   disabled={disabled}
                   className="text-xs"
+                  title="太字"
                 >
                   <strong>B</strong>
                 </Button>
@@ -416,6 +484,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("*SELECTED*", -1)}
                   disabled={disabled}
                   className="text-xs italic"
+                  title="斜体"
                 >
                   I
                 </Button>
@@ -423,9 +492,48 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
+                  onClick={() => insertText("~~SELECTED~~", -2)}
+                  disabled={disabled}
+                  className="text-xs line-through"
+                  title="取り消し線"
+                >
+                  S
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertText("`SELECTED`", -1)}
+                  disabled={disabled}
+                  className="text-xs font-mono"
+                  title="インラインコード"
+                >
+                  `code`
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertText("==SELECTED==", -2)}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="ハイライト"
+                >
+                  HL
+                </Button>
+
+                {/* 区切り線 */}
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                {/* 見出しグループ */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => insertText("# ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="見出し1"
                 >
                   H1
                 </Button>
@@ -436,6 +544,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("## ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="見出し2"
                 >
                   H2
                 </Button>
@@ -446,6 +555,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("### ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="見出し3"
                 >
                   H3
                 </Button>
@@ -453,9 +563,26 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
+                  onClick={() => insertText("#### ")}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="見出し4"
+                >
+                  H4
+                </Button>
+
+                {/* 区切り線 */}
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                {/* リストグループ */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => insertText("- ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="箇条書きリスト"
                 >
                   • リスト
                 </Button>
@@ -466,6 +593,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("1. ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="番号付きリスト"
                 >
                   1. 番号
                 </Button>
@@ -473,21 +601,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => insertText("[リンクテキスト](URL)", -1)}
+                  onClick={insertChecklist}
                   disabled={disabled}
                   className="text-xs"
+                  title="チェックリスト"
                 >
-                  🔗 リンク
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => insertText("```javascript\nコード\n```", -4)}
-                  disabled={disabled}
-                  className="text-xs"
-                >
-                  💻 コード
+                  ☑ TODO
                 </Button>
                 <Button
                   type="button"
@@ -496,8 +615,107 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                   onClick={() => insertText("> ")}
                   disabled={disabled}
                   className="text-xs"
+                  title="引用"
                 >
                   " 引用
+                </Button>
+
+                {/* 区切り線 */}
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                {/* リンク・挿入グループ */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertText("[リンクテキスト](URL)", -1)}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="リンク"
+                >
+                  🔗 リンク
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertText("![画像の説明](画像URL)", -1)}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="画像"
+                >
+                  🖼️ 画像
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={insertTable}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="表"
+                >
+                  📊 表
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertText("---\n")}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="水平線"
+                >
+                  ➖ 区切り
+                </Button>
+
+                {/* 区切り線 */}
+                <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                {/* コード・数式グループ */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertCodeBlock("javascript")}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="JavaScriptコードブロック"
+                >
+                  💻 JS
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertCodeBlock("python")}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="Pythonコードブロック"
+                >
+                  🐍 Python
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertCodeBlock("bash")}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="Bashコードブロック"
+                >
+                  💾 Bash
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={insertMath}
+                  disabled={disabled}
+                  className="text-xs"
+                  title="数式"
+                >
+                  📏 数式
                 </Button>
               </div>
 
@@ -547,8 +765,9 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             <>
               {(!showPreview || activeTab === "write") && (
                 <div className="space-y-3">
-                  {/* ツールバー */}
+                  {/* 強化されたツールバー（タブ表示） */}
                   <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    {/* テキスト装飾グループ */}
                     <Button
                       type="button"
                       variant="outline"
@@ -556,6 +775,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                       onClick={() => insertText("**SELECTED**", -2)}
                       disabled={disabled}
                       className="text-xs"
+                      title="太字"
                     >
                       <strong>B</strong>
                     </Button>
@@ -566,6 +786,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                       onClick={() => insertText("*SELECTED*", -1)}
                       disabled={disabled}
                       className="text-xs italic"
+                      title="斜体"
                     >
                       I
                     </Button>
@@ -573,9 +794,48 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                       type="button"
                       variant="outline"
                       size="sm"
+                      onClick={() => insertText("~~SELECTED~~", -2)}
+                      disabled={disabled}
+                      className="text-xs line-through"
+                      title="取り消し線"
+                    >
+                      S
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("`SELECTED`", -1)}
+                      disabled={disabled}
+                      className="text-xs font-mono"
+                      title="インラインコード"
+                    >
+                      `code`
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("==SELECTED==", -2)}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="ハイライト"
+                    >
+                      HL
+                    </Button>
+
+                    {/* 区切り線 */}
+                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                    {/* 見出しグループ */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => insertText("# ")}
                       disabled={disabled}
                       className="text-xs"
+                      title="見出し1"
                     >
                       H1
                     </Button>
@@ -586,6 +846,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                       onClick={() => insertText("## ")}
                       disabled={disabled}
                       className="text-xs"
+                      title="見出し2"
                     >
                       H2
                     </Button>
@@ -596,6 +857,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                       onClick={() => insertText("### ")}
                       disabled={disabled}
                       className="text-xs"
+                      title="見出し3"
                     >
                       H3
                     </Button>
@@ -603,9 +865,26 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                       type="button"
                       variant="outline"
                       size="sm"
+                      onClick={() => insertText("#### ")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="見出し4"
+                    >
+                      H4
+                    </Button>
+
+                    {/* 区切り線 */}
+                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                    {/* リストグループ */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => insertText("- ")}
                       disabled={disabled}
                       className="text-xs"
+                      title="箇条書きリスト"
                     >
                       • リスト
                     </Button>
@@ -616,6 +895,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                       onClick={() => insertText("1. ")}
                       disabled={disabled}
                       className="text-xs"
+                      title="番号付きリスト"
                     >
                       1. 番号
                     </Button>
@@ -623,23 +903,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => insertText("[リンクテキスト](URL)", -1)}
+                      onClick={insertChecklist}
                       disabled={disabled}
                       className="text-xs"
+                      title="チェックリスト"
                     >
-                      🔗 リンク
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        insertText("```javascript\nコード\n```", -4)
-                      }
-                      disabled={disabled}
-                      className="text-xs"
-                    >
-                      💻 コード
+                      ☑ TODO
                     </Button>
                     <Button
                       type="button"
@@ -648,8 +917,107 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                       onClick={() => insertText("> ")}
                       disabled={disabled}
                       className="text-xs"
+                      title="引用"
                     >
                       " 引用
+                    </Button>
+
+                    {/* 区切り線 */}
+                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                    {/* リンク・挿入グループ */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("[リンクテキスト](URL)", -1)}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="リンク"
+                    >
+                      🔗 リンク
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("![画像の説明](画像URL)", -1)}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="画像"
+                    >
+                      🖼️ 画像
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={insertTable}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="表"
+                    >
+                      📊 表
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("---\n")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="水平線"
+                    >
+                      ➖ 区切り
+                    </Button>
+
+                    {/* 区切り線 */}
+                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2 self-center"></div>
+
+                    {/* コード・数式グループ */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertCodeBlock("javascript")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="JavaScriptコードブロック"
+                    >
+                      💻 JS
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertCodeBlock("python")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="Pythonコードブロック"
+                    >
+                      🐍 Python
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertCodeBlock("bash")}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="Bashコードブロック"
+                    >
+                      💾 Bash
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={insertMath}
+                      disabled={disabled}
+                      className="text-xs"
+                      title="数式"
+                    >
+                      📏 数式
                     </Button>
                   </div>
 

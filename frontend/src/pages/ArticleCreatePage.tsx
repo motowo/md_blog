@@ -4,7 +4,7 @@ import MarkdownEditor from "../components/MarkdownEditor";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import PriceInput from "../components/PriceInput";
-import { Card, CardBody, CardHeader } from "../components/ui/Card";
+import { Card, CardBody } from "../components/ui/Card";
 import SaveStatusIndicator from "../components/SaveStatusIndicator";
 import DraftRecovery from "../components/DraftRecovery";
 import { ArticleService } from "../utils/articleApi";
@@ -98,16 +98,25 @@ const ArticleCreatePage: React.FC = () => {
 
   // タグ提案の更新
   useEffect(() => {
-    if (availableTags.length > 0 && (formData.title || formData.content)) {
-      const suggestions = suggestTags(
-        formData.title,
-        formData.content,
-        availableTags,
-      );
-      setSuggestedTags(suggestions);
-    } else {
-      setSuggestedTags([]);
-    }
+    const updateSuggestions = async () => {
+      if (availableTags.length > 0 && (formData.title || formData.content)) {
+        try {
+          const suggestions = await suggestTags(
+            formData.title,
+            formData.content,
+            availableTags,
+          );
+          setSuggestedTags(suggestions);
+        } catch (error) {
+          console.warn("タグ提案の取得に失敗しました:", error);
+          setSuggestedTags([]);
+        }
+      } else {
+        setSuggestedTags([]);
+      }
+    };
+
+    updateSuggestions();
   }, [formData.title, formData.content, availableTags]);
 
   // 下書き復元ハンドラー

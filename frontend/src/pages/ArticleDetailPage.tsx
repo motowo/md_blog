@@ -355,7 +355,6 @@ export const ArticleDetailPage: React.FC = () => {
     fetchArticle();
   }, [id]);
 
-
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -476,7 +475,9 @@ export const ArticleDetailPage: React.FC = () => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span>作成日時: {formatDateTimeJST(article.created_at)}</span>
+                    <span>
+                      作成日時: {formatDateTimeJST(article.created_at)}
+                    </span>
                   </div>
                   <div className="flex items-center">
                     <svg
@@ -490,7 +491,9 @@ export const ArticleDetailPage: React.FC = () => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span>更新日時: {formatDateTimeJST(article.updated_at)}</span>
+                    <span>
+                      更新日時: {formatDateTimeJST(article.updated_at)}
+                    </span>
                   </div>
                 </div>
               </div>

@@ -3,10 +3,13 @@ import { useSearchParams, Link } from "react-router-dom";
 import { ArticleCard } from "../components/ArticleCard";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import Pagination from "../components/ui/Pagination";
 import { ArticleService } from "../utils/articleApi";
+import { TagService } from "../utils/tagApi";
 import { paymentApi } from "../api/payment";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import type { Article, ArticlesResponse } from "../types/article";
+import type { Tag } from "../types/tag";
 
 export const ArticleListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -28,7 +31,10 @@ export const ArticleListPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get("search") || "",
   );
-  const [selectedTag, setSelectedTag] = useState(searchParams.get("tag") || "");
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    searchParams.get("tags")?.split(",").filter(Boolean) || [],
+  );
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
 
   // 購入状況を取得する関数
   const fetchPurchasedArticles = useCallback(async () => {
@@ -49,6 +55,16 @@ export const ArticleListPage: React.FC = () => {
     }
   }, [user]);
 
+  // タグ一覧取得
+  const fetchTags = useCallback(async () => {
+    try {
+      const tags = await TagService.getTags();
+      setAvailableTags(tags);
+    } catch (error) {
+      console.warn("Failed to fetch tags:", error);
+    }
+  }, []);
+
   // 記事データ取得
   const fetchArticles = useCallback(
     async (page: number = 1) => {
@@ -59,14 +75,14 @@ export const ArticleListPage: React.FC = () => {
         const params: {
           page: number;
           per_page: number;
-          tag?: string;
+          tags?: string;
         } = {
           page,
           per_page: pagination.per_page,
         };
 
-        if (selectedTag) {
-          params.tag = selectedTag;
+        if (selectedTags.length > 0) {
+          params.tags = selectedTags.join(",");
         }
 
         const response: ArticlesResponse =
@@ -89,7 +105,7 @@ export const ArticleListPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [selectedTag, pagination.per_page, fetchPurchasedArticles],
+    [selectedTags, pagination.per_page, fetchPurchasedArticles],
   );
 
   // ページ変更時の処理
@@ -101,15 +117,30 @@ export const ArticleListPage: React.FC = () => {
   };
 
   // タグフィルター変更時の処理
-  const handleTagFilter = (tag: string) => {
-    setSelectedTag(tag);
+  const handleTagToggle = (tagName: string) => {
+    const newSelectedTags = selectedTags.includes(tagName)
+      ? selectedTags.filter((t) => t !== tagName)
+      : [...selectedTags, tagName];
+
+    setSelectedTags(newSelectedTags);
     const newSearchParams = new URLSearchParams(searchParams);
-    if (tag) {
-      newSearchParams.set("tag", tag);
+
+    if (newSelectedTags.length > 0) {
+      newSearchParams.set("tags", newSelectedTags.join(","));
     } else {
-      newSearchParams.delete("tag");
+      newSearchParams.delete("tags");
     }
+
     newSearchParams.delete("page"); // ページをリセット
+    setSearchParams(newSearchParams);
+  };
+
+  // すべてのタグを解除
+  const handleClearAllTags = () => {
+    setSelectedTags([]);
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete("tags");
+    newSearchParams.delete("page");
     setSearchParams(newSearchParams);
   };
 
@@ -132,69 +163,29 @@ export const ArticleListPage: React.FC = () => {
     setPurchasedArticles((prev) => new Set(prev).add(articleId));
   };
 
+  // 初期ロード時にタグ一覧を取得
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
   // 初期ロード & URLパラメータ変更時
   useEffect(() => {
     const page = parseInt(searchParams.get("page") || "1");
     fetchArticles(page);
   }, [searchParams, fetchArticles]);
 
-  // ページネーションボタン生成
+  // ページネーションコンポーネント
   const renderPagination = () => {
-    const buttons = [];
-    const maxVisible = 5;
-    let startPage = Math.max(
-      1,
-      pagination.current_page - Math.floor(maxVisible / 2),
+    return (
+      <Pagination
+        currentPage={pagination.current_page}
+        totalPages={pagination.last_page}
+        onPageChange={handlePageChange}
+        disabled={loading}
+        showPageNumbers={true}
+        maxVisible={5}
+      />
     );
-    const endPage = Math.min(pagination.last_page, startPage + maxVisible - 1);
-
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-
-    // 前のページ
-    if (pagination.current_page > 1) {
-      buttons.push(
-        <Button
-          key="prev"
-          variant="outline"
-          size="sm"
-          onClick={() => handlePageChange(pagination.current_page - 1)}
-        >
-          前へ
-        </Button>,
-      );
-    }
-
-    // ページ番号
-    for (let i = startPage; i <= endPage; i++) {
-      buttons.push(
-        <Button
-          key={i}
-          variant={pagination.current_page === i ? "primary" : "outline"}
-          size="sm"
-          onClick={() => handlePageChange(i)}
-        >
-          {i}
-        </Button>,
-      );
-    }
-
-    // 次のページ
-    if (pagination.current_page < pagination.last_page) {
-      buttons.push(
-        <Button
-          key="next"
-          variant="outline"
-          size="sm"
-          onClick={() => handlePageChange(pagination.current_page + 1)}
-        >
-          次へ
-        </Button>,
-      );
-    }
-
-    return buttons;
   };
 
   if (loading && articles.length === 0) {
@@ -259,26 +250,53 @@ export const ArticleListPage: React.FC = () => {
         </form>
 
         {/* タグフィルター */}
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={selectedTag === "" ? "primary" : "outline"}
-            size="sm"
-            onClick={() => handleTagFilter("")}
-          >
-            すべて
-          </Button>
-          {/* TODO: タグ一覧APIから動的に取得 */}
-          {["JavaScript", "React", "TypeScript", "Laravel", "PHP"].map(
-            (tag) => (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              タグで絞り込み
+            </h3>
+            {selectedTags.length > 0 && (
               <Button
-                key={tag}
-                variant={selectedTag === tag ? "primary" : "outline"}
+                variant="outline"
                 size="sm"
-                onClick={() => handleTagFilter(tag)}
+                onClick={handleClearAllTags}
+                className="text-xs"
               >
-                #{tag}
+                すべて解除
               </Button>
-            ),
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={selectedTags.length === 0 ? "primary" : "outline"}
+              size="sm"
+              onClick={handleClearAllTags}
+            >
+              すべて
+            </Button>
+            {availableTags.map((tag) => (
+              <Button
+                key={tag.id}
+                variant={
+                  selectedTags.includes(tag.name) ? "primary" : "outline"
+                }
+                size="sm"
+                onClick={() => handleTagToggle(tag.name)}
+                className="relative"
+              >
+                #{tag.name}
+                {selectedTags.includes(tag.name) && (
+                  <span className="ml-1 text-xs">✓</span>
+                )}
+              </Button>
+            ))}
+          </div>
+
+          {selectedTags.length > 0 && (
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              選択中: {selectedTags.join(", ")} ({selectedTags.length}個)
+            </div>
           )}
         </div>
       </div>
@@ -299,6 +317,11 @@ export const ArticleListPage: React.FC = () => {
         </div>
       ) : (
         <>
+          {/* 上部ページネーション */}
+          {pagination.last_page > 1 && (
+            <div className="mb-6">{renderPagination()}</div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {articles.map((article) => {
               // 購入済み判定: 無料記事、投稿者本人、管理者、または実際に購入済みの場合
@@ -319,11 +342,9 @@ export const ArticleListPage: React.FC = () => {
             })}
           </div>
 
-          {/* ページネーション */}
+          {/* 下部ページネーション */}
           {pagination.last_page > 1 && (
-            <div className="flex items-center justify-center space-x-2">
-              {renderPagination()}
-            </div>
+            <div className="mt-8">{renderPagination()}</div>
           )}
         </>
       )}
