@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
@@ -21,6 +22,7 @@ import type { User } from "../types/auth";
 import type { ApiError } from "../types/auth";
 import { getBadgeClass } from "../constants/badgeStyles";
 import { formatCurrency } from "../utils/currency";
+import { formatDateTimeJST } from "../utils/datetime";
 import { API_BASE_URL } from "../utils/api";
 
 interface UserProfileViewProps {
@@ -53,6 +55,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   initialTab = "profile",
 }) => {
   const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
     | "profile"
     | "articles"
@@ -264,7 +267,12 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   };
 
   const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("ja-JP");
+    return new Date(dateString).toLocaleDateString("ja-JP", {
+      timeZone: "Asia/Tokyo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
   };
 
   return (
@@ -622,6 +630,14 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {isReadOnly ? "投稿記事一覧" : "記事一覧"}
             </h2>
+            {!isReadOnly && (
+              <Button
+                variant="primary"
+                onClick={() => navigate("/articles/new")}
+              >
+                新しい記事を作成
+              </Button>
+            )}
           </div>
 
           {loading ? (
@@ -653,11 +669,19 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                     {isReadOnly ? "投稿記事がありません" : "記事がありません"}
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
                     {isReadOnly
                       ? "このユーザーはまだ記事を投稿していません"
                       : "記事を作成すると、ここに表示されます"}
                   </p>
+                  {!isReadOnly && (
+                    <Button
+                      variant="primary"
+                      onClick={() => navigate("/articles/new")}
+                    >
+                      最初の記事を作成する
+                    </Button>
+                  )}
                 </div>
               </CardBody>
             </Card>
@@ -681,14 +705,38 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                          作成日: {formatDate(article.created_at)}
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 flex items-center space-x-4">
+                          <span>
+                            📅 作成: {formatDateTimeJST(article.created_at)}
+                          </span>
                           {article.updated_at !== article.created_at && (
-                            <span className="ml-4">
-                              更新日: {formatDate(article.updated_at)}
+                            <span>
+                              🔄 更新: {formatDateTimeJST(article.updated_at)}
                             </span>
                           )}
                         </p>
+                      </div>
+
+                      {/* アクションボタン */}
+                      <div className="flex items-center space-x-2 ml-4">
+                        {!isReadOnly && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              navigate(`/articles/${article.id}/edit`)
+                            }
+                          >
+                            編集
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/articles/${article.id}`)}
+                        >
+                          詳細
+                        </Button>
                       </div>
                     </div>
                   </CardBody>

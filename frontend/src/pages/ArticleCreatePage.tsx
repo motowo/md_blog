@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import MarkdownEditor from "../components/MarkdownEditor";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import PriceInput from "../components/PriceInput";
 import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import SaveStatusIndicator from "../components/SaveStatusIndicator";
 import DraftRecovery from "../components/DraftRecovery";
@@ -10,6 +11,7 @@ import { ArticleService } from "../utils/articleApi";
 import { TagService } from "../utils/tagApi";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import { useAutoSave } from "../hooks/useAutoSave";
+import { suggestTags, getConfidenceLevel } from "../utils/tagSuggestion";
 import type { Tag } from "../types/tag";
 
 interface ArticleFormData {
@@ -26,6 +28,9 @@ const ArticleCreatePage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  const [suggestedTags, setSuggestedTags] = useState<
+    { id: number; name: string; confidence: number }[]
+  >([]);
   const [error, setError] = useState<string | null>(null);
   const [showDraftRecovery, setShowDraftRecovery] = useState(false);
 
@@ -91,6 +96,20 @@ const ArticleCreatePage: React.FC = () => {
     checkForDraft();
   }, [restoreFromStorage]);
 
+  // タグ提案の更新
+  useEffect(() => {
+    if (availableTags.length > 0 && (formData.title || formData.content)) {
+      const suggestions = suggestTags(
+        formData.title,
+        formData.content,
+        availableTags,
+      );
+      setSuggestedTags(suggestions);
+    } else {
+      setSuggestedTags([]);
+    }
+  }, [formData.title, formData.content, availableTags]);
+
   // 下書き復元ハンドラー
   const handleDraftRestore = (
     draftData: Partial<ArticleFormData & { selectedTags: number[] }>,
@@ -131,10 +150,19 @@ const ArticleCreatePage: React.FC = () => {
             ? Number(e.target.value)
             : e.target.value;
 
-      setFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
+      setFormData((prev) => {
+        const newData = {
+          ...prev,
+          [field]: value,
+        };
+
+        // 無料に変更した場合、価格を0にリセット
+        if (field === "is_paid" && !value) {
+          newData.price = 0;
+        }
+
+        return newData;
+      });
     };
 
   const handleTagToggle = (tagId: number) => {
@@ -161,8 +189,12 @@ const ArticleCreatePage: React.FC = () => {
       setError("本文を入力してください。");
       return false;
     }
-    if (formData.is_paid && formData.price <= 0) {
-      setError("有料記事の場合は価格を設定してください。");
+    if (formData.is_paid && formData.price < 10) {
+      setError("有料記事の場合は価格を10円以上に設定してください。");
+      return false;
+    }
+    if (formData.is_paid && formData.price % 10 !== 0) {
+      setError("価格は10円単位で設定してください。");
       return false;
     }
     return true;
@@ -239,7 +271,7 @@ const ArticleCreatePage: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-2 py-8">
         <Card>
           <CardBody>
             <p className="text-center text-gray-600 dark:text-gray-400">
@@ -255,31 +287,63 @@ const ArticleCreatePage: React.FC = () => {
   const isAdmin = user.role === "admin";
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            新しい記事を作成
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Markdownを使って記事を書くことができます。リアルタイムでプレビューも確認できます。
-          </p>
-        </div>
-
-        {/* 保存状態表示 */}
-        <div className="flex items-center space-x-4">
-          <SaveStatusIndicator status={saveStatus} lastSaved={lastSaved} />
-          {hasUnsavedChanges && (
+    <div className="max-w-6xl mx-auto px-2 py-8">
+      <div className="mb-6">
+        {/* 上部ボタンエリア */}
+        <div className="flex justify-between items-center mb-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/articles")}
+            disabled={isSubmitting}
+          >
+            ← 記事一覧に戻る
+          </Button>
+          <div className="flex items-center space-x-3">
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              onClick={forceSave}
+              onClick={(e) => handleSubmit(e, "draft")}
               disabled={isSubmitting}
             >
-              手動保存
+              {isSubmitting ? "保存中..." : "下書き保存"}
             </Button>
-          )}
+            <Button
+              type="button"
+              variant="primary"
+              onClick={(e) => handleSubmit(e, "published")}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "公開中..." : "作成・公開"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              新しい記事を作成
+            </h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Markdownを使って記事を書くことができます。リアルタイムでプレビューも確認できます。
+            </p>
+          </div>
+
+          {/* 保存状態表示 */}
+          <div className="flex items-center space-x-4">
+            <SaveStatusIndicator status={saveStatus} lastSaved={lastSaved} />
+            {hasUnsavedChanges && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={forceSave}
+                disabled={isSubmitting}
+              >
+                手動保存
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -320,122 +384,202 @@ const ArticleCreatePage: React.FC = () => {
           </div>
         )}
 
-        {/* Markdownエディタ */}
-        <MarkdownEditor
-          value={formData.content}
-          onChange={(content) => setFormData((prev) => ({ ...prev, content }))}
-          onTitleChange={(title) => setFormData((prev) => ({ ...prev, title }))}
-          title={formData.title}
-          placeholder="記事の内容をMarkdownで書いてください..."
-          disabled={isSubmitting}
-        />
+        {/* タイトル入力 */}
+        <div className="mb-4">
+          <Input
+            type="text"
+            value={formData.title}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, title: e.target.value }))
+            }
+            placeholder="記事のタイトル"
+            className="text-xl font-bold"
+            disabled={isSubmitting}
+          />
+        </div>
 
-        {/* 記事設定 */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              記事設定
-            </h2>
-          </CardHeader>
-          <CardBody className="space-y-4">
-            {/* 有料設定（管理者の場合は非表示） */}
-            {!isAdmin && (
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="is_paid"
-                    checked={formData.is_paid}
-                    onChange={handleInputChange("is_paid")}
-                    disabled={isSubmitting}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor="is_paid"
-                    className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    有料記事にする
-                  </label>
-                </div>
+        {/* 記事設定セクション（タイトル入力欄と本文編集の間に配置） */}
+        <Card className="mb-6">
+          <CardBody>
+            <div className="flex space-x-8">
+              {/* 左側：記事タイプと価格設定 */}
+              <div className="flex-1 space-y-4">
+                {!isAdmin && (
+                  <>
+                    {/* 記事タイプ設定 */}
+                    <div>
+                      <div className="flex items-center space-x-3">
+                        <span
+                          className={`text-sm ${!formData.is_paid ? "text-green-600 dark:text-green-400 font-medium" : "text-gray-500 dark:text-gray-400"}`}
+                        >
+                          無料
+                        </span>
+                        <div className="relative">
+                          <input
+                            type="checkbox"
+                            id="is_paid"
+                            checked={formData.is_paid}
+                            onChange={handleInputChange("is_paid")}
+                            disabled={isSubmitting}
+                            className="sr-only"
+                          />
+                          <label
+                            htmlFor="is_paid"
+                            className={`flex items-center cursor-pointer ${isSubmitting ? "cursor-not-allowed opacity-50" : ""}`}
+                          >
+                            <div
+                              className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
+                                formData.is_paid
+                                  ? "bg-orange-500"
+                                  : "bg-gray-300 dark:bg-gray-600"
+                              }`}
+                            >
+                              <div
+                                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${
+                                  formData.is_paid
+                                    ? "translate-x-6"
+                                    : "translate-x-0"
+                                }`}
+                              />
+                            </div>
+                          </label>
+                        </div>
+                        <span
+                          className={`text-sm ${formData.is_paid ? "text-orange-600 dark:text-orange-400 font-medium" : "text-gray-500 dark:text-gray-400"}`}
+                        >
+                          有料
+                        </span>
+                      </div>
+                    </div>
 
-                {formData.is_paid && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      価格（円）
-                    </label>
-                    <Input
-                      type="number"
-                      value={formData.price}
-                      onChange={handleInputChange("price")}
-                      min="1"
-                      placeholder="100"
-                      disabled={isSubmitting}
-                    />
-                  </div>
+                    {/* 価格設定 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        価格設定
+                      </label>
+                      <PriceInput
+                        value={formData.price}
+                        onChange={(price) =>
+                          setFormData((prev) => ({ ...prev, price }))
+                        }
+                        disabled={isSubmitting || !formData.is_paid}
+                        placeholder="100"
+                      />
+                    </div>
+                  </>
                 )}
               </div>
-            )}
 
-            {/* タグ選択 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                タグ
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {availableTags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => handleTagToggle(tag.id)}
-                    disabled={isSubmitting}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      selectedTags.includes(tag.id)
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-                    }`}
-                  >
-                    {tag.name}
-                  </button>
-                ))}
+              {/* 右側：タグ選択 */}
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  タグ
+                </label>
+
+                {/* タグ提案セクション */}
+                {suggestedTags.length > 0 && (
+                  <div className="mb-3">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                        💡 提案されたタグ
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        (記事内容から自動提案)
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestedTags.map((tag) => {
+                        const isSelected = selectedTags.includes(tag.id);
+                        const confidenceLevel = getConfidenceLevel(
+                          tag.confidence,
+                        );
+                        const confidenceColor =
+                          confidenceLevel === "high"
+                            ? "border-green-400 bg-green-50 dark:bg-green-900/20"
+                            : confidenceLevel === "medium"
+                              ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20"
+                              : "border-gray-400 bg-gray-50 dark:bg-gray-800";
+
+                        return (
+                          <button
+                            key={`suggested-${tag.id}`}
+                            type="button"
+                            onClick={() => handleTagToggle(tag.id)}
+                            disabled={isSubmitting}
+                            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors border-2 ${
+                              isSelected
+                                ? "bg-blue-500 text-white border-blue-500"
+                                : `${confidenceColor} text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30`
+                            }`}
+                            title={`提案度: ${confidenceLevel.toUpperCase()}`}
+                          >
+                            {tag.name}
+                            {!isSelected && (
+                              <span className="ml-1 text-xs opacity-70">
+                                {confidenceLevel === "high"
+                                  ? "🔥"
+                                  : confidenceLevel === "medium"
+                                    ? "⭐"
+                                    : "💡"}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 全タグ表示 */}
+                <div>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      📋 すべてのタグ
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {availableTags.map((tag) => {
+                      const isSuggested = suggestedTags.some(
+                        (s) => s.id === tag.id,
+                      );
+                      if (isSuggested) return null; // 提案タグは上に表示済みなのでスキップ
+
+                      return (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => handleTagToggle(tag.id)}
+                          disabled={isSubmitting}
+                          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                            selectedTags.includes(tag.id)
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                          }`}
+                        >
+                          {tag.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {availableTags.length === 0 && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    利用可能なタグがありません。
+                  </p>
+                )}
               </div>
-              {availableTags.length === 0 && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  利用可能なタグがありません。
-                </p>
-              )}
             </div>
           </CardBody>
         </Card>
 
-        {/* 送信ボタン */}
-        <div className="flex justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/articles")}
-            disabled={isSubmitting}
-          >
-            キャンセル
-          </Button>
-          <div className="space-x-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={(e) => handleSubmit(e, "draft")}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "保存中..." : "下書き保存"}
-            </Button>
-            <Button
-              type="button"
-              variant="primary"
-              onClick={(e) => handleSubmit(e, "published")}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "公開中..." : "作成・公開"}
-            </Button>
-          </div>
-        </div>
+        {/* Markdownエディタ */}
+        <MarkdownEditor
+          value={formData.content}
+          onChange={(content) => setFormData((prev) => ({ ...prev, content }))}
+          placeholder="記事の内容をMarkdownで書いてください..."
+          disabled={isSubmitting}
+        />
       </div>
     </div>
   );

@@ -3,7 +3,6 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import Button from "./ui/Button";
-import Input from "./ui/Input";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 
 // PrismJS core - 必ず最初にインポート
@@ -173,24 +172,23 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children, className }) => {
 export interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
-  onTitleChange?: (title: string) => void;
-  title?: string;
   placeholder?: string;
   className?: string;
   showPreview?: boolean;
   disabled?: boolean;
+  defaultViewMode?: "split" | "tab";
 }
 
 const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   value,
   onChange,
-  onTitleChange,
-  title = "",
   placeholder = "Markdownで記事を書いてください...",
   className = "",
   showPreview = true,
   disabled = false,
+  defaultViewMode = "split",
 }) => {
+  const [viewMode, setViewMode] = useState<"split" | "tab">(defaultViewMode);
   const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -314,55 +312,93 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
   return (
     <div className={`markdown-editor ${className}`}>
-      {/* タイトル入力 */}
-      {onTitleChange && (
-        <div className="mb-4">
-          <Input
-            type="text"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="記事のタイトル"
-            className="text-xl font-bold"
-            disabled={disabled}
-          />
-        </div>
-      )}
-
       <Card>
         {showPreview && (
           <CardHeader className="pb-0">
-            <div className="flex space-x-1 border-b border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setActiveTab("write")}
-                className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
-                  activeTab === "write"
-                    ? "bg-white dark:bg-gray-800 border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                }`}
-                disabled={disabled}
-              >
-                ✏️ 編集
-              </button>
-              <button
-                onClick={() => setActiveTab("preview")}
-                className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
-                  activeTab === "preview"
-                    ? "bg-white dark:bg-gray-800 border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                }`}
-                disabled={disabled}
-              >
-                👁️ プレビュー
-              </button>
+            <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    表示モード:
+                  </span>
+                  {/* トグルスイッチ */}
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      id="viewModeToggle"
+                      checked={viewMode === "split"}
+                      onChange={(e) =>
+                        setViewMode(e.target.checked ? "split" : "tab")
+                      }
+                      disabled={disabled}
+                      className="sr-only"
+                    />
+                    <label
+                      htmlFor="viewModeToggle"
+                      className={`flex items-center cursor-pointer ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+                    >
+                      <span className="mr-3 text-sm text-gray-700 dark:text-gray-300">
+                        📋 タブ表示
+                      </span>
+                      <div
+                        className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${
+                          viewMode === "split"
+                            ? "bg-blue-600"
+                            : "bg-gray-300 dark:bg-gray-600"
+                        }`}
+                      >
+                        <div
+                          className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${
+                            viewMode === "split"
+                              ? "translate-x-7"
+                              : "translate-x-0"
+                          }`}
+                        />
+                      </div>
+                      <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                        📝 分割表示
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {viewMode === "tab" && (
+                <div className="flex space-x-1">
+                  <button
+                    onClick={() => setActiveTab("write")}
+                    className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
+                      activeTab === "write"
+                        ? "bg-white dark:bg-gray-800 border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                    disabled={disabled}
+                  >
+                    ✏️ 編集
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("preview")}
+                    className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
+                      activeTab === "preview"
+                        ? "bg-white dark:bg-gray-800 border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                    disabled={disabled}
+                  >
+                    👁️ プレビュー
+                  </button>
+                </div>
+              )}
             </div>
           </CardHeader>
         )}
 
         <CardBody>
-          {(!showPreview || activeTab === "write") && (
-            <div className="space-y-3">
-              {/* ツールバー */}
-              <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          {viewMode === "split" && showPreview ? (
+            // 分割表示モード
+            <div className="space-y-4">
+              {/* ツールバー（分割表示では上部に配置） */}
+              <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
                 <Button
                   type="button"
                   variant="outline"
@@ -465,37 +501,195 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
                 </Button>
               </div>
 
-              {/* エディタ */}
-              <textarea
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={placeholder}
-                disabled={disabled}
-                className="w-full h-96 p-4 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm leading-relaxed"
-              />
-            </div>
-          )}
+              {/* 分割エディタとプレビューエリア */}
+              <div className="flex gap-4" style={{ minHeight: "600px" }}>
+                {/* 左側：エディタ */}
+                <div className="flex-1">
+                  <textarea
+                    ref={textareaRef}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={placeholder}
+                    disabled={disabled}
+                    className="w-full h-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm leading-relaxed"
+                    style={{ minHeight: "600px" }}
+                  />
+                </div>
 
-          {showPreview && activeTab === "preview" && (
-            <div className="prose prose-lg max-w-none dark:prose-invert">
-              <div className="min-h-96 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-                {value ? (
-                  <ReactMarkdown
-                    components={components}
-                    rehypePlugins={[rehypeRaw]}
-                    remarkPlugins={[remarkGfm]}
+                {/* 右側：プレビュー */}
+                <div className="flex-1">
+                  <div
+                    className="h-full overflow-y-auto p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                    style={{ minHeight: "600px" }}
                   >
-                    {value}
-                  </ReactMarkdown>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 italic">
-                    プレビューを表示するには、左側の「編集」タブでMarkdownを入力してください。
-                  </p>
-                )}
+                    <div className="prose prose-lg max-w-none dark:prose-invert">
+                      {value ? (
+                        <ReactMarkdown
+                          components={components}
+                          rehypePlugins={[rehypeRaw]}
+                          remarkPlugins={[remarkGfm]}
+                        >
+                          {value}
+                        </ReactMarkdown>
+                      ) : (
+                        <p className="text-gray-500 dark:text-gray-400 italic">
+                          Markdownを入力するとここにプレビューが表示されます。
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+          ) : (
+            // タブ表示モード（従来の動作）
+            <>
+              {(!showPreview || activeTab === "write") && (
+                <div className="space-y-3">
+                  {/* ツールバー */}
+                  <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("**SELECTED**", -2)}
+                      disabled={disabled}
+                      className="text-xs"
+                    >
+                      <strong>B</strong>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("*SELECTED*", -1)}
+                      disabled={disabled}
+                      className="text-xs italic"
+                    >
+                      I
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("# ")}
+                      disabled={disabled}
+                      className="text-xs"
+                    >
+                      H1
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("## ")}
+                      disabled={disabled}
+                      className="text-xs"
+                    >
+                      H2
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("### ")}
+                      disabled={disabled}
+                      className="text-xs"
+                    >
+                      H3
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("- ")}
+                      disabled={disabled}
+                      className="text-xs"
+                    >
+                      • リスト
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("1. ")}
+                      disabled={disabled}
+                      className="text-xs"
+                    >
+                      1. 番号
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("[リンクテキスト](URL)", -1)}
+                      disabled={disabled}
+                      className="text-xs"
+                    >
+                      🔗 リンク
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        insertText("```javascript\nコード\n```", -4)
+                      }
+                      disabled={disabled}
+                      className="text-xs"
+                    >
+                      💻 コード
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertText("> ")}
+                      disabled={disabled}
+                      className="text-xs"
+                    >
+                      " 引用
+                    </Button>
+                  </div>
+
+                  {/* エディタ */}
+                  <textarea
+                    ref={textareaRef}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={placeholder}
+                    disabled={disabled}
+                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-mono text-sm leading-relaxed"
+                    style={{ minHeight: "500px" }}
+                  />
+                </div>
+              )}
+
+              {showPreview && activeTab === "preview" && (
+                <div className="prose prose-lg max-w-none dark:prose-invert">
+                  <div
+                    className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                    style={{ minHeight: "500px" }}
+                  >
+                    {value ? (
+                      <ReactMarkdown
+                        components={components}
+                        rehypePlugins={[rehypeRaw]}
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {value}
+                      </ReactMarkdown>
+                    ) : (
+                      <p className="text-gray-500 dark:text-gray-400 italic">
+                        プレビューを表示するには、左側の「編集」タブでMarkdownを入力してください。
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardBody>
       </Card>
