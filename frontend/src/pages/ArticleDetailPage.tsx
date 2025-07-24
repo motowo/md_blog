@@ -427,38 +427,49 @@ export const ArticleDetailPage: React.FC = () => {
               <div className="flex flex-col space-y-2 text-sm text-gray-600 dark:text-gray-400">
                 {article.user && (
                   <div className="flex items-center">
-                    <svg
-                      className="w-4 h-4 mr-1"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                        clipRule="evenodd"
+                    {/* アバター表示 */}
+                    {article.user.avatar_url ? (
+                      <img
+                        src={article.user.avatar_url}
+                        alt={`${article.user.name}のアバター`}
+                        className="w-8 h-8 rounded-full mr-3 object-cover"
                       />
-                    </svg>
-                    {article.user.profile_public ? (
-                      <Link
-                        to={`/users/${article.user.username}`}
-                        className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
-                      >
-                        {article.user.name}
-                      </Link>
                     ) : (
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        {article.user.name}
-                      </span>
-                    )}
-                    {/* 自分の記事の場合はアイコンを表示 */}
-                    {user && user.id === article.user_id && (
-                      <span
-                        className={`ml-2 ${getBadgeClass("metrics", "owner")}`}
-                        title="あなたの記事"
+                      <svg
+                        className="w-8 h-8 mr-3 text-gray-400"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
                       >
-                        ✏️ 投稿者
-                      </span>
+                        <path
+                          fillRule="evenodd"
+                          d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
                     )}
+                    <div>
+                      {article.user.profile_public ? (
+                        <Link
+                          to={`/users/${article.user.username}`}
+                          className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                        >
+                          {article.user.name}
+                        </Link>
+                      ) : (
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          {article.user.name}
+                        </span>
+                      )}
+                      {/* 自分の記事の場合はアイコンを表示 */}
+                      {user && user.id === article.user_id && (
+                        <span
+                          className={`ml-2 ${getBadgeClass("metrics", "owner")}`}
+                          title="あなたの記事"
+                        >
+                          ✏️ 投稿者
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
                 {/* 作成日時・更新日時の表示 */}

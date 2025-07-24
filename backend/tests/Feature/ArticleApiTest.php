@@ -26,19 +26,19 @@ class ArticleApiTest extends TestCase
     {
         // 異なる作成日時で記事を作成
         $user = User::factory()->create();
-        
+
         $oldArticle = Article::factory()->create([
             'user_id' => $user->id,
             'status' => 'published',
             'created_at' => Carbon::now()->subDays(5),
         ]);
-        
+
         $newArticle = Article::factory()->create([
             'user_id' => $user->id,
             'status' => 'published',
             'created_at' => Carbon::now()->subDay(),
         ]);
-        
+
         $newestArticle = Article::factory()->create([
             'user_id' => $user->id,
             'status' => 'published',
@@ -73,12 +73,12 @@ class ArticleApiTest extends TestCase
         ]);
 
         $articles = $response->json('data');
-        
+
         // 作成日時の降順で返されることを確認
         $this->assertEquals($newestArticle->id, $articles[0]['id']);
         $this->assertEquals($newArticle->id, $articles[1]['id']);
         $this->assertEquals($oldArticle->id, $articles[2]['id']);
-        
+
         // 公開済み記事のみが返されることを確認
         foreach ($articles as $article) {
             $this->assertEquals('published', $article['status']);
@@ -93,9 +93,9 @@ class ArticleApiTest extends TestCase
         // 既存データをクリア
         Payment::query()->delete();
         Article::query()->delete();
-        
+
         $user = User::factory()->create();
-        
+
         // 有料記事を作成
         $article1 = Article::factory()->create([
             'user_id' => $user->id,
@@ -103,14 +103,14 @@ class ArticleApiTest extends TestCase
             'is_paid' => true,
             'price' => 1000,
         ]);
-        
+
         $article2 = Article::factory()->create([
             'user_id' => $user->id,
             'status' => 'published',
             'is_paid' => true,
             'price' => 500,
         ]);
-        
+
         $article3 = Article::factory()->create([
             'user_id' => $user->id,
             'status' => 'published',
@@ -127,7 +127,7 @@ class ArticleApiTest extends TestCase
 
         // 売上データを作成（過去1ヶ月以内）
         $oneWeekAgo = Carbon::now()->subWeek();
-        
+
         // article1: 売上 3000円（3回購入）
         Payment::factory()->count(3)->create([
             'article_id' => $article1->id,
@@ -135,7 +135,7 @@ class ArticleApiTest extends TestCase
             'status' => 'success',
             'created_at' => $oneWeekAgo,
         ]);
-        
+
         // article2: 売上 5000円（10回購入）
         Payment::factory()->count(10)->create([
             'article_id' => $article2->id,
@@ -143,7 +143,7 @@ class ArticleApiTest extends TestCase
             'status' => 'success',
             'created_at' => $oneWeekAgo,
         ]);
-        
+
         // article3: 売上 2000円（1回購入）
         Payment::factory()->create([
             'article_id' => $article3->id,
@@ -176,17 +176,17 @@ class ArticleApiTest extends TestCase
         ]);
 
         $articles = $response->json('data');
-        
+
         // 売上順で返されることを確認
         $this->assertEquals($article2->id, $articles[0]['id']);
         $this->assertEquals(5000, $articles[0]['total_sales']);
-        
+
         $this->assertEquals($article1->id, $articles[1]['id']);
         $this->assertEquals(3000, $articles[1]['total_sales']);
-        
+
         $this->assertEquals($article3->id, $articles[2]['id']);
         $this->assertEquals(2000, $articles[2]['total_sales']);
-        
+
         // 有料記事のみが返されることを確認
         foreach ($articles as $article) {
             $this->assertTrue($article['is_paid']);
@@ -199,7 +199,7 @@ class ArticleApiTest extends TestCase
     public function test_recent_articles_respects_limit()
     {
         $user = User::factory()->create();
-        
+
         // 15件の記事を作成
         Article::factory()->count(15)->create([
             'user_id' => $user->id,

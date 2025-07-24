@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Services\AvatarService;
 use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
@@ -38,7 +39,11 @@ class UserSeeder extends Seeder
             $user->last_login_at = now()->subDays(3)->setTime(14, 30);
             $user->save();
 
-            $this->command->info('管理者アカウントを作成しました');
+            // 管理者にもデフォルトアバターを生成
+            $avatarService = new AvatarService;
+            $avatarService->generateDefaultAvatar($user);
+
+            $this->command->info('管理者アカウントを作成しました（アバター付き）');
             $this->command->info('Email: '.$adminEmail);
             $this->command->info('Password: password123');
         } else {
@@ -280,9 +285,13 @@ class UserSeeder extends Seeder
                 $user->last_login_at = now()->subDays($fixedDays)->setTime($fixedHour, 0);
                 $user->save();
 
+                // 各ユーザーにランダムアバターを生成
+                $avatarService = new AvatarService;
+                $avatarService->generateDefaultAvatar($user);
+
                 $profileInfo = $user->bio ? '（プロフィール設定済み）' : '（プロフィール未設定）';
                 $publicInfo = $user->profile_public ? '（公開）' : '（非公開）';
-                $this->command->info("一般ユーザーを作成しました: {$userData['email']} {$profileInfo} {$publicInfo}");
+                $this->command->info("一般ユーザーを作成しました: {$userData['email']} {$profileInfo} {$publicInfo} （アバター付き）");
             } else {
                 $this->command->info("ユーザーは既に存在します: {$userData['email']}");
             }

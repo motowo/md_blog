@@ -44,6 +44,11 @@ components:
           example: "author"
         bio:
           type: string
+        avatar_url:
+          type: string
+          nullable: true
+          description: "BASE64エンコードされたアバター画像データ（自動生成または手動アップロード）"
+          example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADI..."
 
     PublicUser:
       type: object
@@ -77,6 +82,11 @@ components:
           type: string
           nullable: true
           example: "avatars/user123.jpg"
+        avatar_url:
+          type: string
+          nullable: true
+          description: "BASE64エンコードされたアバター画像データ（自動生成または手動アップロード）"
+          example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADI..."
         created_at:
           type: string
           format: date-time

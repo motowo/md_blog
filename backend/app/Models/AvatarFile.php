@@ -13,19 +13,27 @@ class AvatarFile extends Model
     protected $fillable = [
         'user_id',
         'original_filename',
-        'stored_filename',
-        'file_path',
         'mime_type',
         'file_size',
         'width',
         'height',
         'crop_data',
         'is_active',
+        'base64_data',
     ];
 
     protected $casts = [
         'crop_data' => 'array',
         'is_active' => 'boolean',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'base64_data', // 大きなデータなのでデフォルトでは隠す
     ];
 
     /**
@@ -41,7 +49,12 @@ class AvatarFile extends Model
      */
     public function getUrlAttribute(): string
     {
-        return asset('storage/'.$this->file_path);
+        // BASE64データを返す
+        if ($this->base64_data) {
+            return $this->base64_data;
+        }
+
+        return '';
     }
 
     /**

@@ -104,11 +104,8 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
     setDragOver(false);
   };
 
-  const avatarUrl = currentAvatar?.startsWith("http")
-    ? currentAvatar
-    : currentAvatar
-      ? `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/storage/${currentAvatar}`
-      : null;
+  // currentAvatarはavatar_urlの値を期待する（サーバー側で生成されたURL）
+  const avatarUrl = currentAvatar || null;
 
   return (
     <div className={`flex flex-col items-center space-y-4 ${className}`}>

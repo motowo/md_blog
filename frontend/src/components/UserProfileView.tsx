@@ -23,7 +23,6 @@ import type { ApiError } from "../types/auth";
 import { getBadgeClass } from "../constants/badgeStyles";
 import { formatCurrency } from "../utils/currency";
 import { formatDateTimeJST } from "../utils/datetime";
-import { API_BASE_URL } from "../utils/api";
 
 interface UserProfileViewProps {
   user: User;
@@ -395,9 +394,9 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
               <div className="text-center">
                 {isReadOnly ? (
                   <div className="flex justify-center">
-                    {user.avatar_path ? (
+                    {user.avatar_url ? (
                       <img
-                        src={`${API_BASE_URL}${user.avatar_path}`}
+                        src={user.avatar_url}
                         alt={user.name}
                         className="h-32 w-32 rounded-full object-cover"
                       />
@@ -415,7 +414,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </div>
                 ) : (
                   <AvatarUpload
-                    currentAvatar={user?.avatar_path}
+                    currentAvatar={user?.avatar_url}
                     onUpload={handleAvatarUpload}
                     onDelete={handleAvatarDelete}
                     loading={avatarUploading}
