@@ -76,10 +76,17 @@ export const ArticleListPage: React.FC = () => {
           page: number;
           per_page: number;
           tags?: string;
+          search?: string;
         } = {
           page,
           per_page: pagination.per_page,
         };
+
+        // URLパラメータから検索クエリを取得
+        const currentSearchQuery = searchParams.get("search");
+        if (currentSearchQuery) {
+          params.search = currentSearchQuery;
+        }
 
         if (selectedTags.length > 0) {
           params.tags = selectedTags.join(",");
@@ -105,7 +112,7 @@ export const ArticleListPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [selectedTags, pagination.per_page, fetchPurchasedArticles],
+    [selectedTags, pagination.per_page, fetchPurchasedArticles, searchParams],
   );
 
   // ページ変更時の処理
@@ -155,7 +162,6 @@ export const ArticleListPage: React.FC = () => {
     }
     newSearchParams.delete("page"); // ページをリセット
     setSearchParams(newSearchParams);
-    // TODO: 検索API実装時に追加
   };
 
   // 購入成功時の処理

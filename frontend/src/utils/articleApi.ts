@@ -12,6 +12,8 @@ export class ArticleService {
     page?: number;
     per_page?: number;
     tag?: string;
+    tags?: string;
+    search?: string;
     status?: string;
   }): Promise<ArticlesResponse> {
     const searchParams = new URLSearchParams();
@@ -20,6 +22,8 @@ export class ArticleService {
     if (params?.per_page)
       searchParams.append("per_page", params.per_page.toString());
     if (params?.tag) searchParams.append("tag", params.tag);
+    if (params?.tags) searchParams.append("tags", params.tags);
+    if (params?.search) searchParams.append("search", params.search);
     if (params?.status) searchParams.append("status", params.status);
 
     const url = searchParams.toString()
@@ -90,6 +94,8 @@ export class ArticleService {
     page?: number;
     per_page?: number;
     tag?: string;
+    tags?: string;
+    search?: string;
   }): Promise<ArticlesResponse> {
     return this.getArticles({ ...params, status: "published" });
   }

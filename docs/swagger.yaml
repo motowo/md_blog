@@ -491,7 +491,7 @@ paths:
       tags:
         - Articles
       summary: 記事一覧取得
-      description: 公開記事の一覧を取得します
+      description: 公開記事の一覧を取得します。キーワード検索、タグフィルター、組み合わせ検索に対応
       parameters:
         - name: page
           in: query
@@ -507,14 +507,21 @@ paths:
             default: 15
         - name: tag
           in: query
-          description: タグによる絞り込み
+          description: 単一タグによる絞り込み（後方互換性）
           schema:
             type: string
+        - name: tags
+          in: query
+          description: 複数タグによる絞り込み（カンマ区切り、AND条件）
+          schema:
+            type: string
+            example: "React,TypeScript,JavaScript"
         - name: search
           in: query
-          description: キーワード検索
+          description: キーワード検索（タイトル・本文を対象、部分一致）
           schema:
             type: string
+            example: "React Hooks"
       responses:
         '200':
           description: 記事一覧取得成功
