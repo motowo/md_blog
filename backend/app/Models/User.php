@@ -34,7 +34,7 @@ class User extends Authenticatable
         'profile_public',
         'is_active',
     ];
-    
+
     /**
      * The accessors to append to the model's array form.
      *
@@ -99,7 +99,7 @@ class User extends Authenticatable
     {
         return $this->avatarFiles()->active()->latest()->first();
     }
-    
+
     /**
      * Get the avatar URL attribute.
      * Dynamically returns the URL from active avatar file.
@@ -107,6 +107,7 @@ class User extends Authenticatable
     public function getAvatarUrlAttribute(): ?string
     {
         $activeAvatar = $this->activeAvatar();
+
         return $activeAvatar ? $activeAvatar->url : null;
     }
 

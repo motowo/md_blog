@@ -41,7 +41,7 @@ class AuthController extends Controller
         ]);
 
         // デフォルトアバターを生成
-        $avatarService = new AvatarService();
+        $avatarService = new AvatarService;
         $avatarService->generateDefaultAvatar($user);
 
         $token = $user->createToken('auth_token')->plainTextToken;

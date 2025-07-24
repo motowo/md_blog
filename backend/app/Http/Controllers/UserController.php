@@ -213,20 +213,20 @@ class UserController extends Controller
                 // Store the original file temporarily for cropping
                 $tempPath = $file->storeAs('temp', 'temp_'.$storedFilename, 'public');
                 $fullTempPath = Storage::disk('public')->path($tempPath);
-                
+
                 // Crop the image
                 $croppedPath = $this->cropImage($fullTempPath, $cropData, $storedFilename);
-                
+
                 // Read cropped image and convert to BASE64
                 $croppedImageContent = file_get_contents(Storage::disk('public')->path('avatars/'.$storedFilename));
                 $base64Data = 'data:'.$file->getMimeType().';base64,'.base64_encode($croppedImageContent);
-                
+
                 // Clean up temp files
                 Storage::disk('public')->delete($tempPath);
                 Storage::disk('public')->delete('avatars/'.$storedFilename);
             } catch (\Exception $e) {
                 // テスト環境や画像処理でエラーが発生した場合は元の画像をそのまま使用
-                \Log::warning('Avatar crop failed, using original image: ' . $e->getMessage());
+                \Log::warning('Avatar crop failed, using original image: '.$e->getMessage());
             }
         }
 

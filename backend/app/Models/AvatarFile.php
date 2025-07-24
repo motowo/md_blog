@@ -26,7 +26,7 @@ class AvatarFile extends Model
         'crop_data' => 'array',
         'is_active' => 'boolean',
     ];
-    
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -53,7 +53,7 @@ class AvatarFile extends Model
         if ($this->base64_data) {
             return $this->base64_data;
         }
-        
+
         return '';
     }
 

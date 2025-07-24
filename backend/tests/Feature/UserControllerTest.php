@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\AvatarFile;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -67,7 +67,7 @@ class UserControllerTest extends TestCase
         $this->assertNotNull($avatarFile->base64_data);
         // GD拡張なしでは画像データが異なるため、data URIの形式のみ確認
         $this->assertStringStartsWith('data:', $avatarFile->base64_data);
-        
+
         // BASE64データのみ保存されていることを確認（file_pathとstored_filenameカラムは削除済み）
     }
 
@@ -205,7 +205,7 @@ class UserControllerTest extends TestCase
         $user->refresh();
         $this->assertEquals($avatarFile->base64_data, $user->avatar_url);
     }
-    
+
     public function test_user_registration_creates_default_avatar(): void
     {
         $response = $this->postJson('/api/register', [
@@ -217,7 +217,7 @@ class UserControllerTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        
+
         // ユーザーが作成されたことを確認
         $this->assertDatabaseHas('users', [
             'username' => 'testuser',
@@ -227,7 +227,7 @@ class UserControllerTest extends TestCase
         // デフォルトアバターが作成されたことを確認
         $user = \App\Models\User::where('email', 'test@example.com')->first();
         $this->assertNotNull($user);
-        
+
         $avatarFile = $user->avatarFiles()->active()->first();
         $this->assertNotNull($avatarFile);
         $this->assertEquals('default_avatar.png', $avatarFile->original_filename);

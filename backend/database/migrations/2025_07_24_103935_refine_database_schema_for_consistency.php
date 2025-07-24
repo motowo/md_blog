@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             // Change role from varchar to ENUM for better data integrity
             $table->enum('role', ['author', 'admin'])->default('author')->change();
-            
+
             // Add index for frequently queried columns
             $table->index('role', 'idx_users_role');
             $table->index('is_active', 'idx_users_is_active');
@@ -27,7 +27,7 @@ return new class extends Migration
         Schema::table('articles', function (Blueprint $table) {
             // Change price from DECIMAL(8,2) to DECIMAL(10,2) for higher price support
             $table->decimal('price', 10, 2)->nullable()->change();
-            
+
             // Add indexes for frequently queried columns
             $table->index('status', 'idx_articles_status');
             $table->index('is_paid', 'idx_articles_is_paid');
@@ -40,7 +40,7 @@ return new class extends Migration
         Schema::table('payments', function (Blueprint $table) {
             // Change amount from DECIMAL(8,2) to DECIMAL(10,2) for consistency
             $table->decimal('amount', 10, 2)->change();
-            
+
             // Add indexes for frequently queried columns
             $table->index('status', 'idx_payments_status');
             $table->index('paid_at', 'idx_payments_paid_at');

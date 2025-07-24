@@ -40,7 +40,7 @@ class UserSeeder extends Seeder
             $user->save();
 
             // 管理者にもデフォルトアバターを生成
-            $avatarService = new AvatarService();
+            $avatarService = new AvatarService;
             $avatarService->generateDefaultAvatar($user);
 
             $this->command->info('管理者アカウントを作成しました（アバター付き）');
@@ -286,7 +286,7 @@ class UserSeeder extends Seeder
                 $user->save();
 
                 // 各ユーザーにランダムアバターを生成
-                $avatarService = new AvatarService();
+                $avatarService = new AvatarService;
                 $avatarService->generateDefaultAvatar($user);
 
                 $profileInfo = $user->bio ? '（プロフィール設定済み）' : '（プロフィール未設定）';

@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\AvatarFile;
+use App\Models\User;
 use App\Services\AvatarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,7 +15,7 @@ class AvatarServiceTest extends TestCase
     public function test_generate_default_avatar_creates_avatar_file(): void
     {
         $user = User::factory()->create();
-        $avatarService = new AvatarService();
+        $avatarService = new AvatarService;
 
         $avatarFile = $avatarService->generateDefaultAvatar($user);
 
@@ -26,16 +26,16 @@ class AvatarServiceTest extends TestCase
         $this->assertEquals('image/png', $avatarFile->mime_type);
         $this->assertTrue($avatarFile->is_active);
         $this->assertStringStartsWith('data:image/png;base64,', $avatarFile->base64_data);
-        
+
         // ユーザーのavatar_pathが更新されていることを確認
         $user->refresh();
-        $this->assertEquals('avatar_file_' . $avatarFile->id, $user->avatar_path);
+        $this->assertEquals('avatar_file_'.$avatarFile->id, $user->avatar_path);
     }
 
     public function test_generate_default_avatar_deactivates_old_avatars(): void
     {
         $user = User::factory()->create();
-        $avatarService = new AvatarService();
+        $avatarService = new AvatarService;
 
         // 最初のアバターを作成
         $firstAvatar = $avatarService->generateDefaultAvatar($user);
@@ -53,7 +53,7 @@ class AvatarServiceTest extends TestCase
     public function test_has_avatar_returns_correct_status(): void
     {
         $user = User::factory()->create();
-        $avatarService = new AvatarService();
+        $avatarService = new AvatarService;
 
         // 最初はアバターを持たない
         $this->assertFalse($avatarService->hasAvatar($user));
@@ -70,8 +70,8 @@ class AvatarServiceTest extends TestCase
         $userWithoutAvatar1 = User::factory()->create();
         $userWithoutAvatar2 = User::factory()->create();
 
-        $avatarService = new AvatarService();
-        
+        $avatarService = new AvatarService;
+
         // 一人だけアバターを設定
         $avatarService->generateDefaultAvatar($userWithAvatar);
 
@@ -80,7 +80,7 @@ class AvatarServiceTest extends TestCase
 
         // 2つのアバターが作成されたことを確認
         $this->assertEquals(2, $createdCount);
-        
+
         // 全員がアバターを持つことを確認
         $this->assertTrue($avatarService->hasAvatar($userWithAvatar));
         $this->assertTrue($avatarService->hasAvatar($userWithoutAvatar1));
@@ -91,15 +91,15 @@ class AvatarServiceTest extends TestCase
     {
         // 3人のユーザーを作成（全員アバターなし）
         User::factory()->count(3)->create();
-        
-        $avatarService = new AvatarService();
+
+        $avatarService = new AvatarService;
 
         // 2つまでしか作成しない
         $createdCount = $avatarService->generateMissingDefaultAvatars(2);
 
         // 2つのアバターが作成されたことを確認
         $this->assertEquals(2, $createdCount);
-        
+
         // データベースで確認
         $this->assertEquals(2, AvatarFile::where('is_active', true)->count());
     }
@@ -107,7 +107,7 @@ class AvatarServiceTest extends TestCase
     public function test_regenerate_default_avatar_replaces_existing_avatar(): void
     {
         $user = User::factory()->create();
-        $avatarService = new AvatarService();
+        $avatarService = new AvatarService;
 
         // 最初のアバターを生成
         $firstAvatar = $avatarService->generateDefaultAvatar($user);
@@ -119,10 +119,10 @@ class AvatarServiceTest extends TestCase
         // 新しいアバターが作成され、古いものは非アクティブになることを確認
         $this->assertNotEquals($firstAvatar->id, $newAvatar->id);
         $this->assertTrue($newAvatar->is_active);
-        
+
         $firstAvatar->refresh();
         $this->assertFalse($firstAvatar->is_active);
-        
+
         // 同じユーザーなので同じアバター画像が生成されることを確認
         $this->assertEquals($firstBase64, $newAvatar->base64_data);
     }
@@ -137,7 +137,7 @@ class AvatarServiceTest extends TestCase
             'username' => 'user2',
             'email' => 'user2@example.com',
         ]);
-        $avatarService = new AvatarService();
+        $avatarService = new AvatarService;
 
         $avatar1 = $avatarService->generateDefaultAvatar($user1);
         $avatar2 = $avatarService->generateDefaultAvatar($user2);
@@ -146,7 +146,7 @@ class AvatarServiceTest extends TestCase
         // 同じデータが返される場合があるため、最低限の検証のみ実行
         $this->assertStringStartsWith('data:image/png;base64,', $avatar1->base64_data);
         $this->assertStringStartsWith('data:image/png;base64,', $avatar2->base64_data);
-        
+
         // アバターファイルのIDは異なることを確認
         $this->assertNotEquals($avatar1->id, $avatar2->id);
     }
@@ -154,7 +154,7 @@ class AvatarServiceTest extends TestCase
     public function test_user_model_returns_avatar_url_from_generated_avatar(): void
     {
         $user = User::factory()->create();
-        $avatarService = new AvatarService();
+        $avatarService = new AvatarService;
 
         // アバター生成前はnull
         $this->assertNull($user->avatar_url);
@@ -162,7 +162,7 @@ class AvatarServiceTest extends TestCase
         // アバター生成後はURLが取得できる
         $avatar = $avatarService->generateDefaultAvatar($user);
         $user->refresh();
-        
+
         $this->assertNotNull($user->avatar_url);
         $this->assertEquals($avatar->base64_data, $user->avatar_url);
     }
