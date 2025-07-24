@@ -734,6 +734,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /articles/recent:
+    get:
+      tags:
+        - Articles
+      summary: 新着記事取得
+      description: 作成日時順で新着記事を取得します（トップページカルーセル用）
+      parameters:
+        - name: limit
+          in: query
+          description: 取得件数
+          schema:
+            type: integer
+            default: 10
+            maximum: 10
+      responses:
+        '200':
+          description: 新着記事取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+
+  /articles/trending:
+    get:
+      tags:
+        - Articles
+      summary: 注目記事取得
+      description: 過去1ヶ月の売上上位記事を取得します（トップページカルーセル用）
+      parameters:
+        - name: limit
+          in: query
+          description: 取得件数
+          schema:
+            type: integer
+            default: 10
+            maximum: 10
+      responses:
+        '200':
+          description: 注目記事取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Article'
+                        - type: object
+                          properties:
+                            total_sales:
+                              type: integer
+                              description: 過去1ヶ月の総売上
+                              example: 5000
+
   /articles/user:
     get:
       tags:

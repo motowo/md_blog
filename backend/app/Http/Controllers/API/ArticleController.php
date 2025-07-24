@@ -267,12 +267,43 @@ class ArticleController extends Controller
      */
     public function recent(Request $request)
     {
-        $limit = $request->get('limit', 3);
+        $limit = $request->get('limit', 10);
         $limit = min($limit, 10); // 最大10件まで
 
         $articles = Article::with('user:id,name,username,profile_public,avatar_path', 'tags')
             ->where('status', 'published')
-            ->latest('updated_at') // 更新日時の降順
+            ->latest('created_at') // 作成日時の降順
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'data' => $articles,
+        ]);
+    }
+
+    /**
+     * Get trending articles based on sales in the last month.
+     */
+    public function trending(Request $request)
+    {
+        $limit = $request->get('limit', 10);
+        $limit = min($limit, 10); // 最大10件まで
+
+        // 過去1ヶ月の日付を計算
+        $oneMonthAgo = now()->subMonth();
+
+        $articles = Article::with('user:id,name,username,profile_public,avatar_path', 'tags')
+            ->select('articles.*')
+            ->selectRaw('COALESCE(SUM(payments.amount), 0) as total_sales')
+            ->leftJoin('payments', function ($join) use ($oneMonthAgo) {
+                $join->on('articles.id', '=', 'payments.article_id')
+                    ->where('payments.status', '=', 'success')
+                    ->where('payments.created_at', '>=', $oneMonthAgo);
+            })
+            ->where('articles.status', 'published')
+            ->where('articles.is_paid', true) // 有料記事のみ
+            ->groupBy('articles.id')
+            ->orderByDesc('total_sales')
             ->limit($limit)
             ->get();
 

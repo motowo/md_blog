@@ -25,6 +25,7 @@ Route::get('tags/{tag}', [TagController::class, 'show']);
 // 記事関連のルート（認証不要：一覧）
 Route::get('articles', [ArticleController::class, 'index']);
 Route::get('articles/recent', [ArticleController::class, 'recent']);
+Route::get('articles/trending', [ArticleController::class, 'trending']);
 
 // 記事詳細（オプション認証：ログイン済みの場合は認証情報を取得）
 Route::get('articles/{article}', [ArticleController::class, 'show']);
