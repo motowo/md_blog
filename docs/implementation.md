@@ -9,7 +9,7 @@
 - **データベース設計**: 19テーブル完全構築（users, articles, tags, article_tags, payments, payouts, credit_cards, bank_accounts, commission_settings等）
 - **データベース項目精緻化**: 設計書との一貫性確保・パフォーマンス最適化実装完了
   - **データ型整合性**: users.role を ENUM('author', 'admin') に変更
-  - **価格精度向上**: articles.price、payments.amount を DECIMAL(10,2) に統一
+  - **価格精度最適化**: articles.price、payments.amount を DECIMAL(10,0) に統一（整数価格対応）
   - **パフォーマンス最適化**: 全テーブルに適切なインデックス追加（19個の新規インデックス）
   - **クエリ高速化**: 頻繁にアクセスされるカラムの複合インデックス最適化
 
