@@ -34,8 +34,8 @@ export interface AvatarFile {
   id: number;
   user_id: number;
   original_filename: string;
-  stored_filename: string;
-  file_path: string;
+  stored_filename: string | null;
+  file_path: string | null;
   mime_type: string;
   file_size: number;
   width?: number;
@@ -48,6 +48,8 @@ export interface AvatarFile {
     zoom?: number;
   };
   is_active: boolean;
+  base64_data?: string;
+  url?: string;
   created_at: string;
   updated_at: string;
 }

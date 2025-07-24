@@ -36,6 +36,13 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['avatar_url'];
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
@@ -91,6 +98,17 @@ class User extends Authenticatable
     public function activeAvatar()
     {
         return $this->avatarFiles()->active()->latest()->first();
+    }
+
+    /**
+     * Get the avatar URL attribute.
+     * Dynamically returns the URL from active avatar file.
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        $activeAvatar = $this->activeAvatar();
+
+        return $activeAvatar ? $activeAvatar->url : null;
     }
 
     /**

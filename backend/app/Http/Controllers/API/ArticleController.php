@@ -16,7 +16,9 @@ class ArticleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Article::with('user:id,name,username,profile_public,avatar_path', 'tags');
+        $query = Article::with(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+            $query->active();
+        }, 'tags']);
 
         // 公開記事のみに絞り込み
         if ($request->has('status')) {
@@ -117,7 +119,9 @@ class ArticleController extends Controller
 
             // 未ログインの場合はプレビューのみ
             if (! $user) {
-                $articleData = $article->load('user:id,name,username,profile_public,avatar_path', 'tags');
+                $articleData = $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+                    $query->active();
+                }, 'tags']);
                 $articleData->content = substr($article->content, 0, 300).'...';
 
                 return response()->json([
@@ -127,7 +131,9 @@ class ArticleController extends Controller
             } elseif ($user->id === $article->user_id || $user->role === 'admin') {
                 // 作成者または管理者の場合は全文表示
                 return response()->json([
-                    'data' => $article->load('user:id,name,username,profile_public,avatar_path', 'tags'),
+                    'data' => $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+                        $query->active();
+                    }, 'tags']),
                     'is_preview' => false,
                 ]);
             } else {
@@ -137,13 +143,17 @@ class ArticleController extends Controller
                 if ($hasPurchased) {
                     // 購入済みの場合は全文表示
                     return response()->json([
-                        'data' => $article->load('user:id,name,username,profile_public,avatar_path', 'tags'),
+                        'data' => $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+                            $query->active();
+                        }, 'tags']),
                         'is_preview' => false,
                         'has_purchased' => true,
                     ]);
                 } else {
                     // 未購入の場合はプレビューのみ
-                    $articleData = $article->load('user:id,name,username,profile_public,avatar_path', 'tags');
+                    $articleData = $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+                        $query->active();
+                    }, 'tags']);
                     $articleData->content = substr($article->content, 0, 300).'...';
 
                     return response()->json([
@@ -157,7 +167,9 @@ class ArticleController extends Controller
 
         // 無料記事の場合は全文表示
         return response()->json([
-            'data' => $article->load('user:id,name,username,profile_public,avatar_path', 'tags'),
+            'data' => $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+                $query->active();
+            }, 'tags']),
             'is_preview' => false,
         ]);
     }
@@ -270,7 +282,9 @@ class ArticleController extends Controller
         $limit = $request->get('limit', 10);
         $limit = min($limit, 10); // 最大10件まで
 
-        $articles = Article::with('user:id,name,username,profile_public,avatar_path', 'tags')
+        $articles = Article::with(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+            $query->active();
+        }, 'tags'])
             ->where('status', 'published')
             ->latest('created_at') // 作成日時の降順
             ->limit($limit)
@@ -292,7 +306,9 @@ class ArticleController extends Controller
         // 過去1ヶ月の日付を計算
         $oneMonthAgo = now()->subMonth();
 
-        $articles = Article::with('user:id,name,username,profile_public,avatar_path', 'tags')
+        $articles = Article::with(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+            $query->active();
+        }, 'tags'])
             ->select('articles.*')
             ->selectRaw('COALESCE(SUM(payments.amount), 0) as total_sales')
             ->leftJoin('payments', function ($join) use ($oneMonthAgo) {

@@ -5,6 +5,7 @@ export interface User {
   name?: string;
   role: "author" | "admin";
   avatar_path?: string;
+  avatar_url?: string; // 動的に生成されるアバターURL
   bio?: string;
   career_description?: string;
   x_url?: string;
