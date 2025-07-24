@@ -18,16 +18,39 @@ class ArticleController extends Controller
     {
         $query = Article::with('user:id,name,username,profile_public,avatar_path', 'tags');
 
-        // 公開記事のみに絞り込み
+        // デフォルトで公開記事のみに絞り込み
         if ($request->has('status')) {
             $query->where('status', $request->status);
+        } else {
+            $query->where('status', 'published');
         }
 
-        // タグによる絞り込み
+        // キーワード検索（タイトル・本文の全文検索）
+        if ($request->has('search') && ! empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('content', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        // タグによる絞り込み（単一タグ対応）
         if ($request->has('tag')) {
             $query->whereHas('tags', function ($q) use ($request) {
                 $q->where('slug', $request->tag);
             });
+        }
+
+        // 複数タグによる絞り込み
+        if ($request->has('tags') && ! empty($request->tags)) {
+            $tags = is_array($request->tags) ? $request->tags : explode(',', $request->tags);
+            $tags = array_filter($tags); // 空の値を除去
+
+            if (! empty($tags)) {
+                $query->whereHas('tags', function ($q) use ($tags) {
+                    $q->whereIn('name', $tags);
+                }, '=', count($tags)); // すべてのタグを持つ記事のみ（AND検索）
+            }
         }
 
         // ページネーション設定
