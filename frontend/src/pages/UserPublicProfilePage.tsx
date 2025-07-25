@@ -122,23 +122,6 @@ const UserPublicProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* ヘッダー */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {user.name} のプロフィール
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            @{user.username} • {user.articles_count}記事投稿
-            {user.paid_articles_count > 0 &&
-              ` • ${user.paid_articles_count}記事有料`}
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => navigate("/articles")}>
-          記事一覧に戻る
-        </Button>
-      </div>
-
       {/* プロフィール表示 */}
       <PublicProfileView user={userForProfileView} />
     </div>

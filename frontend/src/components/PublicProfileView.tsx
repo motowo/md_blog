@@ -20,6 +20,10 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activityData, setActivityData] = useState<ActivityData>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalArticles, setTotalArticles] = useState(0);
+  const articlesPerPage = 10;
 
   const fetchActivityData = useCallback(
     async (year?: number) => {
@@ -44,14 +48,14 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
     [user.username],
   );
 
-  const fetchUserArticles = useCallback(async () => {
+  const fetchUserArticles = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
       
-      // 公開記事用のエンドポイント
+      // 公開記事用のエンドポイント（ページネーション対応）
       const response = await fetch(
-        `${API_BASE_URL}/api/users/${user.username}/articles`,
+        `${API_BASE_URL}/api/users/${user.username}/articles?page=${page}&per_page=${articlesPerPage}`,
       );
       
       if (!response.ok) {
@@ -60,18 +64,84 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
       
       const data = await response.json();
       setUserArticles(data.data || []);
+      setCurrentPage(data.current_page || 1);
+      setTotalPages(data.last_page || 1);
+      setTotalArticles(data.total || 0);
     } catch (err) {
       console.error("Failed to fetch user articles:", err);
       setError("記事の取得に失敗しました");
     } finally {
       setLoading(false);
     }
-  }, [user.username]);
+  }, [user.username, articlesPerPage]);
 
   useEffect(() => {
     fetchActivityData();
-    fetchUserArticles();
+    fetchUserArticles(1);
   }, [fetchActivityData, fetchUserArticles]);
+
+  // ページネーション関数
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchUserArticles(page);
+  };
+
+  const handleFirstPage = () => handlePageChange(1);
+  const handleLastPage = () => handlePageChange(totalPages);
+  const handlePrevPage = () => handlePageChange(Math.max(1, currentPage - 1));
+  const handleNextPage = () => handlePageChange(Math.min(totalPages, currentPage + 1));
+
+  // ページネーションコンポーネント
+  const PaginationComponent = () => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleFirstPage}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            最初
+          </button>
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            前へ
+          </button>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-700 dark:text-gray-300">
+            {totalArticles}件中 {(currentPage - 1) * articlesPerPage + 1}-{Math.min(currentPage * articlesPerPage, totalArticles)}件を表示
+          </span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            (ページ {currentPage} / {totalPages})
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            次へ
+          </button>
+          <button
+            onClick={handleLastPage}
+            disabled={currentPage === totalPages}
+            className="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            最後
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -126,7 +196,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
                     {user.name}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    @{user.username}
+                    {user.username}
                   </p>
                 </div>
 
@@ -226,6 +296,9 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
         </h2>
       </div>
 
+      {/* 上部ページネーション */}
+      {totalArticles > 0 && <PaginationComponent />}
+
       {loading ? (
         <div className="flex items-center justify-center h-32">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -271,7 +344,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                       <button
                         onClick={() => navigate(`/articles/${article.id}`)}
-                        className="text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        className="text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors w-full text-left"
                       >
                         {article.title}
                       </button>
@@ -285,7 +358,7 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
                       <span>{formatDateTimeJST(article.created_at)}</span>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          getBadgeClass(article.status)
+                          getBadgeClass("articleStatus", article.status)
                         }`}
                       >
                         {article.status === "published"
@@ -329,6 +402,9 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
           ))}
         </div>
       )}
+
+      {/* 下部ページネーション */}
+      {totalArticles > 0 && <PaginationComponent />}
     </div>
   );
 };

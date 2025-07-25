@@ -10,6 +10,8 @@ export interface Article {
   is_paid: boolean;
   price?: number;
   preview_content?: string;
+  excerpt?: string;
+  payments_count?: number;
   created_at: string;
   updated_at: string;
   // リレーション
