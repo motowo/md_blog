@@ -48,32 +48,35 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
     [user.username],
   );
 
-  const fetchUserArticles = useCallback(async (page: number = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // 公開記事用のエンドポイント（ページネーション対応）
-      const response = await fetch(
-        `${API_BASE_URL}/api/users/${user.username}/articles?page=${page}&per_page=${articlesPerPage}`,
-      );
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch articles");
+  const fetchUserArticles = useCallback(
+    async (page: number = 1) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // 公開記事用のエンドポイント（ページネーション対応）
+        const response = await fetch(
+          `${API_BASE_URL}/api/users/${user.username}/articles?page=${page}&per_page=${articlesPerPage}`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch articles");
+        }
+
+        const data = await response.json();
+        setUserArticles(data.data || []);
+        setCurrentPage(data.current_page || 1);
+        setTotalPages(data.last_page || 1);
+        setTotalArticles(data.total || 0);
+      } catch (err) {
+        console.error("Failed to fetch user articles:", err);
+        setError("記事の取得に失敗しました");
+      } finally {
+        setLoading(false);
       }
-      
-      const data = await response.json();
-      setUserArticles(data.data || []);
-      setCurrentPage(data.current_page || 1);
-      setTotalPages(data.last_page || 1);
-      setTotalArticles(data.total || 0);
-    } catch (err) {
-      console.error("Failed to fetch user articles:", err);
-      setError("記事の取得に失敗しました");
-    } finally {
-      setLoading(false);
-    }
-  }, [user.username, articlesPerPage]);
+    },
+    [user.username, articlesPerPage],
+  );
 
   useEffect(() => {
     fetchActivityData();
@@ -89,7 +92,8 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
   const handleFirstPage = () => handlePageChange(1);
   const handleLastPage = () => handlePageChange(totalPages);
   const handlePrevPage = () => handlePageChange(Math.max(1, currentPage - 1));
-  const handleNextPage = () => handlePageChange(Math.min(totalPages, currentPage + 1));
+  const handleNextPage = () =>
+    handlePageChange(Math.min(totalPages, currentPage + 1));
 
   // ページネーションコンポーネント
   const PaginationComponent = () => {
@@ -116,7 +120,8 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
 
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-700 dark:text-gray-300">
-            {totalArticles}件中 {(currentPage - 1) * articlesPerPage + 1}-{Math.min(currentPage * articlesPerPage, totalArticles)}件を表示
+            {totalArticles}件中 {(currentPage - 1) * articlesPerPage + 1}-
+            {Math.min(currentPage * articlesPerPage, totalArticles)}件を表示
           </span>
           <span className="text-sm text-gray-500 dark:text-gray-400">
             (ページ {currentPage} / {totalPages})
@@ -337,7 +342,10 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
       ) : (
         <div className="space-y-4">
           {userArticles.map((article) => (
-            <Card key={article.id} className="hover:shadow-md transition-shadow">
+            <Card
+              key={article.id}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardBody>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -357,9 +365,10 @@ const PublicProfileView: React.FC<PublicProfileViewProps> = ({ user }) => {
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                       <span>{formatDateTimeJST(article.created_at)}</span>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          getBadgeClass("articleStatus", article.status)
-                        }`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getBadgeClass(
+                          "articleStatus",
+                          article.status,
+                        )}`}
                       >
                         {article.status === "published"
                           ? "公開中"

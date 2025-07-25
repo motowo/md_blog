@@ -25,6 +25,7 @@ class ArticleController extends Controller
             return $data;
         }
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -170,7 +171,7 @@ class ArticleController extends Controller
                 $articleData = $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
                     $query->active();
                 }, 'tags']);
-                
+
                 return response()->json([
                     'data' => $this->cleanUtf8($articleData->toArray()),
                     'is_preview' => false,
@@ -184,7 +185,7 @@ class ArticleController extends Controller
                     $articleData = $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
                         $query->active();
                     }, 'tags']);
-                    
+
                     return response()->json([
                         'data' => $this->cleanUtf8($articleData->toArray()),
                         'is_preview' => false,
@@ -213,7 +214,7 @@ class ArticleController extends Controller
         $articleData = $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
             $query->active();
         }, 'tags']);
-        
+
         return response()->json([
             'data' => $this->cleanUtf8($articleData->toArray()),
             'is_preview' => false,

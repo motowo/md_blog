@@ -2,12 +2,13 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Article;
+use Illuminate\Console\Command;
 
 class CheckUserAvatarEncoding extends Command
 {
     protected $signature = 'user:check-avatar-encoding {article_id}';
+
     protected $description = 'Check UTF-8 encoding of user avatar data for an article';
 
     public function handle()
@@ -17,8 +18,9 @@ class CheckUserAvatarEncoding extends Command
             $query->active();
         }])->find($articleId);
 
-        if (!$article) {
+        if (! $article) {
             $this->error("Article {$articleId} not found");
+
             return 1;
         }
 
@@ -31,9 +33,9 @@ class CheckUserAvatarEncoding extends Command
         foreach ($fields as $field) {
             $value = $article->user->{$field} ?? '';
             $isValid = mb_check_encoding($value, 'UTF-8');
-            $this->info("User {$field} Valid UTF-8: " . ($isValid ? 'Yes' : 'No'));
-            if (!$isValid) {
-                $this->error("Invalid UTF-8 in user {$field}: " . bin2hex($value));
+            $this->info("User {$field} Valid UTF-8: ".($isValid ? 'Yes' : 'No'));
+            if (! $isValid) {
+                $this->error("Invalid UTF-8 in user {$field}: ".bin2hex($value));
             }
         }
 
@@ -41,22 +43,22 @@ class CheckUserAvatarEncoding extends Command
         if ($article->user->avatarFiles) {
             foreach ($article->user->avatarFiles as $avatarFile) {
                 $this->info("Avatar File ID: {$avatarFile->id}");
-                
+
                 $avatarFields = ['file_path', 'original_name', 'file_data'];
                 foreach ($avatarFields as $field) {
                     $value = $avatarFile->{$field} ?? '';
                     $isValid = mb_check_encoding($value, 'UTF-8');
-                    $this->info("Avatar {$field} Valid UTF-8: " . ($isValid ? 'Yes' : 'No'));
-                    
-                    if (!$isValid) {
+                    $this->info("Avatar {$field} Valid UTF-8: ".($isValid ? 'Yes' : 'No'));
+
+                    if (! $isValid) {
                         $this->error("Invalid UTF-8 in avatar {$field}");
-                        $this->error("Length: " . strlen($value));
-                        $this->error("First 100 bytes hex: " . bin2hex(substr($value, 0, 100)));
+                        $this->error('Length: '.strlen($value));
+                        $this->error('First 100 bytes hex: '.bin2hex(substr($value, 0, 100)));
                     }
                 }
             }
         } else {
-            $this->info("No avatar files found");
+            $this->info('No avatar files found');
         }
 
         // JSON エンコードテスト
@@ -66,9 +68,9 @@ class CheckUserAvatarEncoding extends Command
                 'is_preview' => true,
             ];
             $json = json_encode($jsonData, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-            $this->info("JSON encoding successful");
+            $this->info('JSON encoding successful');
         } catch (\JsonException $e) {
-            $this->error("JSON encoding failed: " . $e->getMessage());
+            $this->error('JSON encoding failed: '.$e->getMessage());
         }
 
         return 0;
