@@ -97,15 +97,28 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   const fetchActivityData = useCallback(
     async (year?: number) => {
       try {
-        const activities = isReadOnly
-          ? await UserService.getArticleActivity(user.id, year)
-          : await UserService.getArticleActivity(undefined, year);
+        let activities;
+        if (isReadOnly) {
+          // 公開プロフィール用の新しいエンドポイント
+          const response = await fetch(
+            `${API_BASE_URL}/api/users/${user.username}/activity${year ? `?year=${year}` : ""}`,
+          );
+          if (response.ok) {
+            const data = await response.json();
+            activities = data.activities;
+          } else {
+            activities = {};
+          }
+        } else {
+          activities = await UserService.getArticleActivity(undefined, year);
+        }
         setActivityData(activities);
       } catch (err) {
         console.error("Failed to fetch activity data:", err);
+        setActivityData({});
       }
     },
-    [user.id, isReadOnly],
+    [user.username, isReadOnly],
   );
 
   useEffect(() => {

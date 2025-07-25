@@ -97,6 +97,44 @@ class UserController extends Controller
     }
 
     /**
+     * Get public user's activity heatmap data.
+     */
+    public function publicUserActivity(string $username, Request $request): JsonResponse
+    {
+        $user = User::where('username', $username)->first();
+
+        // ユーザーが存在しない場合
+        if (! $user) {
+            return response()->json([
+                'message' => 'ユーザーが見つかりません',
+            ], 404);
+        }
+
+        // プロフィールが非公開の場合
+        if (! $user->profile_public) {
+            return response()->json([
+                'message' => 'このユーザーのプロフィールは非公開です',
+            ], 404);
+        }
+
+        $year = $request->get('year', now()->year);
+
+        // 指定年の投稿記事アクティビティを取得
+        $activities = $user->articles()
+            ->whereYear('created_at', $year)
+            ->where('status', 'published')
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('count', 'date')
+            ->toArray();
+
+        return response()->json([
+            'activities' => $activities,
+        ]);
+    }
+
+    /**
      * Get public users list with search functionality.
      */
     public function publicUsersList(Request $request): JsonResponse

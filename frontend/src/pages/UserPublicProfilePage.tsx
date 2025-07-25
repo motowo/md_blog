@@ -14,6 +14,7 @@ interface PublicUser {
   x_url?: string;
   github_url?: string;
   avatar_path?: string;
+  avatar_url?: string;
   created_at: string;
   articles_count: number;
   public_articles_count: number;
@@ -111,6 +112,7 @@ const UserPublicProfilePage: React.FC = () => {
     x_url: user.x_url || "",
     github_url: user.github_url || "",
     avatar_path: user.avatar_path || "",
+    avatar_url: user.avatar_url || "",
     role: "author", // 公開プロフィールは全て投稿者
     profile_public: true, // 公開プロフィール表示ページなので表示上は常にtrue
     is_active: true,
