@@ -78,7 +78,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
     career_description: user?.career_description || "",
     x_url: user?.x_url || "",
     github_url: user?.github_url || "",
-    profile_public: user?.profile_public ?? true,
+    profile_public: user?.profile_public ?? false,
   });
 
   // アクティビティ関連の状態
@@ -117,7 +117,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
         career_description: user.career_description || "",
         x_url: user.x_url || "",
         github_url: user.github_url || "",
-        profile_public: user.profile_public ?? true,
+        profile_public: user.profile_public ?? false,
       });
       fetchActivityData();
     }

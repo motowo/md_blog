@@ -112,7 +112,7 @@ const UserPublicProfilePage: React.FC = () => {
     github_url: user.github_url || "",
     avatar_path: user.avatar_path || "",
     role: "author", // 公開プロフィールは全て投稿者
-    profile_public: true, // 公開プロフィールなのでtrue
+    profile_public: true, // 公開プロフィール表示ページなので表示上は常にtrue
     is_active: true,
     created_at: user.created_at,
     updated_at: user.created_at, // 公開プロフィールでは更新日時は表示しない
