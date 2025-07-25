@@ -33,6 +33,7 @@ Route::get('articles/{article}', [ArticleController::class, 'show']);
 // ユーザー関連のルート（認証不要：公開プロフィール）
 Route::get('users', [UserController::class, 'publicUsersList']);
 Route::get('users/{username}', [UserController::class, 'publicProfile']);
+Route::get('users/{username}/articles', [UserController::class, 'publicUserArticles']);
 
 // タグ関連のルート（認証必要・管理者のみ：作成・更新・削除）
 Route::middleware('auth:sanctum')->group(function () {

@@ -23,6 +23,7 @@ import type { ApiError } from "../types/auth";
 import { getBadgeClass } from "../constants/badgeStyles";
 import { formatCurrency } from "../utils/currency";
 import { formatDateTimeJST } from "../utils/datetime";
+import { API_BASE_URL } from "../utils/api";
 
 interface UserProfileViewProps {
   user: User;
@@ -128,7 +129,9 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
       setLoading(true);
       setError(null);
       const articles = isReadOnly
-        ? await ArticleService.getUserArticles(user.id)
+        ? await fetch(`${API_BASE_URL}/api/users/${user.username}/articles`)
+            .then((res) => res.json())
+            .then((data) => data.data || [])
         : await ArticleService.getUserArticles();
       setUserArticles(articles);
     } catch (err) {
@@ -137,7 +140,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [user.id, isReadOnly]);
+  }, [user.username, isReadOnly]);
 
   const fetchPurchases = useCallback(async () => {
     if (isReadOnly) return;
@@ -432,181 +435,244 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
               </h2>
             </CardHeader>
             <CardBody>
-              <form onSubmit={handleProfileUpdate} className="space-y-6">
-                <Input
-                  label="名前（必須）"
-                  type="text"
-                  value={profileData.name}
-                  onChange={(e) =>
-                    !isReadOnly &&
-                    setProfileData({ ...profileData, name: e.target.value })
-                  }
-                  placeholder="表示名を入力"
-                  required
-                  readOnly={isReadOnly}
-                />
+              {isReadOnly ? (
+                // 読み取り専用モード：テキスト表示
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      {profileData.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      @{profileData.username}
+                    </p>
+                  </div>
 
-                <Input
-                  label="ユーザー名（必須）"
-                  type="text"
-                  value={profileData.username}
-                  onChange={(e) =>
-                    !isReadOnly &&
-                    setProfileData({
-                      ...profileData,
-                      username: e.target.value,
-                    })
-                  }
-                  placeholder="ユーザー名を入力"
-                  required
-                  readOnly={isReadOnly}
-                />
+                  {profileData.bio && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                        自己紹介
+                      </h4>
+                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                        {profileData.bio}
+                      </p>
+                    </div>
+                  )}
 
-                <Input
-                  label="メールアドレス（必須）"
-                  type="email"
-                  value={profileData.email}
-                  onChange={(e) =>
-                    !isReadOnly &&
-                    setProfileData({
-                      ...profileData,
-                      email: e.target.value,
-                    })
-                  }
-                  placeholder="メールアドレスを入力"
-                  required
-                  readOnly={isReadOnly}
-                />
+                  {profileData.career_description && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                        経歴・キャリア
+                      </h4>
+                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                        {profileData.career_description}
+                      </p>
+                    </div>
+                  )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    自己紹介（任意）
-                  </label>
-                  <textarea
-                    value={profileData.bio}
+                  {(profileData.x_url || profileData.github_url) && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                        リンク
+                      </h4>
+                      <div className="space-y-2">
+                        {profileData.x_url && (
+                          <div className="flex items-center">
+                            <svg
+                              className="w-4 h-4 mr-2 text-gray-500"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M18.258,3.266c-0.693,0.405-1.46,0.698-2.277,0.857c-0.653-0.686-1.586-1.115-2.618-1.115c-1.98,0-3.586,1.581-3.586,3.53c0,0.276,0.031,0.545,0.092,0.805C6.888,7.195,4.245,5.79,2.476,3.654C2.167,4.176,1.99,4.781,1.99,5.429c0,1.224,0.633,2.305,1.596,2.938C2.999,8.349,2.445,8.19,1.961,7.925C1.96,7.94,1.96,7.954,1.96,7.97c0,1.71,1.237,3.138,2.877,3.462c-0.301,0.08-0.617,0.123-0.943,0.123c-0.23,0-0.456-0.021-0.674-0.062c0.456,1.402,1.781,2.422,3.35,2.451c-1.228,0.947-2.773,1.512-4.454,1.512c-0.291,0-0.575-0.017-0.855-0.049C2.44,17.738,4.358,18.5,6.467,18.5c7.756,0,11.99-6.325,11.99-11.817c0-0.18-0.004-0.359-0.012-0.537C17.818,5.205,18.11,4.765,18.258,3.266z" />
+                            </svg>
+                            <a
+                              href={profileData.x_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              X (Twitter)
+                            </a>
+                          </div>
+                        )}
+                        {profileData.github_url && (
+                          <div className="flex items-center">
+                            <svg
+                              className="w-4 h-4 mr-2 text-gray-500"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <a
+                              href={profileData.github_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              GitHub
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // 編集モード：フォーム表示
+                <form onSubmit={handleProfileUpdate} className="space-y-6">
+                  <Input
+                    label="名前"
+                    type="text"
+                    value={profileData.name}
                     onChange={(e) =>
-                      !isReadOnly &&
+                      setProfileData({ ...profileData, name: e.target.value })
+                    }
+                    placeholder="表示名を入力"
+                    required
+                  />
+
+                  <Input
+                    label="ユーザー名"
+                    type="text"
+                    value={profileData.username}
+                    onChange={(e) =>
                       setProfileData({
                         ...profileData,
-                        bio: e.target.value,
+                        username: e.target.value,
                       })
                     }
-                    placeholder="自己紹介文を入力してください"
-                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      isReadOnly
-                        ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
-                        : ""
-                    }`}
-                    rows={3}
-                    readOnly={isReadOnly}
+                    placeholder="ユーザー名を入力"
+                    required
                   />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    経歴・キャリア（任意）
-                  </label>
-                  <textarea
-                    value={profileData.career_description}
+                  <Input
+                    label="メールアドレス"
+                    type="email"
+                    value={profileData.email}
                     onChange={(e) =>
-                      !isReadOnly &&
                       setProfileData({
                         ...profileData,
-                        career_description: e.target.value,
+                        email: e.target.value,
                       })
                     }
-                    placeholder="経歴やキャリアについて詳しく記載してください"
-                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      isReadOnly
-                        ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
-                        : ""
-                    }`}
-                    rows={4}
-                    readOnly={isReadOnly}
+                    placeholder="メールアドレスを入力"
+                    required
                   />
-                </div>
 
-                <Input
-                  label="X URL（任意）"
-                  type="url"
-                  value={profileData.x_url}
-                  onChange={(e) =>
-                    !isReadOnly &&
-                    setProfileData({
-                      ...profileData,
-                      x_url: e.target.value,
-                    })
-                  }
-                  placeholder="https://x.com/username"
-                  readOnly={isReadOnly}
-                />
-
-                <Input
-                  label="GitHub URL（任意）"
-                  type="url"
-                  value={profileData.github_url}
-                  onChange={(e) =>
-                    !isReadOnly &&
-                    setProfileData({
-                      ...profileData,
-                      github_url: e.target.value,
-                    })
-                  }
-                  placeholder="https://github.com/username"
-                  readOnly={isReadOnly}
-                />
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    プロフィール公開設定（任意）
-                  </label>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      非公開
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        !isReadOnly &&
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      自己紹介
+                    </label>
+                    <textarea
+                      value={profileData.bio}
+                      onChange={(e) =>
                         setProfileData({
                           ...profileData,
-                          profile_public: !profileData.profile_public,
+                          bio: e.target.value,
                         })
                       }
-                      disabled={isReadOnly}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        profileData.profile_public
-                          ? "bg-blue-600"
-                          : "bg-gray-200 dark:bg-gray-600"
-                      } ${isReadOnly ? "cursor-not-allowed opacity-50" : ""}`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          profileData.profile_public
-                            ? "translate-x-6"
-                            : "translate-x-1"
-                        }`}
-                      />
-                    </button>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      公開
-                    </span>
+                      placeholder="自己紹介文を入力してください"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={3}
+                    />
                   </div>
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    {profileData.profile_public
-                      ? "✅ プロフィールが他のユーザーに表示されます"
-                      : "🔒 プロフィールは非公開です"}
-                  </p>
-                </div>
 
-                {!isReadOnly && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      経歴・キャリア
+                    </label>
+                    <textarea
+                      value={profileData.career_description}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          career_description: e.target.value,
+                        })
+                      }
+                      placeholder="経歴やキャリアについて詳しく記載してください"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={4}
+                    />
+                  </div>
+
+                  <Input
+                    label="X URL"
+                    type="url"
+                    value={profileData.x_url}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        x_url: e.target.value,
+                      })
+                    }
+                    placeholder="https://x.com/username"
+                  />
+
+                  <Input
+                    label="GitHub URL"
+                    type="url"
+                    value={profileData.github_url}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        github_url: e.target.value,
+                      })
+                    }
+                    placeholder="https://github.com/username"
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      プロフィール公開設定
+                    </label>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        非公開
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setProfileData({
+                            ...profileData,
+                            profile_public: !profileData.profile_public,
+                          })
+                        }
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                          profileData.profile_public
+                            ? "bg-blue-600"
+                            : "bg-gray-200 dark:bg-gray-600"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            profileData.profile_public
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        公開
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      {profileData.profile_public
+                        ? "✅ プロフィールが他のユーザーに表示されます"
+                        : "🔒 プロフィールは非公開です"}
+                    </p>
+                  </div>
+
                   <div className="pt-4">
                     <Button type="submit" variant="primary" loading={loading}>
                       プロフィールを更新
                     </Button>
                   </div>
-                )}
-              </form>
+                </form>
+              )}
             </CardBody>
           </Card>
         </div>
