@@ -1,0 +1,11 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="32" height="32" rx="6" fill="#0F172A"/>
+  
+  <!-- M letter with markdown style -->
+  <path d="M7 11V21H10V15L12 17L14 15V21H17V11H14L12 13L10 11H7Z" fill="#3B82F6"/>
+  
+  <!-- Code bracket -->
+  <path d="M20 14L23 16L20 18" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M25 14L22 16L25 18" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,10 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="16" height="16" rx="3" fill="#0F172A"/>
+  
+  <!-- M letter simplified -->
+  <path d="M3 5V11H5V8L6.5 9.5L8 8V11H10V5H8L6.5 7L5 5H3Z" fill="#3B82F6"/>
+  
+  <!-- Code bracket simplified -->
+  <path d="M11 7L12.5 8L11 9" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
