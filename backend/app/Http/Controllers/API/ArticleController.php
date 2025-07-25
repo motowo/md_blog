@@ -12,6 +12,21 @@ use Illuminate\Support\Facades\Log;
 class ArticleController extends Controller
 {
     /**
+     * UTF-8エンコーディングのクリーニング
+     */
+    private function cleanUtf8($data)
+    {
+        if (is_array($data)) {
+            return array_map([$this, 'cleanUtf8'], $data);
+        } elseif (is_string($data)) {
+            // 無効なUTF-8文字を除去または置換
+            return mb_convert_encoding($data, 'UTF-8', 'UTF-8');
+        } else {
+            return $data;
+        }
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
@@ -148,15 +163,17 @@ class ArticleController extends Controller
                 $articleData->content = substr($article->content, 0, 300).'...';
 
                 return response()->json([
-                    'data' => $articleData,
+                    'data' => $this->cleanUtf8($articleData->toArray()),
                     'is_preview' => true,
                 ]);
             } elseif ($user->id === $article->user_id || $user->role === 'admin') {
                 // 作成者または管理者の場合は全文表示
+                $articleData = $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+                    $query->active();
+                }, 'tags']);
+
                 return response()->json([
-                    'data' => $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
-                        $query->active();
-                    }, 'tags']),
+                    'data' => $this->cleanUtf8($articleData->toArray()),
                     'is_preview' => false,
                 ]);
             } else {
@@ -165,10 +182,12 @@ class ArticleController extends Controller
 
                 if ($hasPurchased) {
                     // 購入済みの場合は全文表示
+                    $articleData = $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+                        $query->active();
+                    }, 'tags']);
+
                     return response()->json([
-                        'data' => $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
-                            $query->active();
-                        }, 'tags']),
+                        'data' => $this->cleanUtf8($articleData->toArray()),
                         'is_preview' => false,
                         'has_purchased' => true,
                     ]);
@@ -179,20 +198,25 @@ class ArticleController extends Controller
                     }, 'tags']);
                     $articleData->content = substr($article->content, 0, 300).'...';
 
-                    return response()->json([
-                        'data' => $articleData,
+                    // UTF-8エンコーディングのクリーニング
+                    $responseData = [
+                        'data' => $this->cleanUtf8($articleData->toArray()),
                         'is_preview' => true,
                         'has_purchased' => false,
-                    ]);
+                    ];
+
+                    return response()->json($responseData);
                 }
             }
         }
 
         // 無料記事の場合は全文表示
+        $articleData = $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
+            $query->active();
+        }, 'tags']);
+
         return response()->json([
-            'data' => $article->load(['user:id,name,username,profile_public,avatar_path', 'user.avatarFiles' => function ($query) {
-                $query->active();
-            }, 'tags']),
+            'data' => $this->cleanUtf8($articleData->toArray()),
             'is_preview' => false,
         ]);
     }

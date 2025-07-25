@@ -53,6 +53,7 @@ class UserController extends Controller
             'x_url' => $user->x_url,
             'github_url' => $user->github_url,
             'avatar_path' => $user->avatar_path,
+            'avatar_url' => $user->avatar_url,
             'created_at' => $user->created_at,
             // 統計情報を追加
             'articles_count' => $user->articles()->where('status', 'published')->count(),
@@ -61,6 +62,88 @@ class UserController extends Controller
         ];
 
         return response()->json($publicData);
+    }
+
+    /**
+     * Get public user's articles.
+     */
+    public function publicUserArticles(string $username, Request $request): JsonResponse
+    {
+        $user = User::where('username', $username)->first();
+
+        // ユーザーが存在しない場合
+        if (! $user) {
+            return response()->json([
+                'message' => 'ユーザーが見つかりません',
+            ], 404);
+        }
+
+        // プロフィールが非公開の場合
+        if (! $user->profile_public) {
+            return response()->json([
+                'message' => 'このユーザーのプロフィールは非公開です',
+            ], 404);
+        }
+
+        // 公開記事のみを取得
+        $articles = $user->articles()
+            ->where('status', 'published')
+            ->with(['user:id,name,username,avatar_path', 'tags'])
+            ->withCount(['payments'])
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 10));
+
+        return response()->json($articles);
+    }
+
+    /**
+     * Get public user's activity heatmap data.
+     */
+    public function publicUserActivity(string $username, Request $request): JsonResponse
+    {
+        $user = User::where('username', $username)->first();
+
+        // ユーザーが存在しない場合
+        if (! $user) {
+            return response()->json([
+                'message' => 'ユーザーが見つかりません',
+            ], 404);
+        }
+
+        // プロフィールが非公開の場合
+        if (! $user->profile_public) {
+            return response()->json([
+                'message' => 'このユーザーのプロフィールは非公開です',
+            ], 404);
+        }
+
+        $year = $request->get('year', now()->year);
+
+        // 指定年の投稿記事アクティビティを取得（有料・無料・合計を含む）
+        $activities = $user->articles()
+            ->whereYear('created_at', $year)
+            ->where('status', 'published')
+            ->selectRaw('
+                DATE(created_at) as date, 
+                COUNT(*) as total,
+                SUM(CASE WHEN is_paid = 1 THEN 1 ELSE 0 END) as paid,
+                SUM(CASE WHEN is_paid = 0 THEN 1 ELSE 0 END) as free
+            ')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->date => [
+                    'total' => (int) $item->total,
+                    'paid' => (int) $item->paid,
+                    'free' => (int) $item->free,
+                ]];
+            })
+            ->toArray();
+
+        return response()->json([
+            'activities' => $activities,
+        ]);
     }
 
     /**

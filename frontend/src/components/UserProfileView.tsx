@@ -78,7 +78,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
     career_description: user?.career_description || "",
     x_url: user?.x_url || "",
     github_url: user?.github_url || "",
-    profile_public: user?.profile_public ?? true,
+    profile_public: user?.profile_public ?? false,
   });
 
   // アクティビティ関連の状態
@@ -102,6 +102,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
         setActivityData(activities);
       } catch (err) {
         console.error("Failed to fetch activity data:", err);
+        setActivityData({});
       }
     },
     [user.id, isReadOnly],
@@ -117,7 +118,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
         career_description: user.career_description || "",
         x_url: user.x_url || "",
         github_url: user.github_url || "",
-        profile_public: user.profile_public ?? true,
+        profile_public: user.profile_public ?? false,
       });
       fetchActivityData();
     }
@@ -414,7 +415,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </div>
                 ) : (
                   <AvatarUpload
-                    currentAvatar={user?.avatar_url}
+                    currentAvatar={user?.avatar_path}
                     onUpload={handleAvatarUpload}
                     onDelete={handleAvatarDelete}
                     loading={avatarUploading}

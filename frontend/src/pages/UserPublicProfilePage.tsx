@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardBody } from "../components/ui/Card";
 import Button from "../components/ui/Button";
-import UserProfileView from "../components/UserProfileView";
+import PublicProfileView from "../components/PublicProfileView";
 import { API_BASE_URL } from "../utils/api";
 
 interface PublicUser {
@@ -14,6 +14,7 @@ interface PublicUser {
   x_url?: string;
   github_url?: string;
   avatar_path?: string;
+  avatar_url?: string;
   created_at: string;
   articles_count: number;
   public_articles_count: number;
@@ -111,8 +112,9 @@ const UserPublicProfilePage: React.FC = () => {
     x_url: user.x_url || "",
     github_url: user.github_url || "",
     avatar_path: user.avatar_path || "",
+    avatar_url: user.avatar_url || "",
     role: "author", // 公開プロフィールは全て投稿者
-    profile_public: true, // 公開プロフィールなのでtrue
+    profile_public: true, // 公開プロフィール表示ページなので表示上は常にtrue
     is_active: true,
     created_at: user.created_at,
     updated_at: user.created_at, // 公開プロフィールでは更新日時は表示しない
@@ -120,30 +122,8 @@ const UserPublicProfilePage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* ヘッダー */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {user.name} のプロフィール
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            @{user.username} • {user.articles_count}記事投稿
-            {user.paid_articles_count > 0 &&
-              ` • ${user.paid_articles_count}記事有料`}
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => navigate("/articles")}>
-          記事一覧に戻る
-        </Button>
-      </div>
-
       {/* プロフィール表示 */}
-      <UserProfileView
-        user={userForProfileView}
-        isReadOnly={true}
-        showPaymentTab={false}
-        initialTab="profile"
-      />
+      <PublicProfileView user={userForProfileView} />
     </div>
   );
 };
