@@ -119,14 +119,26 @@ class UserController extends Controller
 
         $year = $request->get('year', now()->year);
 
-        // 指定年の投稿記事アクティビティを取得
+        // 指定年の投稿記事アクティビティを取得（有料・無料・合計を含む）
         $activities = $user->articles()
             ->whereYear('created_at', $year)
             ->where('status', 'published')
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->selectRaw('
+                DATE(created_at) as date, 
+                COUNT(*) as total,
+                SUM(CASE WHEN is_paid = 1 THEN 1 ELSE 0 END) as paid,
+                SUM(CASE WHEN is_paid = 0 THEN 1 ELSE 0 END) as free
+            ')
             ->groupBy('date')
             ->orderBy('date')
-            ->pluck('count', 'date')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->date => [
+                    'total' => (int) $item->total,
+                    'paid' => (int) $item->paid,
+                    'free' => (int) $item->free,
+                ]];
+            })
             ->toArray();
 
         return response()->json([
