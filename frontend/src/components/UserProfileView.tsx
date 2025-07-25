@@ -58,14 +58,13 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
     | "profile"
-    | "articles"
     | "purchases"
     | "payment"
     | "bank-account"
     | "sales"
     | "payouts"
     | "settings"
-  >(initialTab);
+  >(initialTab === "articles" ? "profile" : initialTab);
   const [userArticles, setUserArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -261,25 +260,6 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      published: { label: "公開" },
-      draft: { label: "下書き" },
-      private: { label: "非公開" },
-    };
-    const config =
-      statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
-    return (
-      <span
-        className={getBadgeClass(
-          "articleStatus",
-          status as "published" | "draft" | "private",
-        )}
-      >
-        {config.label}
-      </span>
-    );
-  };
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ja-JP", {
@@ -292,29 +272,20 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* タブナビゲーション */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab("profile")}
-            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "profile"
-                ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
-            }`}
-          >
-            プロフィール
-          </button>
-          <button
-            onClick={() => setActiveTab("articles")}
-            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "articles"
-                ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
-            }`}
-          >
-            {isReadOnly ? "投稿記事" : "記事管理"}
-          </button>
+      {/* タブナビゲーション（公開プロフィールでは表示しない） */}
+      {!isReadOnly && (
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab("profile")}
+              className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "profile"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+              }`}
+            >
+              プロフィール
+            </button>
           {!isReadOnly && (
             <button
               onClick={() => setActiveTab("purchases")}
@@ -387,8 +358,9 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
               アカウント設定
             </button>
           )}
-        </nav>
-      </div>
+          </nav>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded mb-6">
@@ -396,58 +368,58 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
         </div>
       )}
 
-      {/* プロフィールタブ */}
-      {activeTab === "profile" && (
+      {/* 統合されたプロフィール・記事タブ（常に表示） */}
+      {(activeTab === "profile" || isReadOnly) && (
         <div className="space-y-6">
-          {/* プロフィール画像 */}
+          {/* プロフィール画像とプロフィール情報を横並びで表示 */}
           <Card>
-            <CardHeader>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                プロフィール画像
-              </h2>
-            </CardHeader>
             <CardBody>
-              <div className="text-center">
-                {isReadOnly ? (
-                  <div className="flex justify-center">
-                    {user.avatar_url ? (
-                      <img
-                        src={user.avatar_url}
-                        alt={user.name}
-                        className="h-32 w-32 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-32 w-32 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                        <svg
-                          className="h-16 w-16 text-gray-400 dark:text-gray-500"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                        </svg>
-                      </div>
-                    )}
+              <div className="flex flex-col lg:flex-row lg:space-x-6 space-y-6 lg:space-y-0">
+                {/* プロフィール画像（25%） */}
+                <div className="lg:w-1/4 flex-shrink-0">
+                  <div className="text-center lg:text-left">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      プロフィール画像
+                    </h3>
+                    <div className="flex justify-center lg:justify-start">
+                      {isReadOnly ? (
+                        user.avatar_url ? (
+                          <img
+                            src={user.avatar_url}
+                            alt={user.name}
+                            className="h-32 w-32 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-32 w-32 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <svg
+                              className="h-16 w-16 text-gray-400 dark:text-gray-500"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                          </div>
+                        )
+                      ) : (
+                        <AvatarUpload
+                          currentAvatar={user?.avatar_url}
+                          onUpload={handleAvatarUpload}
+                          onDelete={handleAvatarDelete}
+                          loading={avatarUploading}
+                        />
+                      )}
+                    </div>
                   </div>
-                ) : (
-                  <AvatarUpload
-                    currentAvatar={user?.avatar_url}
-                    onUpload={handleAvatarUpload}
-                    onDelete={handleAvatarDelete}
-                    loading={avatarUploading}
-                  />
-                )}
-              </div>
-            </CardBody>
-          </Card>
+                </div>
 
-          {/* プロフィール編集 */}
-          <Card>
-            <CardHeader>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {isReadOnly ? "プロフィール情報" : "プロフィール編集"}
-              </h2>
-            </CardHeader>
-            <CardBody>
+                {/* プロフィール情報（75%） */}
+                <div className="lg:w-3/4">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {isReadOnly ? "プロフィール情報" : "プロフィール編集"}
+                    </h3>
+                  </div>
+                  <div className="space-y-6">
               {isReadOnly ? (
                 // 読み取り専用モード：テキスト表示
                 <div className="space-y-6">
@@ -686,15 +658,13 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </div>
                 </form>
               )}
+                  </div>
+                </div>
+              </div>
             </CardBody>
           </Card>
-        </div>
-      )}
 
-      {/* 記事管理タブ */}
-      {activeTab === "articles" && (
-        <div className="space-y-6">
-          {/* アクティビティヒートマップ */}
+          {/* ヒートマップ */}
           <Card>
             <CardBody>
               <ActivityHeatmap
@@ -704,6 +674,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
             </CardBody>
           </Card>
 
+          {/* 記事一覧 */}
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {isReadOnly ? "投稿記事一覧" : "記事一覧"}
@@ -757,7 +728,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                       variant="primary"
                       onClick={() => navigate("/articles/new")}
                     >
-                      最初の記事を作成する
+                      新しい記事を作成
                     </Button>
                   )}
                 </div>
@@ -766,56 +737,76 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
           ) : (
             <div className="space-y-4">
               {userArticles.map((article) => (
-                <Card key={article.id}>
+                <Card key={article.id} className="hover:shadow-md transition-shadow">
                   <CardBody>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          <button
+                            onClick={() => navigate(`/articles/${article.id}`)}
+                            className="text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          >
                             {article.title}
-                          </h3>
-                          {getStatusBadge(article.status)}
+                          </button>
+                        </h3>
+                        {article.excerpt && (
+                          <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                            {article.excerpt}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                          <span>{formatDateTimeJST(article.created_at)}</span>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              getBadgeClass(article.status)
+                            }`}
+                          >
+                            {article.status === "published"
+                              ? "公開中"
+                              : article.status === "draft"
+                                ? "下書き"
+                                : "非公開"}
+                          </span>
                           {article.is_paid && (
-                            <span
-                              className={getBadgeClass("priceType", "paid")}
-                            >
-                              有料: {formatCurrency(article.price || 0)}
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                              有料 {formatCurrency(article.price || 0)}
+                            </span>
+                          )}
+                          {!article.is_paid && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                              無料
+                            </span>
+                          )}
+                          {article.payments_count > 0 && (
+                            <span className="text-gray-600 dark:text-gray-400">
+                              {article.payments_count}人が購入
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 flex items-center space-x-4">
-                          <span>
-                            📅 作成: {formatDateTimeJST(article.created_at)}
-                          </span>
-                          {article.updated_at !== article.created_at && (
-                            <span>
-                              🔄 更新: {formatDateTimeJST(article.updated_at)}
-                            </span>
-                          )}
-                        </p>
+                        {article.tags && article.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {article.tags.map((tag) => (
+                              <span
+                                key={tag.id}
+                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                              >
+                                #{tag.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-
-                      {/* アクションボタン */}
-                      <div className="flex items-center space-x-2 ml-4">
-                        {!isReadOnly && (
+                      {!isReadOnly && (
+                        <div className="flex items-center space-x-2 ml-4">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() =>
-                              navigate(`/articles/${article.id}/edit`)
-                            }
+                            onClick={() => navigate(`/articles/${article.id}/edit`)}
                           >
                             編集
                           </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/articles/${article.id}`)}
-                        >
-                          詳細
-                        </Button>
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </CardBody>
                 </Card>
@@ -824,6 +815,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
           )}
         </div>
       )}
+
 
       {/* 購入履歴タブ */}
       {activeTab === "purchases" && !isReadOnly && (
