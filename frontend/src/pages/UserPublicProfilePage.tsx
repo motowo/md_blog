@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardBody } from "../components/ui/Card";
 import Button from "../components/ui/Button";
-import UserProfileView from "../components/UserProfileView";
+import PublicProfileView from "../components/PublicProfileView";
 import { API_BASE_URL } from "../utils/api";
 
 interface PublicUser {
@@ -140,12 +140,7 @@ const UserPublicProfilePage: React.FC = () => {
       </div>
 
       {/* プロフィール表示 */}
-      <UserProfileView
-        user={userForProfileView}
-        isReadOnly={true}
-        showPaymentTab={false}
-        initialTab="profile"
-      />
+      <PublicProfileView user={userForProfileView} />
     </div>
   );
 };

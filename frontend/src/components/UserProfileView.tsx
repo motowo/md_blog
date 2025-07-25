@@ -23,7 +23,6 @@ import type { ApiError } from "../types/auth";
 import { getBadgeClass } from "../constants/badgeStyles";
 import { formatCurrency } from "../utils/currency";
 import { formatDateTimeJST } from "../utils/datetime";
-import { API_BASE_URL } from "../utils/api";
 
 interface UserProfileViewProps {
   user: User;
@@ -58,13 +57,14 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
     | "profile"
+    | "articles"
     | "purchases"
     | "payment"
     | "bank-account"
     | "sales"
     | "payouts"
     | "settings"
-  >(initialTab === "articles" ? "profile" : initialTab);
+  >(initialTab);
   const [userArticles, setUserArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,28 +96,16 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   const fetchActivityData = useCallback(
     async (year?: number) => {
       try {
-        let activities;
-        if (isReadOnly) {
-          // 公開プロフィール用の新しいエンドポイント
-          const response = await fetch(
-            `${API_BASE_URL}/api/users/${user.username}/activity${year ? `?year=${year}` : ""}`,
-          );
-          if (response.ok) {
-            const data = await response.json();
-            activities = data.activities;
-          } else {
-            activities = {};
-          }
-        } else {
-          activities = await UserService.getArticleActivity(undefined, year);
-        }
+        const activities = isReadOnly
+          ? await UserService.getArticleActivity(user.id, year)
+          : await UserService.getArticleActivity(undefined, year);
         setActivityData(activities);
       } catch (err) {
         console.error("Failed to fetch activity data:", err);
         setActivityData({});
       }
     },
-    [user.username, isReadOnly],
+    [user.id, isReadOnly],
   );
 
   useEffect(() => {
@@ -141,9 +129,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
       setLoading(true);
       setError(null);
       const articles = isReadOnly
-        ? await fetch(`${API_BASE_URL}/api/users/${user.username}/articles`)
-            .then((res) => res.json())
-            .then((data) => data.data || [])
+        ? await ArticleService.getUserArticles(user.id)
         : await ArticleService.getUserArticles();
       setUserArticles(articles);
     } catch (err) {
@@ -152,7 +138,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [user.username, isReadOnly]);
+  }, [user.id, isReadOnly]);
 
   const fetchPurchases = useCallback(async () => {
     if (isReadOnly) return;
@@ -260,6 +246,25 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      published: { label: "公開" },
+      draft: { label: "下書き" },
+      private: { label: "非公開" },
+    };
+    const config =
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
+    return (
+      <span
+        className={getBadgeClass(
+          "articleStatus",
+          status as "published" | "draft" | "private",
+        )}
+      >
+        {config.label}
+      </span>
+    );
+  };
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ja-JP", {
@@ -272,20 +277,29 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* タブナビゲーション（公開プロフィールでは表示しない） */}
-      {!isReadOnly && (
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab("profile")}
-              className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "profile"
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
-              }`}
-            >
-              プロフィール
-            </button>
+      {/* タブナビゲーション */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab("profile")}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "profile"
+                ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            プロフィール
+          </button>
+          <button
+            onClick={() => setActiveTab("articles")}
+            className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "articles"
+                ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            {isReadOnly ? "投稿記事" : "記事管理"}
+          </button>
           {!isReadOnly && (
             <button
               onClick={() => setActiveTab("purchases")}
@@ -358,9 +372,8 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
               アカウント設定
             </button>
           )}
-          </nav>
-        </div>
-      )}
+        </nav>
+      </div>
 
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded mb-6">
@@ -368,303 +381,242 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
         </div>
       )}
 
-      {/* 統合されたプロフィール・記事タブ（常に表示） */}
-      {(activeTab === "profile" || isReadOnly) && (
+      {/* プロフィールタブ */}
+      {activeTab === "profile" && (
         <div className="space-y-6">
-          {/* プロフィール画像とプロフィール情報を横並びで表示 */}
+          {/* プロフィール画像 */}
           <Card>
+            <CardHeader>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                プロフィール画像
+              </h2>
+            </CardHeader>
             <CardBody>
-              <div className="flex flex-col lg:flex-row lg:space-x-6 space-y-6 lg:space-y-0">
-                {/* プロフィール画像（25%） */}
-                <div className="lg:w-1/4 flex-shrink-0">
-                  <div className="text-center lg:text-left">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      プロフィール画像
-                    </h3>
-                    <div className="flex justify-center lg:justify-start">
-                      {isReadOnly ? (
-                        user.avatar_url ? (
-                          <img
-                            src={user.avatar_url}
-                            alt={user.name}
-                            className="h-32 w-32 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-32 w-32 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <svg
-                              className="h-16 w-16 text-gray-400 dark:text-gray-500"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                            </svg>
-                          </div>
-                        )
-                      ) : (
-                        <AvatarUpload
-                          currentAvatar={user?.avatar_url}
-                          onUpload={handleAvatarUpload}
-                          onDelete={handleAvatarDelete}
-                          loading={avatarUploading}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* プロフィール情報（75%） */}
-                <div className="lg:w-3/4">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {isReadOnly ? "プロフィール情報" : "プロフィール編集"}
-                    </h3>
-                  </div>
-                  <div className="space-y-6">
-              {isReadOnly ? (
-                // 読み取り専用モード：テキスト表示
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      {profileData.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      @{profileData.username}
-                    </p>
-                  </div>
-
-                  {profileData.bio && (
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                        自己紹介
-                      </h4>
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {profileData.bio}
-                      </p>
-                    </div>
-                  )}
-
-                  {profileData.career_description && (
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                        経歴・キャリア
-                      </h4>
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {profileData.career_description}
-                      </p>
-                    </div>
-                  )}
-
-                  {(profileData.x_url || profileData.github_url) && (
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                        リンク
-                      </h4>
-                      <div className="space-y-2">
-                        {profileData.x_url && (
-                          <div className="flex items-center">
-                            <svg
-                              className="w-4 h-4 mr-2 text-gray-500"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M18.258,3.266c-0.693,0.405-1.46,0.698-2.277,0.857c-0.653-0.686-1.586-1.115-2.618-1.115c-1.98,0-3.586,1.581-3.586,3.53c0,0.276,0.031,0.545,0.092,0.805C6.888,7.195,4.245,5.79,2.476,3.654C2.167,4.176,1.99,4.781,1.99,5.429c0,1.224,0.633,2.305,1.596,2.938C2.999,8.349,2.445,8.19,1.961,7.925C1.96,7.94,1.96,7.954,1.96,7.97c0,1.71,1.237,3.138,2.877,3.462c-0.301,0.08-0.617,0.123-0.943,0.123c-0.23,0-0.456-0.021-0.674-0.062c0.456,1.402,1.781,2.422,3.35,2.451c-1.228,0.947-2.773,1.512-4.454,1.512c-0.291,0-0.575-0.017-0.855-0.049C2.44,17.738,4.358,18.5,6.467,18.5c7.756,0,11.99-6.325,11.99-11.817c0-0.18-0.004-0.359-0.012-0.537C17.818,5.205,18.11,4.765,18.258,3.266z" />
-                            </svg>
-                            <a
-                              href={profileData.x_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 dark:text-blue-400 hover:underline"
-                            >
-                              X (Twitter)
-                            </a>
-                          </div>
-                        )}
-                        {profileData.github_url && (
-                          <div className="flex items-center">
-                            <svg
-                              className="w-4 h-4 mr-2 text-gray-500"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <a
-                              href={profileData.github_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 dark:text-blue-400 hover:underline"
-                            >
-                              GitHub
-                            </a>
-                          </div>
-                        )}
+              <div className="text-center">
+                {isReadOnly ? (
+                  <div className="flex justify-center">
+                    {user.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.name}
+                        className="h-32 w-32 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-32 w-32 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                        <svg
+                          className="h-16 w-16 text-gray-400 dark:text-gray-500"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                ) : (
+                  <AvatarUpload
+                    currentAvatar={user?.avatar_path}
+                    onUpload={handleAvatarUpload}
+                    onDelete={handleAvatarDelete}
+                    loading={avatarUploading}
+                  />
+                )}
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* プロフィール編集 */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {isReadOnly ? "プロフィール情報" : "プロフィール編集"}
+              </h2>
+            </CardHeader>
+            <CardBody>
+              <form onSubmit={handleProfileUpdate} className="space-y-6">
+                <Input
+                  label="名前（必須）"
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) =>
+                    !isReadOnly &&
+                    setProfileData({ ...profileData, name: e.target.value })
+                  }
+                  placeholder="表示名を入力"
+                  required
+                  readOnly={isReadOnly}
+                />
+
+                <Input
+                  label="ユーザー名（必須）"
+                  type="text"
+                  value={profileData.username}
+                  onChange={(e) =>
+                    !isReadOnly &&
+                    setProfileData({
+                      ...profileData,
+                      username: e.target.value,
+                    })
+                  }
+                  placeholder="ユーザー名を入力"
+                  required
+                  readOnly={isReadOnly}
+                />
+
+                <Input
+                  label="メールアドレス（必須）"
+                  type="email"
+                  value={profileData.email}
+                  onChange={(e) =>
+                    !isReadOnly &&
+                    setProfileData({
+                      ...profileData,
+                      email: e.target.value,
+                    })
+                  }
+                  placeholder="メールアドレスを入力"
+                  required
+                  readOnly={isReadOnly}
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    自己紹介（任意）
+                  </label>
+                  <textarea
+                    value={profileData.bio}
+                    onChange={(e) =>
+                      !isReadOnly &&
+                      setProfileData({
+                        ...profileData,
+                        bio: e.target.value,
+                      })
+                    }
+                    placeholder="自己紹介文を入力してください"
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      isReadOnly
+                        ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                        : ""
+                    }`}
+                    rows={3}
+                    readOnly={isReadOnly}
+                  />
                 </div>
-              ) : (
-                // 編集モード：フォーム表示
-                <form onSubmit={handleProfileUpdate} className="space-y-6">
-                  <Input
-                    label="名前"
-                    type="text"
-                    value={profileData.name}
-                    onChange={(e) =>
-                      setProfileData({ ...profileData, name: e.target.value })
-                    }
-                    placeholder="表示名を入力"
-                    required
-                  />
 
-                  <Input
-                    label="ユーザー名"
-                    type="text"
-                    value={profileData.username}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    経歴・キャリア（任意）
+                  </label>
+                  <textarea
+                    value={profileData.career_description}
                     onChange={(e) =>
+                      !isReadOnly &&
                       setProfileData({
                         ...profileData,
-                        username: e.target.value,
+                        career_description: e.target.value,
                       })
                     }
-                    placeholder="ユーザー名を入力"
-                    required
+                    placeholder="経歴やキャリアについて詳しく記載してください"
+                    className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      isReadOnly
+                        ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
+                        : ""
+                    }`}
+                    rows={4}
+                    readOnly={isReadOnly}
                   />
+                </div>
 
-                  <Input
-                    label="メールアドレス"
-                    type="email"
-                    value={profileData.email}
-                    onChange={(e) =>
-                      setProfileData({
-                        ...profileData,
-                        email: e.target.value,
-                      })
-                    }
-                    placeholder="メールアドレスを入力"
-                    required
-                  />
+                <Input
+                  label="X URL（任意）"
+                  type="url"
+                  value={profileData.x_url}
+                  onChange={(e) =>
+                    !isReadOnly &&
+                    setProfileData({
+                      ...profileData,
+                      x_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://x.com/username"
+                  readOnly={isReadOnly}
+                />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      自己紹介
-                    </label>
-                    <textarea
-                      value={profileData.bio}
-                      onChange={(e) =>
+                <Input
+                  label="GitHub URL（任意）"
+                  type="url"
+                  value={profileData.github_url}
+                  onChange={(e) =>
+                    !isReadOnly &&
+                    setProfileData({
+                      ...profileData,
+                      github_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://github.com/username"
+                  readOnly={isReadOnly}
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    プロフィール公開設定（任意）
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      非公開
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        !isReadOnly &&
                         setProfileData({
                           ...profileData,
-                          bio: e.target.value,
+                          profile_public: !profileData.profile_public,
                         })
                       }
-                      placeholder="自己紹介文を入力してください"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      経歴・キャリア
-                    </label>
-                    <textarea
-                      value={profileData.career_description}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          career_description: e.target.value,
-                        })
-                      }
-                      placeholder="経歴やキャリアについて詳しく記載してください"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows={4}
-                    />
-                  </div>
-
-                  <Input
-                    label="X URL"
-                    type="url"
-                    value={profileData.x_url}
-                    onChange={(e) =>
-                      setProfileData({
-                        ...profileData,
-                        x_url: e.target.value,
-                      })
-                    }
-                    placeholder="https://x.com/username"
-                  />
-
-                  <Input
-                    label="GitHub URL"
-                    type="url"
-                    value={profileData.github_url}
-                    onChange={(e) =>
-                      setProfileData({
-                        ...profileData,
-                        github_url: e.target.value,
-                      })
-                    }
-                    placeholder="https://github.com/username"
-                  />
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                      プロフィール公開設定
-                    </label>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        非公開
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setProfileData({
-                            ...profileData,
-                            profile_public: !profileData.profile_public,
-                          })
-                        }
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      disabled={isReadOnly}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        profileData.profile_public
+                          ? "bg-blue-600"
+                          : "bg-gray-200 dark:bg-gray-600"
+                      } ${isReadOnly ? "cursor-not-allowed opacity-50" : ""}`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                           profileData.profile_public
-                            ? "bg-blue-600"
-                            : "bg-gray-200 dark:bg-gray-600"
+                            ? "translate-x-6"
+                            : "translate-x-1"
                         }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            profileData.profile_public
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                          }`}
-                        />
-                      </button>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        公開
-                      </span>
-                    </div>
-                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      {profileData.profile_public
-                        ? "✅ プロフィールが他のユーザーに表示されます"
-                        : "🔒 プロフィールは非公開です"}
-                    </p>
+                      />
+                    </button>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      公開
+                    </span>
                   </div>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    {profileData.profile_public
+                      ? "✅ プロフィールが他のユーザーに表示されます"
+                      : "🔒 プロフィールは非公開です"}
+                  </p>
+                </div>
 
+                {!isReadOnly && (
                   <div className="pt-4">
                     <Button type="submit" variant="primary" loading={loading}>
                       プロフィールを更新
                     </Button>
                   </div>
-                </form>
-              )}
-                  </div>
-                </div>
-              </div>
+                )}
+              </form>
             </CardBody>
           </Card>
+        </div>
+      )}
 
-          {/* ヒートマップ */}
+      {/* 記事管理タブ */}
+      {activeTab === "articles" && (
+        <div className="space-y-6">
+          {/* アクティビティヒートマップ */}
           <Card>
             <CardBody>
               <ActivityHeatmap
@@ -674,7 +626,6 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
             </CardBody>
           </Card>
 
-          {/* 記事一覧 */}
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {isReadOnly ? "投稿記事一覧" : "記事一覧"}
@@ -728,7 +679,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                       variant="primary"
                       onClick={() => navigate("/articles/new")}
                     >
-                      新しい記事を作成
+                      最初の記事を作成する
                     </Button>
                   )}
                 </div>
@@ -737,76 +688,56 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
           ) : (
             <div className="space-y-4">
               {userArticles.map((article) => (
-                <Card key={article.id} className="hover:shadow-md transition-shadow">
+                <Card key={article.id}>
                   <CardBody>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                          <button
-                            onClick={() => navigate(`/articles/${article.id}`)}
-                            className="text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                          >
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             {article.title}
-                          </button>
-                        </h3>
-                        {article.excerpt && (
-                          <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                            {article.excerpt}
-                          </p>
-                        )}
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                          <span>{formatDateTimeJST(article.created_at)}</span>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              getBadgeClass(article.status)
-                            }`}
-                          >
-                            {article.status === "published"
-                              ? "公開中"
-                              : article.status === "draft"
-                                ? "下書き"
-                                : "非公開"}
-                          </span>
+                          </h3>
+                          {getStatusBadge(article.status)}
                           {article.is_paid && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                              有料 {formatCurrency(article.price || 0)}
-                            </span>
-                          )}
-                          {!article.is_paid && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                              無料
-                            </span>
-                          )}
-                          {article.payments_count > 0 && (
-                            <span className="text-gray-600 dark:text-gray-400">
-                              {article.payments_count}人が購入
+                            <span
+                              className={getBadgeClass("priceType", "paid")}
+                            >
+                              有料: {formatCurrency(article.price || 0)}
                             </span>
                           )}
                         </div>
-                        {article.tags && article.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {article.tags.map((tag) => (
-                              <span
-                                key={tag.id}
-                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-                              >
-                                #{tag.name}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 flex items-center space-x-4">
+                          <span>
+                            📅 作成: {formatDateTimeJST(article.created_at)}
+                          </span>
+                          {article.updated_at !== article.created_at && (
+                            <span>
+                              🔄 更新: {formatDateTimeJST(article.updated_at)}
+                            </span>
+                          )}
+                        </p>
                       </div>
-                      {!isReadOnly && (
-                        <div className="flex items-center space-x-2 ml-4">
+
+                      {/* アクションボタン */}
+                      <div className="flex items-center space-x-2 ml-4">
+                        {!isReadOnly && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/articles/${article.id}/edit`)}
+                            onClick={() =>
+                              navigate(`/articles/${article.id}/edit`)
+                            }
                           >
                             編集
                           </Button>
-                        </div>
-                      )}
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/articles/${article.id}`)}
+                        >
+                          詳細
+                        </Button>
+                      </div>
                     </div>
                   </CardBody>
                 </Card>
@@ -815,7 +746,6 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
           )}
         </div>
       )}
-
 
       {/* 購入履歴タブ */}
       {activeTab === "purchases" && !isReadOnly && (
