@@ -102,6 +102,7 @@ class PerformanceTestSeeder extends Seeder
             
             $users[] = [
                 'name' => $fullName,
+                'username' => $emailBase . '_' . ($i + 1),
                 'email' => $email,
                 'email_verified_at' => Carbon::now(),
                 'password' => bcrypt('password'),
