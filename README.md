@@ -67,6 +67,7 @@ docker-compose up -d
 3. アプリケーションへのアクセス
 - フロントエンド: http://localhost/ (ポート80)
 - バックエンド API: http://localhost:8000
+- phpMyAdmin: http://localhost:8080
 
 ### テストデータ
 
@@ -96,6 +97,27 @@ docker-compose up -d
 - チェック有効時: 30日間の認証トークン有効期限
 - チェック無効時: 7日間の認証トークン有効期限
 - ブラウザリフレッシュ時も認証状態を維持
+
+### データベース管理
+
+#### phpMyAdmin
+データベースの直接操作にはphpMyAdminをご利用ください。
+
+**アクセス方法:**
+- URL: http://localhost:8080
+- ユーザー名: `root`
+- パスワード: `password`
+- データベース名: `md_blog`
+
+**主要テーブル:**
+- `users` - ユーザー情報
+- `articles` - 記事データ
+- `tags` - タグマスタ
+- `article_tags` - 記事とタグの関連
+- `payments` - 決済履歴
+- `credit_cards` - クレジットカード情報
+- `payouts` - 振込管理
+- `commission_settings` - 手数料設定
 
 ### 開発コマンド
 
