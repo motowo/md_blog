@@ -53,13 +53,20 @@ class CreditCardSeeder extends Seeder
                 ->first();
 
             if (! $existingPayment) {
+                $commissionAmount = (int) ($sampleArticle->price * 0.10); // 10%手数料
+                $payoutAmount = $sampleArticle->price - $commissionAmount;
+
                 Payment::create([
                     'user_id' => $tanakaUser->id,
                     'article_id' => $sampleArticle->id,
                     'amount' => $sampleArticle->price,
-                    'status' => 'success',
+                    'commission_amount' => $commissionAmount,
+                    'payout_amount' => $payoutAmount,
+                    'status' => 'completed',
+                    'payment_method' => 'credit_card',
                     'transaction_id' => 'test_fixed_transaction_001',
                     'paid_at' => now(),
+                    'payout_completed_at' => now()->addDays(7),
                 ]);
 
                 echo "決済履歴を作成しました: {$tanakaUser->name} が「{$sampleArticle->title}」を購入\n";

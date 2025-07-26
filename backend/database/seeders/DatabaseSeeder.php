@@ -22,6 +22,12 @@ class DatabaseSeeder extends Seeder
             CommissionSettingSeeder::class,
             PaymentSeeder::class, // 記事作成後に実行
             PayoutSeeder::class, // 決済データ作成後に実行
+
+            // パフォーマンステスト用大規模データ（環境変数で制御）
+            PerformanceTestSeeder::class,
+
+            // エラーケーステストデータ
+            ErrorCaseTestSeeder::class,
         ]);
     }
 }

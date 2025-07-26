@@ -94,13 +94,20 @@ class PaymentSeeder extends Seeder
                     $purchaseDate = now()->subDays(rand(1, 30));
                 }
 
+                $commissionAmount = $this->calculateCommission($article->price, $purchaseDate);
+                $payoutAmount = $article->price - $commissionAmount;
+
                 Payment::create([
                     'user_id' => $buyer->id,
                     'article_id' => $article->id,
                     'amount' => $article->price,
+                    'commission_amount' => $commissionAmount,
+                    'payout_amount' => $payoutAmount,
                     'transaction_id' => 'txn_fixed_'.str_pad($articleIndex, 4, '0', STR_PAD_LEFT).'_'.str_pad($i, 2, '0', STR_PAD_LEFT),
-                    'status' => 'success',
+                    'status' => 'completed',
+                    'payment_method' => 'credit_card',
                     'paid_at' => $purchaseDate,
+                    'payout_completed_at' => $purchaseDate->copy()->addDays(rand(7, 30)),
                     'created_at' => $purchaseDate,
                     'updated_at' => $purchaseDate,
                 ]);
@@ -114,6 +121,22 @@ class PaymentSeeder extends Seeder
 
         // 統計情報を表示
         $this->showPaymentStatistics();
+    }
+
+    /**
+     * 手数料計算（時期に応じた変化）
+     */
+    private function calculateCommission(int $amount, Carbon $date): int
+    {
+        if ($date->lt(Carbon::create(2024, 1, 1))) {
+            $rate = 0.10; // 10%
+        } elseif ($date->lt(Carbon::create(2025, 1, 1))) {
+            $rate = 0.05; // 5% (2024年)
+        } else {
+            $rate = 0.10; // 10% (2025年以降)
+        }
+
+        return (int) ($amount * $rate);
     }
 
     /**
@@ -154,7 +177,7 @@ class PaymentSeeder extends Seeder
     private function showPaymentStatistics(): void
     {
         $totalPayments = Payment::count();
-        $totalRevenue = Payment::where('status', 'success')->sum('amount');
+        $totalRevenue = Payment::where('status', 'completed')->sum('amount');
 
         // 手数料設定を取得
         $commissionSetting = CommissionSetting::where('is_active', true)->first();
