@@ -135,8 +135,8 @@ class PaymentSeeder extends Seeder
         } else {
             $rate = 0.10; // 10% (2025年以降)
         }
-        
-        return (int)($amount * $rate);
+
+        return (int) ($amount * $rate);
     }
 
     /**

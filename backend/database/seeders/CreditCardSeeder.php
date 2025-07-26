@@ -53,9 +53,9 @@ class CreditCardSeeder extends Seeder
                 ->first();
 
             if (! $existingPayment) {
-                $commissionAmount = (int)($sampleArticle->price * 0.10); // 10%手数料
+                $commissionAmount = (int) ($sampleArticle->price * 0.10); // 10%手数料
                 $payoutAmount = $sampleArticle->price - $commissionAmount;
-                
+
                 Payment::create([
                     'user_id' => $tanakaUser->id,
                     'article_id' => $sampleArticle->id,

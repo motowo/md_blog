@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\Article;
-use App\Models\User;
 use App\Models\Payment;
 use App\Models\Tag;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
@@ -16,7 +16,7 @@ class ErrorCaseTestSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->info("=== エラーケーステストデータ生成開始 ===");
+        $this->command->info('=== エラーケーステストデータ生成開始 ===');
 
         // 既存ユーザーを取得（authorロールのユーザーも購入者として使用）
         $authors = User::where('role', 'author')->limit(5)->get();
@@ -25,6 +25,7 @@ class ErrorCaseTestSeeder extends Seeder
 
         if ($authors->isEmpty() || $users->isEmpty() || $tags->isEmpty()) {
             $this->command->error('基本データが不足しています。先に基本シーダーを実行してください。');
+
             return;
         }
 
@@ -49,7 +50,7 @@ class ErrorCaseTestSeeder extends Seeder
         // 7. 境界値テストデータ
         $this->createBoundaryValueTestData($authors, $users);
 
-        $this->command->info("=== エラーケーステストデータ生成完了 ===");
+        $this->command->info('=== エラーケーステストデータ生成完了 ===');
         $this->showErrorCaseStatistics();
     }
 
@@ -58,7 +59,7 @@ class ErrorCaseTestSeeder extends Seeder
      */
     private function createAbnormalPriceArticles($author, $tags): void
     {
-        $this->command->info("異常価格記事を作成中...");
+        $this->command->info('異常価格記事を作成中...');
 
         $abnormalPrices = [
             0,      // 無料だが is_paid = true
@@ -80,7 +81,7 @@ class ErrorCaseTestSeeder extends Seeder
                 'updated_at' => Carbon::now(),
             ]);
             $article->save();
-            
+
             // タグを関連付け
             $article->tags()->attach($tags->random()->id);
         }
@@ -91,7 +92,7 @@ class ErrorCaseTestSeeder extends Seeder
      */
     private function createAbnormalDateArticles($author, $tags): void
     {
-        $this->command->info("異常日付記事を作成中...");
+        $this->command->info('異常日付記事を作成中...');
 
         $abnormalDates = [
             Carbon::create(1900, 1, 1),  // 過去すぎる日付
@@ -113,7 +114,7 @@ class ErrorCaseTestSeeder extends Seeder
                     'updated_at' => $date->copy()->addHour(),
                 ]);
                 $article->save();
-                
+
                 $article->tags()->attach($tags->random()->id);
             } catch (\Exception $e) {
                 $this->command->warn("日付エラー: {$date->format('Y-m-d')} - {$e->getMessage()}");
@@ -126,7 +127,7 @@ class ErrorCaseTestSeeder extends Seeder
      */
     private function createPaymentErrorCases($users, $authors): void
     {
-        $this->command->info("決済エラーケースを作成中...");
+        $this->command->info('決済エラーケースを作成中...');
 
         // テスト用有料記事を作成
         $testArticle = new Article([
@@ -148,35 +149,35 @@ class ErrorCaseTestSeeder extends Seeder
                 'commission_amount' => 0,
                 'payout_amount' => 0,
                 'status' => 'completed',
-                'description' => '金額ゼロの決済'
+                'description' => '金額ゼロの決済',
             ],
             [
                 'amount' => -500,
                 'commission_amount' => -50,
                 'payout_amount' => -450,
                 'status' => 'completed',
-                'description' => '負の金額の決済'
+                'description' => '負の金額の決済',
             ],
             [
                 'amount' => 500,
                 'commission_amount' => 600, // 手数料が金額を超過
                 'payout_amount' => -100,
                 'status' => 'completed',
-                'description' => '手数料超過の決済'
+                'description' => '手数料超過の決済',
             ],
             [
                 'amount' => 500,
                 'commission_amount' => 50,
                 'payout_amount' => 450,
                 'status' => 'failed',
-                'description' => '失敗した決済'
+                'description' => '失敗した決済',
             ],
             [
                 'amount' => 500,
                 'commission_amount' => 50,
                 'payout_amount' => 450,
                 'status' => 'pending',
-                'description' => '保留中の決済'
+                'description' => '保留中の決済',
             ],
         ];
 
@@ -190,12 +191,12 @@ class ErrorCaseTestSeeder extends Seeder
                     'payout_amount' => $case['payout_amount'],
                     'status' => $case['status'],
                     'payment_method' => 'credit_card',
-                    'transaction_id' => 'error_test_' . ($index + 1),
+                    'transaction_id' => 'error_test_'.($index + 1),
                     'created_at' => Carbon::now()->subDays(rand(1, 5)),
                     'updated_at' => Carbon::now(),
                 ]);
                 $payment->save();
-                
+
                 $this->command->info("作成: {$case['description']}");
             } catch (\Exception $e) {
                 $this->command->warn("決済エラー: {$case['description']} - {$e->getMessage()}");
@@ -208,42 +209,42 @@ class ErrorCaseTestSeeder extends Seeder
      */
     private function createExtremeContentArticles($author, $tags): void
     {
-        $this->command->info("極端コンテンツ記事を作成中...");
+        $this->command->info('極端コンテンツ記事を作成中...');
 
         // 極端に長いタイトル
         $longTitle = str_repeat('非常に長いタイトルのテストデータ', 20);
-        
+
         // 極端に長いコンテンツ
         $longContent = str_repeat("この文章は極端に長いコンテンツのテストデータです。\n", 1000);
-        
+
         // 極端に短いコンテンツ
-        $shortContent = "短";
+        $shortContent = '短';
 
         $extremeCases = [
             [
                 'title' => $longTitle,
                 'content' => '通常の長さのコンテンツです。',
-                'description' => '極端に長いタイトル'
+                'description' => '極端に長いタイトル',
             ],
             [
                 'title' => '極端に長いコンテンツのテスト',
                 'content' => $longContent,
-                'description' => '極端に長いコンテンツ'
+                'description' => '極端に長いコンテンツ',
             ],
             [
                 'title' => '極端に短いコンテンツのテスト',
                 'content' => $shortContent,
-                'description' => '極端に短いコンテンツ'
+                'description' => '極端に短いコンテンツ',
             ],
             [
                 'title' => '',
                 'content' => '空のタイトルのテストです。',
-                'description' => '空のタイトル'
+                'description' => '空のタイトル',
             ],
             [
                 'title' => '空のコンテンツのテスト',
                 'content' => '',
-                'description' => '空のコンテンツ'
+                'description' => '空のコンテンツ',
             ],
         ];
 
@@ -260,7 +261,7 @@ class ErrorCaseTestSeeder extends Seeder
                     'updated_at' => Carbon::now(),
                 ]);
                 $article->save();
-                
+
                 $article->tags()->attach($tags->random()->id);
                 $this->command->info("作成: {$case['description']}");
             } catch (\Exception $e) {
@@ -274,28 +275,28 @@ class ErrorCaseTestSeeder extends Seeder
      */
     private function createCharacterEncodingTestData($author, $tags): void
     {
-        $this->command->info("文字化けテストデータを作成中...");
+        $this->command->info('文字化けテストデータを作成中...');
 
         $encodingTests = [
             [
                 'title' => '🚀 絵文字テスト 🎉 記事タイトル 💻',
                 'content' => "絵文字を含むコンテンツのテストです。\n\n🌟 星\n❤️ ハート\n🔥 火\n\n絵文字が正しく表示されるかテストします。",
-                'description' => '絵文字テスト'
+                'description' => '絵文字テスト',
             ],
             [
                 'title' => 'ñoël café résumé naïve',
                 'content' => 'Accented characters: café, résumé, naïve, piñata, ñoël',
-                'description' => 'アクセント文字テスト'
+                'description' => 'アクセント文字テスト',
             ],
             [
                 'title' => '中文测试 한국어 テスト العربية',
                 'content' => "多言語文字のテストです。\n\n中文: 这是中文测试\n한국어: 한국어 테스트입니다\nالعربية: هذا اختبار عربي",
-                'description' => '多言語文字テスト'
+                'description' => '多言語文字テスト',
             ],
             [
                 'title' => '特殊記号テスト ∀∃∈∉∪∩⊂⊃',
                 'content' => "数学記号: ∀∃∈∉∪∩⊂⊃⊆⊇∧∨¬\n通貨記号: ¥€\$£¢\n矢印: ←→↑↓⇐⇒⇑⇓",
-                'description' => '特殊記号テスト'
+                'description' => '特殊記号テスト',
             ],
         ];
 
@@ -312,7 +313,7 @@ class ErrorCaseTestSeeder extends Seeder
                     'updated_at' => Carbon::now(),
                 ]);
                 $article->save();
-                
+
                 $article->tags()->attach($tags->random()->id);
                 $this->command->info("作成: {$test['description']}");
             } catch (\Exception $e) {
@@ -326,28 +327,28 @@ class ErrorCaseTestSeeder extends Seeder
      */
     private function createSpecialCharacterTestData($author, $tags): void
     {
-        $this->command->info("特殊文字テストデータを作成中...");
+        $this->command->info('特殊文字テストデータを作成中...');
 
         $specialCharTests = [
             [
                 'title' => 'SQLインジェクション\'; DROP TABLE articles; --',
                 'content' => "SQLインジェクション攻撃の文字列テストです。\n'; DROP TABLE articles; --\nOR 1=1\nUNION SELECT * FROM users",
-                'description' => 'SQLインジェクションテスト'
+                'description' => 'SQLインジェクションテスト',
             ],
             [
                 'title' => 'XSSテスト<script>alert("XSS")</script>',
                 'content' => "XSS攻撃の文字列テストです。\n<script>alert('XSS')</script>\n<img src=x onerror=alert('XSS')>",
-                'description' => 'XSSテスト'
+                'description' => 'XSSテスト',
             ],
             [
                 'title' => 'HTMLタグテスト<h1>見出し</h1>',
                 'content' => "<p>HTMLタグのテストです。</p>\n<strong>太字</strong>\n<em>斜体</em>\n<code>コード</code>",
-                'description' => 'HTMLタグテスト'
+                'description' => 'HTMLタグテスト',
             ],
             [
                 'title' => '改行文字テスト\n\r\n\t',
                 'content' => "改行文字とタブ文字のテストです。\n\n改行\r\nWindows改行\t\tタブ",
-                'description' => '改行・タブ文字テスト'
+                'description' => '改行・タブ文字テスト',
             ],
         ];
 
@@ -364,7 +365,7 @@ class ErrorCaseTestSeeder extends Seeder
                     'updated_at' => Carbon::now(),
                 ]);
                 $article->save();
-                
+
                 $article->tags()->attach($tags->random()->id);
                 $this->command->info("作成: {$test['description']}");
             } catch (\Exception $e) {
@@ -378,11 +379,11 @@ class ErrorCaseTestSeeder extends Seeder
      */
     private function createBoundaryValueTestData($authors, $users): void
     {
-        $this->command->info("境界値テストデータを作成中...");
+        $this->command->info('境界値テストデータを作成中...');
 
         // 記事の境界値テスト
         $boundaryPrices = [299, 300, 301, 999, 1000, 1001, 9999, 10000, 10001];
-        
+
         foreach ($boundaryPrices as $price) {
             try {
                 $article = new Article([
@@ -421,7 +422,7 @@ class ErrorCaseTestSeeder extends Seeder
                         'payout_amount' => $testArticle->price - $this->calculateCommission($testArticle->price, $date),
                         'status' => 'completed',
                         'payment_method' => 'credit_card',
-                        'transaction_id' => 'boundary_' . $date->format('YmdHis'),
+                        'transaction_id' => 'boundary_'.$date->format('YmdHis'),
                         'created_at' => $date,
                         'updated_at' => $date->copy()->addHour(),
                     ]);
@@ -445,8 +446,8 @@ class ErrorCaseTestSeeder extends Seeder
         } else {
             $rate = 0.10; // 10% (2025年以降)
         }
-        
-        return (int)($amount * $rate);
+
+        return (int) ($amount * $rate);
     }
 
     /**
@@ -456,19 +457,19 @@ class ErrorCaseTestSeeder extends Seeder
     {
         $errorArticles = Article::where('title', 'LIKE', '%テスト%')->count();
         $errorPayments = Payment::where('transaction_id', 'LIKE', '%test%')
-                               ->orWhere('transaction_id', 'LIKE', '%error%')
-                               ->orWhere('transaction_id', 'LIKE', '%boundary%')
-                               ->count();
+            ->orWhere('transaction_id', 'LIKE', '%error%')
+            ->orWhere('transaction_id', 'LIKE', '%boundary%')
+            ->count();
 
         $this->command->info('=== エラーケーステストデータ統計 ===');
         $this->command->info("テスト記事数: {$errorArticles}");
         $this->command->info("テスト決済数: {$errorPayments}");
-        
+
         // 特殊文字を含む記事
         $specialCharArticles = Article::where('title', 'LIKE', '%<script%')
-                                     ->orWhere('title', 'LIKE', '%DROP TABLE%')
-                                     ->orWhere('title', 'LIKE', '%絵文字%')
-                                     ->count();
+            ->orWhere('title', 'LIKE', '%DROP TABLE%')
+            ->orWhere('title', 'LIKE', '%絵文字%')
+            ->count();
         $this->command->info("特殊文字テスト記事数: {$specialCharArticles}");
     }
 }
