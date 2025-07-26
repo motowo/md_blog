@@ -14,10 +14,11 @@ RUN apk add --no-cache \
     unzip \
     bash \
     nodejs \
-    npm
+    npm \
+    icu-dev
 
 # PHP拡張機能をインストール
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd intl
 
 # Composerをインストール
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
