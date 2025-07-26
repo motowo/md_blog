@@ -18,9 +18,9 @@ class ErrorCaseTestSeeder extends Seeder
     {
         $this->command->info("=== エラーケーステストデータ生成開始 ===");
 
-        // 既存ユーザーを取得
+        // 既存ユーザーを取得（authorロールのユーザーも購入者として使用）
         $authors = User::where('role', 'author')->limit(5)->get();
-        $users = User::where('role', 'user')->limit(10)->get();
+        $users = User::where('role', 'author')->limit(10)->get(); // authorを購入者として使用
         $tags = Tag::limit(5)->get();
 
         if ($authors->isEmpty() || $users->isEmpty() || $tags->isEmpty()) {
