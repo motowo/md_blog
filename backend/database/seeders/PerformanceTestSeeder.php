@@ -44,6 +44,7 @@ class PerformanceTestSeeder extends Seeder
      */
     public function run(): void
     {
+        // 環境変数から設定を読み込み（0の場合はスキップ）
         $userCount = (int) env('PERF_TEST_USERS', self::DEFAULT_USERS);
         $articleCount = (int) env('PERF_TEST_ARTICLES', self::DEFAULT_ARTICLES);
         $paymentCount = (int) env('PERF_TEST_PAYMENTS', self::DEFAULT_PAYMENTS);
@@ -61,9 +62,27 @@ class PerformanceTestSeeder extends Seeder
         }
 
         // 大規模データ生成
-        $users = $this->generateUsers($userCount);
-        $articles = $this->generateArticles($articleCount, $users, $tags);
-        $this->generatePayments($paymentCount, $articles);
+        $users = [];
+        if ($userCount > 0) {
+            $users = $this->generateUsers($userCount);
+        } else {
+            // 既存ユーザーを取得
+            $users = User::where('role', 'author')->get()->toArray();
+            $this->command->info("既存ユーザーを使用: " . count($users) . "名");
+        }
+        
+        $articles = [];
+        if ($articleCount > 0) {
+            $articles = $this->generateArticles($articleCount, $users, $tags);
+        } else {
+            // 既存記事を取得
+            $articles = Article::orderBy('id', 'desc')->get()->toArray();
+            $this->command->info("既存記事を使用: " . count($articles) . "件");
+        }
+        
+        if ($paymentCount > 0) {
+            $this->generatePayments($paymentCount, $articles);
+        }
 
         $this->command->info("=== パフォーマンステストデータ生成完了 ===");
         $this->showStatistics();
