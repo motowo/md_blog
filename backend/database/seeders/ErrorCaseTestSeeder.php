@@ -294,7 +294,7 @@ class ErrorCaseTestSeeder extends Seeder
             ],
             [
                 'title' => '特殊記号テスト ∀∃∈∉∪∩⊂⊃',
-                'content' => "数学記号: ∀∃∈∉∪∩⊂⊃⊆⊇∧∨¬\n通貨記号: ¥€$£¢\n矢印: ←→↑↓⇐⇒⇑⇓",
+                'content' => "数学記号: ∀∃∈∉∪∩⊂⊃⊆⊇∧∨¬\n通貨記号: ¥€\$£¢\n矢印: ←→↑↓⇐⇒⇑⇓",
                 'description' => '特殊記号テスト'
             ],
         ];
