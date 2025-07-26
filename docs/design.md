@@ -53,27 +53,101 @@ graph TB
 
 #### フロントエンド (React)
 ```
-src/
-├── components/     # 再利用可能コンポーネント
-├── pages/         # ページコンポーネント
-├── services/      # API通信サービス
-├── types/         # TypeScript型定義
-├── utils/         # ユーティリティ関数
-├── hooks/         # カスタムフック
-└── contexts/      # React Context
+frontend/src/
+├── components/              # 再利用可能コンポーネント
+│   ├── ui/                 # 基本UIコンポーネント（Atomic Design）
+│   │   ├── Button.tsx      # ボタン（atoms）
+│   │   ├── Card.tsx        # カード（atoms）
+│   │   ├── Input.tsx       # 入力フィールド（atoms）
+│   │   └── Pagination.tsx  # ページネーション（molecules）
+│   ├── Layout.tsx          # メインレイアウト（templates）
+│   ├── AdminLayout.tsx     # 管理者レイアウト（templates）
+│   ├── MarkdownEditor.tsx  # Markdownエディタ（organisms）
+│   ├── ActivityHeatmap.tsx # アクティビティヒートマップ（organisms）
+│   ├── ArticleCard.tsx     # 記事カード（molecules）
+│   └── UserProfileView.tsx # プロフィール表示（organisms）
+├── pages/                  # ページコンポーネント（pages）
+│   ├── HomePage.tsx        # ホームページ
+│   ├── ArticleListPage.tsx # 記事一覧
+│   ├── ArticleDetailPage.tsx # 記事詳細
+│   ├── UserMyPage.tsx      # マイページ
+│   └── Admin*/             # 管理者画面群
+├── contexts/               # React Context（状態管理）
+│   ├── AuthContext.tsx     # 認証状態管理
+│   └── ThemeContext.tsx    # テーマ管理
+├── hooks/                  # カスタムフック
+│   └── useAutoSave.ts      # 自動保存フック
+├── utils/                  # ユーティリティ・API通信
+│   ├── api.ts              # API基本設定
+│   ├── articleApi.ts       # 記事API
+│   ├── userApi.ts          # ユーザーAPI
+│   ├── currency.ts         # 通貨フォーマット
+│   └── datetime.ts         # 日時処理
+├── types/                  # TypeScript型定義
+│   ├── article.ts          # 記事関連型
+│   ├── auth.ts             # 認証関連型
+│   └── tag.ts              # タグ関連型
+├── constants/              # 定数定義
+│   ├── badgeStyles.ts      # UIスタイル定数
+│   └── languages.ts        # プログラミング言語定義
+└── styles/                 # スタイルファイル
+    └── markdown.css        # Markdownスタイル
 ```
 
 #### バックエンド (Laravel)
 ```
-app/
+backend/app/
 ├── Http/
-│   ├── Controllers/  # APIコントローラー
-│   ├── Requests/     # リクエストバリデーション
-│   └── Resources/    # APIレスポンス整形
-├── Models/          # Eloquentモデル
-├── Services/        # ビジネスロジック
-├── Repositories/    # データアクセス層
-└── Exceptions/      # カスタム例外
+│   ├── Controllers/        # MVCコントローラー
+│   │   ├── API/           # API専用コントローラー
+│   │   │   ├── AuthController.php      # 認証API
+│   │   │   ├── ArticleController.php   # 記事API
+│   │   │   ├── UserController.php      # ユーザーAPI
+│   │   │   ├── AdminController.php     # 管理者API
+│   │   │   └── TagController.php       # タグAPI
+│   │   └── Controller.php  # ベースコントローラー
+│   ├── Middleware/         # ミドルウェア
+│   │   └── AdminMiddleware.php # 管理者権限チェック
+│   └── Resources/          # APIレスポンス整形
+│       ├── PayoutResource.php  # 振込データ
+│       └── SaleResource.php    # 売上データ
+├── Models/                 # Eloquentモデル（ドメインモデル）
+│   ├── User.php            # ユーザーモデル
+│   ├── Article.php         # 記事モデル
+│   ├── Tag.php             # タグモデル
+│   ├── Payment.php         # 決済モデル
+│   └── Payout.php          # 振込モデル
+├── Services/               # ビジネスロジック（サービス層）
+│   ├── AvatarService.php   # アバター生成サービス
+│   └── CommissionService.php # 手数料計算サービス
+├── Console/Commands/       # Artisanコマンド
+│   ├── RegeneratePayout.php        # 振込データ再生成
+│   └── GenerateDefaultAvatars.php  # アバター生成
+└── Helpers/                # ヘルパークラス
+    └── TimeZoneHelper.php  # タイムゾーン処理
+
+backend/database/
+├── migrations/             # データベースマイグレーション
+│   ├── 2025_07_22_000000_create_all_tables.php
+│   └── ...                 # 各種テーブル作成・変更
+├── seeders/                # テストデータ生成
+│   ├── DatabaseSeeder.php  # メインシーダー
+│   ├── UserSeeder.php      # ユーザーデータ
+│   └── ArticleSeeder.php   # 記事データ
+└── factories/              # ファクトリー（テスト用）
+    ├── UserFactory.php     # ユーザーファクトリー
+    └── ArticleFactory.php  # 記事ファクトリー
+
+backend/routes/
+├── api.php                 # API ルート定義
+├── web.php                 # Web ルート定義
+└── console.php             # コンソールルート
+
+backend/tests/
+├── Feature/                # 機能テスト（統合テスト）
+│   ├── ArticleApiTest.php  # 記事API機能テスト
+│   └── UserControllerTest.php # ユーザー機能テスト
+└── Unit/                   # ユニットテスト
 ```
 
 ### 設計パターン
