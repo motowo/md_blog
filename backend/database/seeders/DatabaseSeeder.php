@@ -24,8 +24,10 @@ class DatabaseSeeder extends Seeder
             PayoutSeeder::class, // 決済データ作成後に実行
             
             // パフォーマンステスト用大規模データ（環境変数で制御）
-            // 実行時: PERF_TEST_USERS=1000 PERF_TEST_ARTICLES=10000 php artisan db:seed --class=PerformanceTestSeeder
-            // PerformanceTestSeeder::class,
+            PerformanceTestSeeder::class,
+            
+            // エラーケーステストデータ
+            ErrorCaseTestSeeder::class,
         ]);
     }
 }
