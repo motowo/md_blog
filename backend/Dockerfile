@@ -36,22 +36,9 @@ RUN chown -R www-data:www-data /var/www/html \
 # ポート8000を公開
 EXPOSE 8000
 
-# エントリーポイントスクリプトを作成
-RUN echo '#!/bin/bash\n\
-# アプリケーションキーを生成（存在しない場合）\n\
-if [ ! -f ".env" ]; then\n\
-    cp .env.example .env\n\
-fi\n\
-\n\
-# アプリケーションキーを生成\n\
-php artisan key:generate --force\n\
-\n\
-# データベースマイグレーション実行\n\
-php artisan migrate --force\n\
-\n\
-# Laravel開発サーバーを起動\n\
-php artisan serve --host=0.0.0.0 --port=8000' > /entrypoint.sh && \
-    chmod +x /entrypoint.sh
+# エントリーポイントスクリプトをコピー
+COPY docker-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # エントリーポイントを設定
-CMD ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
