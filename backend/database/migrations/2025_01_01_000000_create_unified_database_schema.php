@@ -19,8 +19,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('role')->default('author');
-            $table->string('profile_image_url')->nullable();
+            $table->enum('role', ['author', 'admin', 'user'])->default('author');
             $table->string('avatar_path')->nullable();
             $table->text('bio')->nullable();
             $table->text('career_description')->nullable();
@@ -31,6 +30,12 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
             $table->timestamp('last_login_at')->nullable();
+
+            // インデックス
+            $table->index('role');
+            $table->index('is_active');
+            $table->index('profile_public');
+            $table->index('last_login_at');
         });
 
         // Password reset tokens table
@@ -100,60 +105,6 @@ return new class extends Migration
             $table->timestamp('failed_at')->useCurrent();
         });
 
-        // Tags table
-        Schema::create('tags', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->string('slug')->unique();
-            $table->timestamps();
-        });
-
-        // Articles table
-        Schema::create('articles', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('title');
-            $table->longText('content');
-            $table->enum('status', ['draft', 'published'])->default('draft');
-            $table->boolean('is_paid')->default(false);
-            $table->decimal('price', 8, 2)->nullable();
-            $table->text('preview_content')->nullable();
-            $table->timestamps();
-        });
-
-        // Article tags table (pivot table)
-        Schema::create('article_tags', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('article_id')->constrained()->onDelete('cascade');
-            $table->foreignId('tag_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
-            $table->unique(['article_id', 'tag_id']);
-        });
-
-        // Payments table
-        Schema::create('payments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('article_id')->constrained()->onDelete('cascade');
-            $table->decimal('amount', 8, 2);
-            $table->string('transaction_id')->unique();
-            $table->enum('status', ['pending', 'success', 'failed'])->default('pending');
-            $table->timestamp('paid_at')->nullable();
-            $table->timestamps();
-        });
-
-        // Payouts table
-        Schema::create('payouts', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('period');
-            $table->decimal('amount', 10, 2);
-            $table->enum('status', ['unpaid', 'paid', 'failed'])->default('unpaid');
-            $table->timestamp('paid_at')->nullable();
-            $table->json('bank_account_info')->nullable();
-            $table->timestamps();
-        });
-
         // Personal access tokens table (Laravel Sanctum)
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
@@ -166,22 +117,128 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Avatar files table
-        Schema::create('avatar_files', function (Blueprint $table) {
+        // Tags table
+        Schema::create('tags', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('original_filename');
-            $table->string('stored_filename');
-            $table->string('file_path');
-            $table->string('mime_type');
-            $table->integer('file_size');
-            $table->integer('width')->nullable();
-            $table->integer('height')->nullable();
-            $table->json('crop_data')->nullable();
-            $table->boolean('is_active')->default(false);
+            $table->string('name')->unique();
+            $table->string('slug')->unique();
             $table->timestamps();
 
+            // インデックス
+            $table->index('created_at');
+        });
+
+        // Articles table
+        Schema::create('articles', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('title');
+            $table->longText('content');
+            $table->enum('status', ['draft', 'published'])->default('draft');
+            $table->boolean('is_paid')->default(false);
+            $table->decimal('price', 10, 0)->nullable(); // 整数精度（小数点なし）
+            $table->text('preview_content')->nullable();
+            $table->timestamps();
+
+            // インデックス
+            $table->index('status');
+            $table->index('is_paid');
+            $table->index(['status', 'is_paid']);
+            $table->index('created_at');
+            $table->index(['user_id', 'status']);
+        });
+
+        // Article tags table (pivot table)
+        Schema::create('article_tags', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('article_id')->constrained()->onDelete('cascade');
+            $table->foreignId('tag_id')->constrained()->onDelete('cascade');
+            $table->timestamps();
+            $table->unique(['article_id', 'tag_id']);
+
+            // インデックス
+            $table->index('tag_id');
+            $table->index('created_at');
+        });
+
+        // Commission settings table
+        Schema::create('commission_settings', function (Blueprint $table) {
+            $table->id();
+            $table->decimal('rate', 5, 2)->comment('手数料率（%）');
+            $table->date('applicable_from')->comment('適用開始日');
+            $table->date('applicable_to')->nullable()->comment('適用終了日');
+            $table->boolean('is_active')->default(true)->comment('有効フラグ');
+            $table->string('description')->nullable()->comment('説明');
+            $table->timestamps();
+
+            // インデックス
+            $table->index(['applicable_from', 'applicable_to']);
+            $table->index('is_active');
+        });
+
+        // Payments table (統合された最新構造)
+        Schema::create('payments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('article_id')->constrained()->onDelete('cascade');
+            $table->decimal('amount', 10, 0); // 整数精度（小数点なし）
+            $table->decimal('commission_amount', 10, 0)->nullable()->comment('手数料金額');
+            $table->decimal('payout_amount', 10, 0)->nullable()->comment('著者振込金額');
+            $table->string('transaction_id')->unique();
+            $table->enum('status', ['pending', 'completed', 'failed'])->default('pending');
+            $table->string('payment_method')->nullable()->comment('決済方法');
+            $table->timestamp('paid_at')->nullable();
+            $table->timestamp('payout_completed_at')->nullable()->comment('振込完了日時');
+            $table->timestamps();
+
+            // インデックス
+            $table->index('status');
+            $table->index('paid_at');
+            $table->index(['user_id', 'status']);
+            $table->index(['article_id', 'status']);
+            $table->index(['user_id', 'paid_at']);
+            $table->index('payout_completed_at');
+        });
+
+        // Payouts table
+        Schema::create('payouts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('period');
+            $table->decimal('amount', 10, 2);
+            $table->decimal('gross_amount', 10, 2)->nullable()->comment('総売上金額');
+            $table->decimal('commission_amount', 10, 2)->nullable()->comment('手数料金額');
+            $table->decimal('commission_rate', 5, 2)->nullable()->comment('適用手数料率（%）');
+            $table->enum('status', ['unpaid', 'paid', 'failed'])->default('unpaid');
+            $table->timestamp('paid_at')->nullable();
+            $table->json('bank_account_info')->nullable();
+            $table->timestamps();
+
+            // インデックス
+            $table->index('status');
+            $table->index('period');
+            $table->index(['user_id', 'period']);
+            $table->index(['status', 'period']);
+        });
+
+        // Bank accounts table
+        Schema::create('bank_accounts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('bank_name')->comment('銀行名');
+            $table->string('branch_name')->comment('支店名');
+            $table->string('account_type')->comment('口座種別（普通・当座）');
+            $table->string('account_number')->comment('口座番号');
+            $table->string('account_holder_name')->comment('口座名義');
+            $table->boolean('is_active')->default(true)->comment('有効フラグ');
+            $table->timestamp('verified_at')->nullable()->comment('確認日時');
+            $table->timestamps();
+
+            // インデックス
+            $table->index('user_id');
+            $table->index('is_active');
             $table->index(['user_id', 'is_active']);
+            $table->index('verified_at');
         });
 
         // Credit cards table
@@ -197,7 +254,28 @@ return new class extends Migration
             $table->boolean('is_default')->default(true);
             $table->timestamps();
 
+            // インデックス
             $table->unique('user_id');
+            $table->index('is_default');
+            $table->index('card_brand');
+        });
+
+        // Avatar files table (最新のBASE64構造)
+        Schema::create('avatar_files', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('original_filename');
+            $table->string('mime_type');
+            $table->integer('file_size');
+            $table->integer('width')->nullable();
+            $table->integer('height')->nullable();
+            $table->json('crop_data')->nullable();
+            $table->longText('base64_data')->nullable()->comment('BASE64エンコードされた画像データ');
+            $table->boolean('is_active')->default(false);
+            $table->timestamps();
+
+            // インデックス
+            $table->index(['user_id', 'is_active']);
         });
     }
 
@@ -206,14 +284,16 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('credit_cards');
         Schema::dropIfExists('avatar_files');
-        Schema::dropIfExists('personal_access_tokens');
+        Schema::dropIfExists('credit_cards');
+        Schema::dropIfExists('bank_accounts');
         Schema::dropIfExists('payouts');
         Schema::dropIfExists('payments');
+        Schema::dropIfExists('commission_settings');
         Schema::dropIfExists('article_tags');
         Schema::dropIfExists('articles');
         Schema::dropIfExists('tags');
+        Schema::dropIfExists('personal_access_tokens');
         Schema::dropIfExists('failed_jobs');
         Schema::dropIfExists('job_batches');
         Schema::dropIfExists('jobs');
