@@ -336,6 +336,9 @@ class PerformanceTestSeeder extends Seeder
             $content = mb_substr($content, 0, $targetLength - 50) . "...";
         }
         
+        // 改行コードを実際の改行に変換
+        $content = str_replace('\\n', "\n", $content);
+        
         return $content;
     }
 
