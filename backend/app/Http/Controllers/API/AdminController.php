@@ -25,15 +25,19 @@ class AdminController extends Controller
         $perPage = $request->get('per_page', 15);
         $search = $request->get('search');
 
-        $query = User::query()
+        // N+1問題対策：関連データを事前読み込み
+        $query = User::with(['avatarFiles' => function ($query) {
+            $query->active();
+        }])
             ->withCount(['articles', 'payments'])
             ->orderBy('created_at', 'desc');
 
         if ($search) {
+            // SQLインジェクション対策：特殊文字をエスケープ
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('username', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                $q->where('name', 'like', '%'.addcslashes($search, '%_\\').'%')
+                    ->orWhere('username', 'like', '%'.addcslashes($search, '%_\\').'%')
+                    ->orWhere('email', 'like', '%'.addcslashes($search, '%_\\').'%');
             });
         }
 

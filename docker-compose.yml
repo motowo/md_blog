@@ -27,13 +27,13 @@ services:
       - backend_vendor:/var/www/html/vendor
     environment:
       - APP_ENV=local
-      - APP_DEBUG=true
-      - DB_CONNECTION=mysql
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=md_blog
-      - DB_USERNAME=root
-      - DB_PASSWORD=password
+      - APP_DEBUG=${APP_DEBUG:-false}
+      - DB_CONNECTION=${DB_CONNECTION:-mysql}
+      - DB_HOST=${DB_HOST:-mysql}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_DATABASE=${DB_DATABASE:-md_blog}
+      - DB_USERNAME=${DB_USERNAME:-root}
+      - DB_PASSWORD=${DB_PASSWORD}
     depends_on:
       - mysql
 
@@ -43,10 +43,10 @@ services:
     ports:
       - "3306:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_DATABASE=md_blog
-      - MYSQL_USER=dbuser
-      - MYSQL_PASSWORD=dbpassword
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-md_blog}
+      - MYSQL_USER=${MYSQL_USER:-dbuser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -62,11 +62,11 @@ services:
     ports:
       - "8080:80"
     environment:
-      - PMA_HOST=mysql
+      - PMA_HOST=${PMA_HOST:-mysql}
       - PMA_PORT=3306
-      - PMA_USER=root
-      - PMA_PASSWORD=password
-      - MYSQL_ROOT_PASSWORD=password
+      - PMA_USER=${PMA_USER:-root}
+      - PMA_PASSWORD=${PMA_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     depends_on:
       - mysql
 

@@ -2,6 +2,9 @@
 backend/vendor/
 backend/.env
 backend/.env.backup
+
+# Docker Compose環境変数（機密情報を含む）
+.env
 backend/.phpunit.result.cache
 backend/storage/*.key
 backend/storage/framework/cache/data/*

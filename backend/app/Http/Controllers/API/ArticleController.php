@@ -45,9 +45,10 @@ class ArticleController extends Controller
         // キーワード検索（タイトル・本文の全文検索）
         if ($request->has('search') && ! empty($request->search)) {
             $searchTerm = $request->search;
+            // SQLインジェクション対策：バインドパラメータを使用
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('title', 'LIKE', "%{$searchTerm}%")
-                    ->orWhere('content', 'LIKE', "%{$searchTerm}%");
+                $q->where('title', 'LIKE', '%'.addcslashes($searchTerm, '%_\\').'%')
+                    ->orWhere('content', 'LIKE', '%'.addcslashes($searchTerm, '%_\\').'%');
             });
         }
 

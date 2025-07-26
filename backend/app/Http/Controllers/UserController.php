@@ -151,16 +151,21 @@ class UserController extends Controller
      */
     public function publicUsersList(Request $request): JsonResponse
     {
-        $query = User::where('profile_public', true)
+        // N+1問題対策：関連データを事前読み込み
+        $query = User::with(['avatarFiles' => function ($query) {
+            $query->active();
+        }])
+            ->where('profile_public', true)
             ->where('role', 'author'); // 投稿者のみ表示
 
         // 検索クエリがある場合
         if ($request->has('search') && ! empty($request->search)) {
             $searchTerm = $request->search;
+            // SQLインジェクション対策：特殊文字をエスケープ
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'LIKE', "%{$searchTerm}%")
-                    ->orWhere('username', 'LIKE', "%{$searchTerm}%")
-                    ->orWhere('bio', 'LIKE', "%{$searchTerm}%");
+                $q->where('name', 'LIKE', '%'.addcslashes($searchTerm, '%_\\').'%')
+                    ->orWhere('username', 'LIKE', '%'.addcslashes($searchTerm, '%_\\').'%')
+                    ->orWhere('bio', 'LIKE', '%'.addcslashes($searchTerm, '%_\\').'%');
             });
         }
 
