@@ -268,3 +268,7 @@ docker-compose down -v
 7. CI/CDパイプラインで品質確認後マージ
 
 詳細な開発ガイドラインは `CLAUDE.md` を参照してください。
+
+## その他のドキュメント
+
+- [データベース永続化・マイグレーション・Seederガイド](docs/database-persistence.md) - データベース管理の完全ガイド

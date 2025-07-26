@@ -66,9 +66,162 @@ docker-compose exec backend php artisan db:seed
 2. 環境変数が正しく設定されているか確認
 3. ネットワーク接続を確認: `docker-compose exec backend ping mysql`
 
+## マイグレーションの追加手順
+
+### 1. 新しいマイグレーションファイルの作成
+```bash
+# モデルと一緒に作成
+docker-compose exec backend php artisan make:model ModelName -m
+
+# マイグレーションのみ作成
+docker-compose exec backend php artisan make:migration create_table_name_table
+
+# テーブル変更用マイグレーション
+docker-compose exec backend php artisan make:migration add_column_to_table_name_table
+```
+
+### 2. マイグレーションファイルの編集
+```php
+// database/migrations/xxxx_xx_xx_xxxxxx_create_table_name_table.php
+public function up()
+{
+    Schema::create('table_name', function (Blueprint $table) {
+        $table->id();
+        $table->string('column_name');
+        $table->timestamps();
+    });
+}
+
+public function down()
+{
+    Schema::dropIfExists('table_name');
+}
+```
+
+### 3. マイグレーションの実行
+```bash
+# 未実行のマイグレーションを実行
+docker-compose exec backend php artisan migrate
+
+# 特定のマイグレーションのロールバック
+docker-compose exec backend php artisan migrate:rollback --step=1
+
+# すべてをロールバックして再実行（開発環境のみ）
+docker-compose exec backend php artisan migrate:fresh
+```
+
+## Seederの追加手順
+
+### 1. Seederファイルの作成
+```bash
+docker-compose exec backend php artisan make:seeder UserSeeder
+```
+
+### 2. Seederの実装
+```php
+// database/seeders/UserSeeder.php
+public function run()
+{
+    User::factory()->count(10)->create();
+    
+    // または個別にデータを作成
+    User::create([
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'password' => Hash::make('password'),
+    ]);
+}
+```
+
+### 3. DatabaseSeederへの登録
+```php
+// database/seeders/DatabaseSeeder.php
+public function run()
+{
+    $this->call([
+        UserSeeder::class,
+        ArticleSeeder::class,
+        // 他のSeederをここに追加
+    ]);
+}
+```
+
+### 4. Seederの実行
+```bash
+# すべてのSeederを実行
+docker-compose exec backend php artisan db:seed
+
+# 特定のSeederのみ実行
+docker-compose exec backend php artisan db:seed --class=UserSeeder
+
+# マイグレーションとSeederを同時に実行（開発環境のみ）
+docker-compose exec backend php artisan migrate:fresh --seed
+```
+
+## マイグレーション・Seeder使用時の注意点
+
+### 開発環境での注意点
+1. **データの保護**
+   - `migrate:fresh`はすべてのテーブルを削除するため、重要なテストデータがある場合は事前にバックアップ
+   - 本番データのコピーを使用している場合は特に注意
+
+2. **チーム開発での同期**
+   - 新しいマイグレーションを追加したら、必ずチームメンバーに共有
+   - マイグレーションファイル名の日時は変更しない（実行順序が狂う）
+
+3. **Seederの冪等性**
+   - Seederは複数回実行されても問題ないように設計する
+   - 既存データのチェックを入れる
+   ```php
+   if (User::where('email', 'admin@example.com')->doesntExist()) {
+       User::create([...]);
+   }
+   ```
+
+### 本番環境での注意点
+1. **絶対にやってはいけないこと**
+   - `migrate:fresh`や`migrate:refresh`の使用
+   - `--force`オプションの無闇な使用
+   - 未テストのマイグレーションの実行
+
+2. **推奨される手順**
+   - ステージング環境で十分にテスト
+   - データベースのバックアップを取得
+   - メンテナンスモードに切り替え
+   ```bash
+   php artisan down
+   php artisan migrate
+   php artisan up
+   ```
+
+3. **ロールバック戦略**
+   - `down()`メソッドを必ず実装
+   - データの復元が可能か確認
+   - 外部キー制約の順序に注意
+
+### Docker環境特有の注意点
+1. **コンテナ再起動時の動作**
+   - `docker-entrypoint.sh`により、未実行のマイグレーションのみ自動実行
+   - Seederは初回のみ実行（既存データがある場合はスキップ）
+
+2. **開発データのリセット**
+   ```bash
+   # データベースを完全にリセットしたい場合
+   docker-compose down -v
+   docker-compose up -d
+   ```
+
+3. **マイグレーション状態の確認**
+   ```bash
+   # 現在のマイグレーション状態を確認
+   docker-compose exec backend php artisan migrate:status
+   ```
+
 ## 重要な注意事項
 
 - **本番環境では絶対に`--force`オプションを使用しない**
 - **定期的なバックアップを実施する**
 - **ボリュームの削除は慎重に行う**
 - **テスト環境と本番環境のデータベースを明確に分離する**
+- **マイグレーションは必ずバージョン管理に含める**
+- **Seederファイルには機密情報を含めない**
