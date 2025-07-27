@@ -120,8 +120,8 @@ export const PaidArticleAccessModal: React.FC<PaidArticleAccessModalProps> = ({
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                有料記事
+              <h2 className="text-xl font-bold text-blue-800 dark:text-blue-200">
+                💎 プレミアムコンテンツ購入
               </h2>
               <button
                 onClick={onClose}
@@ -150,8 +150,13 @@ export const PaidArticleAccessModal: React.FC<PaidArticleAccessModalProps> = ({
                 {article.title}
               </h3>
 
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {formatCurrency(article.price || 0)}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                <p className="text-sm text-blue-600 dark:text-blue-400 mb-1">
+                  価格
+                </p>
+                <div className="text-3xl font-bold text-blue-800 dark:text-blue-200">
+                  {formatCurrency(article.price || 0)}
+                </div>
               </div>
 
               {!isLoggedIn ? (

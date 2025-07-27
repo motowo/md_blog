@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { paymentApi, PaymentHistoryItem } from "../api/payment";
 import Button from "../components/ui/Button";
 import { Card, CardBody } from "../components/ui/Card";
@@ -8,6 +8,7 @@ import { getBadgeClass } from "../constants/badgeStyles";
 import { formatCurrency } from "../utils/currency";
 
 const PaymentHistoryPage: React.FC = () => {
+  const navigate = useNavigate();
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +46,7 @@ const PaymentHistoryPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusLabels = {
-      success: "成功",
+      completed: "成功",
       failed: "失敗",
       pending: "保留",
     };
@@ -56,6 +57,16 @@ const PaymentHistoryPage: React.FC = () => {
     return (
       <span className={getBadgeClass("paymentStatus", status)}>{label}</span>
     );
+  };
+
+  const handleArticleNavigation = (articleId: number) => {
+    try {
+      navigate(`/articles/${articleId}`);
+    } catch (error) {
+      console.error("記事への遷移に失敗しました:", error);
+      // フォールバック: 直接URLで遷移
+      window.location.href = `/articles/${articleId}`;
+    }
   };
 
   if (loading && payments.length === 0) {
@@ -105,37 +116,80 @@ const PaymentHistoryPage: React.FC = () => {
       ) : (
         <>
           {/* 購入履歴リスト */}
-          <div className="space-y-4 mb-8">
+          <div className="space-y-6 mb-8">
             {payments.map((payment) => (
-              <Card key={payment.id}>
-                <CardBody>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-2">
-                        <Link
-                          to={`/articles/${payment.article_id}`}
-                          className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
-                        >
+              <Card key={payment.id} className="overflow-hidden">
+                <CardBody className="p-0">
+                  <div className="p-6">
+                    {/* ヘッダー部分 */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
                           {payment.article.title}
-                        </Link>
+                        </h3>
+                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                          <span>購入日時: {formatDate(payment.paid_at)}</span>
+                          <span>•</span>
+                          <span>取引ID: {payment.transaction_id}</span>
+                          <span>•</span>
+                          <span className="text-lg font-bold text-gray-900 dark:text-white">
+                            {formatCurrency(payment.amount)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-4">
                         {getStatusBadge(payment.status)}
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        <span>購入日時: {formatDate(payment.paid_at)}</span>
-                        <span className="mx-2">・</span>
-                        <span>取引ID: {payment.transaction_id}</span>
-                      </div>
                     </div>
-                    <div className="text-right ml-4">
-                      <p className="text-lg font-bold text-gray-900 dark:text-white">
-                        {formatCurrency(payment.amount)}
-                      </p>
-                      {payment.status === "success" && (
-                        <Link to={`/articles/${payment.article_id}`}>
-                          <Button variant="outline" size="sm" className="mt-2">
-                            記事を読む
-                          </Button>
-                        </Link>
+
+                    {/* アクションボタン */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      {payment.status === "completed" && (
+                        <Button
+                          variant="primary"
+                          size="md"
+                          className="flex items-center justify-center gap-2"
+                          onClick={() =>
+                            handleArticleNavigation(payment.article_id)
+                          }
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                            />
+                          </svg>
+                          記事を読む
+                        </Button>
+                      )}
+
+                      {payment.status === "failed" && (
+                        <div className="flex-1 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-center">
+                          <p className="text-red-600 dark:text-red-400 font-medium mb-2">
+                            決済が失敗しました
+                          </p>
+                          <p className="text-sm text-red-500 dark:text-red-300">
+                            記事へのアクセスはできません
+                          </p>
+                        </div>
+                      )}
+
+                      {payment.status === "pending" && (
+                        <div className="flex-1 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
+                          <p className="text-yellow-600 dark:text-yellow-400 font-medium mb-2">
+                            決済処理中
+                          </p>
+                          <p className="text-sm text-yellow-500 dark:text-yellow-300">
+                            処理完了後に記事にアクセスできます
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
