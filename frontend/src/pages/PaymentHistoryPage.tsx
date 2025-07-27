@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { paymentApi, PaymentHistoryItem } from "../api/payment";
 import Button from "../components/ui/Button";
 import { Card, CardBody } from "../components/ui/Card";
@@ -8,6 +8,7 @@ import { getBadgeClass } from "../constants/badgeStyles";
 import { formatCurrency } from "../utils/currency";
 
 const PaymentHistoryPage: React.FC = () => {
+  const navigate = useNavigate();
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +20,16 @@ const PaymentHistoryPage: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await paymentApi.getPaymentHistory(currentPage);
+      console.log("購入履歴データ:", response.data);
+      response.data.forEach((payment, index) => {
+        console.log(`決済 ${index + 1}:`, {
+          id: payment.id,
+          article_id: payment.article_id,
+          article_title: payment.article.title,
+          status: payment.status,
+          paid_at: payment.paid_at,
+        });
+      });
       setPayments(response.data);
       setTotalPages(response.meta.last_page);
     } catch (err) {
@@ -56,6 +67,22 @@ const PaymentHistoryPage: React.FC = () => {
     return (
       <span className={getBadgeClass("paymentStatus", status)}>{label}</span>
     );
+  };
+
+  const handleArticleNavigation = (articleId: number, method: string) => {
+    console.log(`${method}でナビゲーション開始:`, { articleId });
+    try {
+      navigate(`/articles/${articleId}`);
+      console.log(`${method}でナビゲーション実行完了`);
+    } catch (error) {
+      console.error(`${method}でのナビゲーションエラー:`, error);
+    }
+  };
+
+  const handleDirectNavigation = (articleId: number) => {
+    console.log("window.location.hrefでのナビゲーション開始:", { articleId });
+    const targetUrl = `/articles/${articleId}`;
+    window.location.href = targetUrl;
   };
 
   if (loading && payments.length === 0) {
@@ -115,9 +142,30 @@ const PaymentHistoryPage: React.FC = () => {
                         <Link
                           to={`/articles/${payment.article_id}`}
                           className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 underline-offset-2 hover:underline"
+                          onClick={() => {
+                            console.log("記事リンククリック:", {
+                              articleId: payment.article_id,
+                              articleTitle: payment.article.title,
+                              linkTo: `/articles/${payment.article_id}`,
+                              paymentStatus: payment.status,
+                            });
+                          }}
                         >
                           {payment.article.title}
                         </Link>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleArticleNavigation(
+                              payment.article_id,
+                              "プログラマティック",
+                            );
+                          }}
+                          className="ml-2 text-xs text-blue-600 hover:text-blue-800 underline"
+                          title="プログラマティックナビゲーションで開く"
+                        >
+                          [navigate関数]
+                        </button>
                         <div className="ml-2">
                           {getStatusBadge(payment.status)}
                         </div>
@@ -133,11 +181,48 @@ const PaymentHistoryPage: React.FC = () => {
                         {formatCurrency(payment.amount)}
                       </p>
                       {payment.status === "completed" && (
-                        <Link to={`/articles/${payment.article_id}`}>
-                          <Button variant="outline" size="sm" className="mt-2">
-                            記事を読む
+                        <div className="space-y-1">
+                          <Link
+                            to={`/articles/${payment.article_id}`}
+                            onClick={() => {
+                              console.log("記事を読むボタンクリック:", {
+                                articleId: payment.article_id,
+                                linkTo: `/articles/${payment.article_id}`,
+                              });
+                            }}
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                            >
+                              記事を読む
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs"
+                            onClick={() =>
+                              handleArticleNavigation(
+                                payment.article_id,
+                                "ボタン",
+                              )
+                            }
+                          >
+                            [navigate関数]
                           </Button>
-                        </Link>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="w-full text-xs"
+                            onClick={() =>
+                              handleDirectNavigation(payment.article_id)
+                            }
+                          >
+                            [直接移動]
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>

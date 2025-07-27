@@ -321,6 +321,9 @@ export const ArticleDetailPage: React.FC = () => {
 
   useEffect(() => {
     const fetchArticle = async () => {
+      console.log("ArticleDetailPage: URLパラメータID:", id);
+      console.log("ArticleDetailPage: 現在のURL:", window.location.href);
+
       if (!id) {
         setError("記事IDが指定されていません");
         setLoading(false);
@@ -331,9 +334,11 @@ export const ArticleDetailPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
+        console.log("ArticleDetailPage: 記事取得開始 ID:", id);
         // 記事詳細を取得
         const response = await ArticleService.getArticle(parseInt(id));
         const articleData = response.data;
+        console.log("ArticleDetailPage: 記事取得成功:", articleData.title);
 
         setArticle(articleData);
 
