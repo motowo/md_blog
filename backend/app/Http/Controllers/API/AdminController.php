@@ -64,7 +64,7 @@ class AdminController extends Controller
                 $query->latest()->take(10);
             },
             'payments' => function ($query) {
-                $query->where('status', 'success')->latest()->take(10);
+                $query->where('status', 'completed')->latest()->take(10);
             },
         ]);
 
@@ -231,11 +231,11 @@ class AdminController extends Controller
         $totalUsers = User::count();
         $totalArticles = Article::count();
         $publishedArticles = Article::where('status', 'published')->count();
-        $totalPayments = Payment::where('status', 'success')->count();
+        $totalPayments = Payment::where('status', 'completed')->count();
 
         // 収益統計
-        $totalRevenue = Payment::where('status', 'success')->sum('amount');
-        $thisMonthRevenue = Payment::where('status', 'success')
+        $totalRevenue = Payment::where('status', 'completed')->sum('amount');
+        $thisMonthRevenue = Payment::where('status', 'completed')
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->sum('amount');
@@ -252,7 +252,7 @@ class AdminController extends Controller
 
         // 最近の活動（過去30日間のデータ）
         $recentPayments = Payment::with(['user', 'article'])
-            ->where('status', 'success')
+            ->where('status', 'completed')
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get();
@@ -263,7 +263,7 @@ class AdminController extends Controller
             DB::raw('MONTH(created_at) as month'),
             DB::raw('SUM(amount) as revenue')
         )
-            ->where('status', 'success')
+            ->where('status', 'completed')
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupBy('year', 'month')
             ->orderBy('year', 'desc')
@@ -301,7 +301,7 @@ class AdminController extends Controller
         $perPage = $request->get('per_page', 15);
 
         $query = Payment::with(['user', 'article'])
-            ->where('status', 'success')
+            ->where('status', 'completed')
             ->orderBy('created_at', 'desc');
 
         // 期間フィルター
