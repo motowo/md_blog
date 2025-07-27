@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
             PerformanceTestSeeder::class,
 
             // エラーケーステストデータ
-            ErrorCaseTestSeeder::class,
+            // ErrorCaseTestSeeder::class,
         ]);
     }
 }

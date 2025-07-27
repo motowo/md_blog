@@ -36,6 +36,10 @@ return new class extends Migration
             $table->index('is_active');
             $table->index('profile_public');
             $table->index('last_login_at');
+            
+            // パフォーマンス改善インデックス
+            $table->index(['role', 'profile_public'], 'users_role_public_idx');
+            $table->index(['role', 'is_active'], 'users_role_active_idx');
         });
 
         // Password reset tokens table
@@ -126,6 +130,9 @@ return new class extends Migration
 
             // インデックス
             $table->index('created_at');
+            
+            // パフォーマンス改善インデックス
+            $table->index('name', 'tags_name_idx');
         });
 
         // Articles table
@@ -146,6 +153,12 @@ return new class extends Migration
             $table->index(['status', 'is_paid']);
             $table->index('created_at');
             $table->index(['user_id', 'status']);
+            
+            // パフォーマンス改善インデックス
+            $table->fullText(['title', 'content'], 'articles_fulltext_search');
+            $table->index(['status', 'created_at'], 'articles_status_created_idx');
+            $table->index(['user_id', 'status', 'created_at'], 'articles_user_status_created_idx');
+            $table->index(['is_paid', 'status'], 'articles_paid_status_idx');
         });
 
         // Article tags table (pivot table)
@@ -159,6 +172,9 @@ return new class extends Migration
             // インデックス
             $table->index('tag_id');
             $table->index('created_at');
+            
+            // パフォーマンス改善インデックス
+            $table->index(['tag_id', 'created_at'], 'article_tags_tag_created_idx');
         });
 
         // Commission settings table
@@ -198,6 +214,11 @@ return new class extends Migration
             $table->index(['article_id', 'status']);
             $table->index(['user_id', 'paid_at']);
             $table->index('payout_completed_at');
+            
+            // パフォーマンス改善インデックス
+            $table->index(['status', 'created_at'], 'payments_status_created_idx');
+            $table->index(['status', 'payout_completed_at'], 'payments_status_payout_idx');
+            $table->index(['user_id', 'status', 'created_at'], 'payments_user_status_created_idx');
         });
 
         // Payouts table
