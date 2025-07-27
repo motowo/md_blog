@@ -14,7 +14,6 @@ import {
 } from "../utils/adminApi";
 import { getBadgeClass } from "../constants/badgeStyles";
 import { formatCurrency } from "../utils/currency";
-import { API_BASE_URL } from "../utils/api";
 
 const AdminArticles: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -260,9 +259,9 @@ const AdminArticles: React.FC = () => {
                           <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                             <div className="flex items-center space-x-2">
                               <div className="flex-shrink-0">
-                                {article.user.avatar_path ? (
+                                {article.user.avatar_url ? (
                                   <img
-                                    src={`${API_BASE_URL}${article.user.avatar_path}`}
+                                    src={article.user.avatar_url}
                                     alt={article.user.name}
                                     className="h-6 w-6 rounded-full object-cover"
                                   />

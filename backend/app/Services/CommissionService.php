@@ -46,7 +46,7 @@ class CommissionService
                     DB::raw('COUNT(payments.id) as payment_count')
                 )
                 ->join('articles', 'payments.article_id', '=', 'articles.id')
-                ->where('payments.status', 'success')
+                ->where('payments.status', 'completed')
                 ->whereRaw($sql, [$startUTC, $endUTC])
                 ->groupBy('articles.user_id')
                 ->get();

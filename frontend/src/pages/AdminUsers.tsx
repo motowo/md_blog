@@ -15,7 +15,6 @@ import {
   type AdminUser,
   type UsersResponse,
 } from "../utils/adminApi";
-import { API_BASE_URL } from "../utils/api";
 
 const AdminUsers: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -283,250 +282,258 @@ const AdminUsers: React.FC = () => {
                   : "投稿者が登録されていません"}
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <SortableTableHeader
-                        field="name"
-                        sortConfig={sortConfig}
-                        onSort={handleSort}
-                      >
-                        投稿者
-                      </SortableTableHeader>
-                      <SortableTableHeader
-                        field="is_active"
-                        sortConfig={sortConfig}
-                        onSort={handleSort}
-                      >
-                        状態
-                      </SortableTableHeader>
-                      <SortableTableHeader
-                        field="articles_count"
-                        sortConfig={sortConfig}
-                        onSort={handleSort}
-                      >
-                        記事数
-                      </SortableTableHeader>
-                      <SortableTableHeader
-                        field="payments_count"
-                        sortConfig={sortConfig}
-                        onSort={handleSort}
-                      >
-                        購入数
-                      </SortableTableHeader>
-                      <SortableTableHeader
-                        field="last_login_at"
-                        sortConfig={sortConfig}
-                        onSort={handleSort}
-                      >
-                        最終ログイン
-                      </SortableTableHeader>
-                      <SortableTableHeader
-                        field="created_at"
-                        sortConfig={sortConfig}
-                        onSort={handleSort}
-                      >
-                        登録日
-                      </SortableTableHeader>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white text-center">
-                        操作
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((targetUser) => (
-                      <tr
-                        key={targetUser.id}
-                        className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                          !targetUser.is_active
-                            ? "opacity-60 bg-gray-50 dark:bg-gray-800"
-                            : ""
-                        }`}
-                      >
-                        <td className="py-3 px-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0">
-                              {targetUser.avatar_path ? (
-                                <img
-                                  src={`${API_BASE_URL}${targetUser.avatar_path}`}
-                                  alt={targetUser.username}
-                                  className="h-10 w-10 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                  <svg
-                                    className="h-6 w-6 text-gray-400 dark:text-gray-500"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                  </svg>
+              <>
+                {/* 上部ページネーション */}
+                {totalPages > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    disabled={loading}
+                    className="mb-4"
+                  />
+                )}
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <SortableTableHeader
+                          field="name"
+                          sortConfig={sortConfig}
+                          onSort={handleSort}
+                        >
+                          投稿者
+                        </SortableTableHeader>
+                        <SortableTableHeader
+                          field="is_active"
+                          sortConfig={sortConfig}
+                          onSort={handleSort}
+                        >
+                          状態
+                        </SortableTableHeader>
+                        <SortableTableHeader
+                          field="articles_count"
+                          sortConfig={sortConfig}
+                          onSort={handleSort}
+                        >
+                          記事数
+                        </SortableTableHeader>
+                        <SortableTableHeader
+                          field="payments_count"
+                          sortConfig={sortConfig}
+                          onSort={handleSort}
+                        >
+                          購入数
+                        </SortableTableHeader>
+                        <SortableTableHeader
+                          field="last_login_at"
+                          sortConfig={sortConfig}
+                          onSort={handleSort}
+                        >
+                          最終ログイン
+                        </SortableTableHeader>
+                        <SortableTableHeader
+                          field="created_at"
+                          sortConfig={sortConfig}
+                          onSort={handleSort}
+                        >
+                          登録日
+                        </SortableTableHeader>
+                        <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-white text-center">
+                          操作
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((targetUser) => (
+                        <tr
+                          key={targetUser.id}
+                          className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                            !targetUser.is_active
+                              ? "opacity-60 bg-gray-50 dark:bg-gray-800"
+                              : ""
+                          }`}
+                        >
+                          <td className="py-3 px-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="flex-shrink-0">
+                                {targetUser.avatar_url ? (
+                                  <img
+                                    src={targetUser.avatar_url}
+                                    alt={targetUser.username}
+                                    className="h-10 w-10 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                    <svg
+                                      className="h-6 w-6 text-gray-400 dark:text-gray-500"
+                                      fill="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900 dark:text-white">
+                                  {targetUser.name || targetUser.username}
                                 </div>
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                  {targetUser.username}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-500">
+                                  {targetUser.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center space-x-2">
+                              <div
+                                className={`w-3 h-3 rounded-full ${
+                                  targetUser.is_active
+                                    ? "bg-green-400"
+                                    : "bg-red-400"
+                                }`}
+                              />
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {targetUser.is_active ? "有効" : "無効"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-gray-900 dark:text-white">
+                            {targetUser.articles_count}
+                          </td>
+                          <td className="py-3 px-4 text-gray-900 dark:text-white">
+                            {targetUser.payments_count}
+                          </td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                            {targetUser.last_login_at
+                              ? formatDate(targetUser.last_login_at)
+                              : "なし"}
+                          </td>
+                          <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                            {formatDate(targetUser.created_at)}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center justify-center space-x-2">
+                              <button
+                                onClick={() => handleViewUser(targetUser)}
+                                className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                                title="詳細を表示"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                  />
+                                </svg>
+                              </button>
+                              {targetUser.id !== user?.id && (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      handleToggleStatus(targetUser)
+                                    }
+                                    className="p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-900/20 rounded-md transition-colors"
+                                    title={
+                                      targetUser.is_active ? "無効化" : "有効化"
+                                    }
+                                  >
+                                    {targetUser.is_active ? (
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728"
+                                        />
+                                        <circle
+                                          cx="12"
+                                          cy="12"
+                                          r="9"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                        />
+                                      </svg>
+                                    ) : (
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                      </svg>
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteUser(targetUser)}
+                                    className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                                    title="削除"
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                  </button>
+                                </>
                               )}
                             </div>
-                            <div>
-                              <div className="font-medium text-gray-900 dark:text-white">
-                                {targetUser.name || targetUser.username}
-                              </div>
-                              <div className="text-sm text-gray-600 dark:text-gray-400">
-                                {targetUser.username}
-                              </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-500">
-                                {targetUser.email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center space-x-2">
-                            <div
-                              className={`w-3 h-3 rounded-full ${
-                                targetUser.is_active
-                                  ? "bg-green-400"
-                                  : "bg-red-400"
-                              }`}
-                            />
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                              {targetUser.is_active ? "有効" : "無効"}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-900 dark:text-white">
-                          {targetUser.articles_count}
-                        </td>
-                        <td className="py-3 px-4 text-gray-900 dark:text-white">
-                          {targetUser.payments_count}
-                        </td>
-                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-                          {targetUser.last_login_at
-                            ? formatDate(targetUser.last_login_at)
-                            : "なし"}
-                        </td>
-                        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
-                          {formatDate(targetUser.created_at)}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center justify-center space-x-2">
-                            <button
-                              onClick={() => handleViewUser(targetUser)}
-                              className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20 rounded-md transition-colors"
-                              title="詳細を表示"
-                            >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                />
-                              </svg>
-                            </button>
-                            {targetUser.id !== user?.id && (
-                              <>
-                                <button
-                                  onClick={() => handleToggleStatus(targetUser)}
-                                  className="p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-900/20 rounded-md transition-colors"
-                                  title={
-                                    targetUser.is_active ? "無効化" : "有効化"
-                                  }
-                                >
-                                  {targetUser.is_active ? (
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M18.364 5.636l-12.728 12.728m0-12.728l12.728 12.728"
-                                      />
-                                      <circle
-                                        cx="12"
-                                        cy="12"
-                                        r="9"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                      />
-                                    </svg>
-                                  ) : (
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                      />
-                                    </svg>
-                                  )}
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteUser(targetUser)}
-                                  className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                                  title="削除"
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                  </svg>
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 下部ページネーション */}
+                {totalPages > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    disabled={loading}
+                    className="mt-6"
+                  />
+                )}
+              </>
             )}
-
-            {/* 上部ページネーション */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              disabled={loading}
-              className="mb-4"
-            />
-
-            {/* 下部ページネーション */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              disabled={loading}
-              className="mt-6"
-            />
           </CardBody>
         </Card>
 
