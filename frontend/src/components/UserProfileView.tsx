@@ -415,7 +415,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </div>
                 ) : (
                   <AvatarUpload
-                    currentAvatar={user?.avatar_path}
+                    currentAvatar={user?.avatar_url}
                     onUpload={handleAvatarUpload}
                     onDelete={handleAvatarDelete}
                     loading={avatarUploading}
