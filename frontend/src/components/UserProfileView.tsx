@@ -788,38 +788,94 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {purchases.map((purchase) => (
                   <div
                     key={purchase.id}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow"
                   >
-                    <div className="flex justify-between items-start">
+                    {/* ヘッダー部分 */}
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
                           {purchase.article?.title || "記事タイトル不明"}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                          購入日: {formatDate(purchase.paid_at)}
-                        </p>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-lg font-semibold text-green-600 dark:text-green-400">
+                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                          <span>購入日時: {formatDate(purchase.paid_at)}</span>
+                          <span>•</span>
+                          <span>取引ID: {purchase.transaction_id}</span>
+                          <span>•</span>
+                          <span className="text-lg font-bold text-gray-900 dark:text-white">
                             {formatCurrency(purchase.amount)}
-                          </span>
-                          <span
-                            className={getBadgeClass(
-                              "paymentStatus",
-                              purchase.status,
-                            )}
-                          >
-                            {purchase.status === "success"
-                              ? "完了"
-                              : purchase.status === "failed"
-                                ? "失敗"
-                                : "処理中"}
                           </span>
                         </div>
                       </div>
+                      <div className="ml-4">
+                        <span
+                          className={getBadgeClass(
+                            "paymentStatus",
+                            purchase.status,
+                          )}
+                        >
+                          {purchase.status === "completed"
+                            ? "完了"
+                            : purchase.status === "failed"
+                              ? "失敗"
+                              : "処理中"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* アクションボタン */}
+                    <div className="flex">
+                      {purchase.status === "completed" &&
+                        purchase.article_id && (
+                          <Button
+                            variant="primary"
+                            size="md"
+                            className="flex items-center justify-center gap-2"
+                            onClick={() =>
+                              navigate(`/articles/${purchase.article_id}`)
+                            }
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                              />
+                            </svg>
+                            記事を読む
+                          </Button>
+                        )}
+
+                      {purchase.status === "failed" && (
+                        <div className="flex-1 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-center">
+                          <p className="text-red-600 dark:text-red-400 font-medium mb-2">
+                            決済が失敗しました
+                          </p>
+                          <p className="text-sm text-red-500 dark:text-red-300">
+                            記事へのアクセスはできません
+                          </p>
+                        </div>
+                      )}
+
+                      {purchase.status === "pending" && (
+                        <div className="flex-1 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-center">
+                          <p className="text-yellow-600 dark:text-yellow-400 font-medium mb-2">
+                            決済処理中
+                          </p>
+                          <p className="text-sm text-yellow-500 dark:text-yellow-300">
+                            処理完了後に記事にアクセスできます
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
