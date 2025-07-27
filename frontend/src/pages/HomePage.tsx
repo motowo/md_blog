@@ -30,7 +30,7 @@ const HomePage: React.FC = () => {
     try {
       const response = await paymentApi.getPaymentHistory(1);
       const purchasedIds = response.data
-        .filter((payment) => payment.status === "success")
+        .filter((payment) => payment.status === "completed")
         .map((payment) => payment.article_id);
       setPurchasedArticles(new Set(purchasedIds));
     } catch (error) {
@@ -38,11 +38,6 @@ const HomePage: React.FC = () => {
       setPurchasedArticles(new Set());
     }
   }, [user]);
-
-  // 購入成功時の処理
-  const handlePurchaseSuccess = (articleId: number) => {
-    setPurchasedArticles((prev) => new Set(prev).add(articleId));
-  };
 
   // 新着記事を取得
   useEffect(() => {
@@ -141,7 +136,6 @@ const HomePage: React.FC = () => {
                   key={article.id}
                   article={article}
                   isPurchased={isPurchased}
-                  onPurchaseSuccess={handlePurchaseSuccess}
                 />
               );
             })}
@@ -194,7 +188,6 @@ const HomePage: React.FC = () => {
                     key={article.id}
                     article={article}
                     isPurchased={isPurchased}
-                    onPurchaseSuccess={handlePurchaseSuccess}
                   />
                 );
               })}

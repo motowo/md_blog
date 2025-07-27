@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "./ui/Card";
-import { generatePreviewText, generateBlurredText } from "../utils/markdown";
+import { generatePreviewText } from "../utils/markdown";
 import { useAuth } from "../contexts/AuthContextDefinition";
-import { PaidArticleAccessModal } from "./PaidArticleAccessModal";
 import type { Article } from "../types/article";
 import { getBadgeClass } from "../constants/badgeStyles";
 import { formatCurrency } from "../utils/currency";
@@ -19,10 +18,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   article,
   showAuthor = true,
   isPurchased = false,
-  onPurchaseSuccess,
 }) => {
   const { user } = useAuth();
-  const [showModal, setShowModal] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ja-JP", {
@@ -39,26 +36,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     article.is_paid,
     isPurchased,
   );
-
-  // 有料記事で未購入の場合はぼかし効果を適用
-  const displayText =
-    article.is_paid && !isPurchased
-      ? generateBlurredText(previewText)
-      : previewText;
-
-  // 投稿者本人または管理者かチェック
-  const isOwnerOrAdmin =
-    user && (user.id === article.user_id || user.role === "admin");
-
-  // ナビゲーション可能かチェック
-  const canNavigate = !article.is_paid || isPurchased || isOwnerOrAdmin;
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (!canNavigate) {
-      e.preventDefault();
-      setShowModal(true);
-    }
-  };
 
   const cardContent = (
     <>
@@ -88,14 +65,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
       <CardBody>
         <div className="mb-4">
-          <p
-            className={`text-gray-600 dark:text-gray-400 text-sm ${
-              article.is_paid && !isPurchased
-                ? "filter blur-sm select-none"
-                : ""
-            }`}
-          >
-            {displayText}
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            {previewText}
           </p>
           {article.is_paid && !isPurchased && (
             <div className="mt-2 text-center">
@@ -190,38 +161,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   );
 
   return (
-    <>
-      <Card
-        className={`h-full transition-transform hover:scale-105 hover:shadow-lg ${
-          !canNavigate ? "cursor-pointer" : "cursor-pointer"
-        }`}
-      >
-        {canNavigate ? (
-          <Link to={`/articles/${article.id}`} className="block h-full">
-            {cardContent}
-          </Link>
-        ) : (
-          <div className="block h-full" onClick={handleClick}>
-            {cardContent}
-          </div>
-        )}
-      </Card>
-
-      {/* 有料記事アクセスモーダル */}
-      <PaidArticleAccessModal
-        article={article}
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-        }}
-        onPurchaseSuccess={() => {
-          setShowModal(false);
-          if (onPurchaseSuccess) {
-            onPurchaseSuccess(article.id);
-          }
-        }}
-        isLoggedIn={!!user}
-      />
-    </>
+    <Card className="h-full transition-transform hover:scale-105 hover:shadow-lg cursor-pointer">
+      <Link to={`/articles/${article.id}`} className="block h-full">
+        {cardContent}
+      </Link>
+    </Card>
   );
 };

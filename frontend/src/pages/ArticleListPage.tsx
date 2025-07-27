@@ -46,7 +46,7 @@ export const ArticleListPage: React.FC = () => {
     try {
       const response = await paymentApi.getPaymentHistory(1);
       const purchasedIds = response.data
-        .filter((payment) => payment.status === "success")
+        .filter((payment) => payment.status === "completed")
         .map((payment) => payment.article_id);
       setPurchasedArticles(new Set(purchasedIds));
     } catch (error) {
@@ -162,11 +162,6 @@ export const ArticleListPage: React.FC = () => {
     }
     newSearchParams.delete("page"); // ページをリセット
     setSearchParams(newSearchParams);
-  };
-
-  // 購入成功時の処理
-  const handlePurchaseSuccess = (articleId: number) => {
-    setPurchasedArticles((prev) => new Set(prev).add(articleId));
   };
 
   // 初期ロード時にタグ一覧を取得
@@ -342,7 +337,6 @@ export const ArticleListPage: React.FC = () => {
                   key={article.id}
                   article={article}
                   isPurchased={isPurchased}
-                  onPurchaseSuccess={handlePurchaseSuccess}
                 />
               );
             })}

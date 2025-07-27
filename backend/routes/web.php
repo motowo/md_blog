@@ -2,6 +2,4 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// API専用バックエンドのため、webルートは最小限に

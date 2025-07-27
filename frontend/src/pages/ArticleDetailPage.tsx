@@ -321,6 +321,9 @@ export const ArticleDetailPage: React.FC = () => {
 
   useEffect(() => {
     const fetchArticle = async () => {
+      console.log("ArticleDetailPage: URLパラメータID:", id);
+      console.log("ArticleDetailPage: 現在のURL:", window.location.href);
+
       if (!id) {
         setError("記事IDが指定されていません");
         setLoading(false);
@@ -331,9 +334,11 @@ export const ArticleDetailPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
+        console.log("ArticleDetailPage: 記事取得開始 ID:", id);
         // 記事詳細を取得
         const response = await ArticleService.getArticle(parseInt(id));
         const articleData = response.data;
+        console.log("ArticleDetailPage: 記事取得成功:", articleData.title);
 
         setArticle(articleData);
 
@@ -585,29 +590,43 @@ export const ArticleDetailPage: React.FC = () => {
 
             {/* 有料記事で未購入かつ投稿者以外の場合の購入促進 */}
             {article.is_paid && !isPurchased && (
-              <div className="mb-8 p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-                  この記事は有料コンテンツです
-                </h3>
-                <p className="text-yellow-700 dark:text-yellow-300 mb-4">
-                  続きを読むには記事を購入してください。
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-yellow-800 dark:text-yellow-200">
-                    {formatCurrency(article.price || 0)}
-                  </span>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      if (!user) {
-                        navigate("/login");
-                      } else {
-                        setShowPaymentModal(true);
-                      }
-                    }}
-                  >
-                    記事を購入する
-                  </Button>
+              <div className="mb-8 p-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-700 shadow-lg">
+                <div className="text-center">
+                  <div className="mb-4">
+                    <h3 className="text-xl font-bold text-blue-800 dark:text-blue-200 mb-2">
+                      💎 プレミアムコンテンツ
+                    </h3>
+                    <p className="text-blue-700 dark:text-blue-300 mb-4">
+                      この記事の続きを読むには購入が必要です
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <div className="text-center">
+                      <span className="block text-sm text-blue-600 dark:text-blue-400 mb-1">
+                        価格
+                      </span>
+                      <span className="text-3xl font-bold text-blue-800 dark:text-blue-200">
+                        {formatCurrency(article.price || 0)}
+                      </span>
+                    </div>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      onClick={() => {
+                        if (!user) {
+                          navigate("/login");
+                        } else {
+                          setShowPaymentModal(true);
+                        }
+                      }}
+                      className="px-8 py-3 text-lg font-semibold"
+                    >
+                      🛒 今すぐ購入する
+                    </Button>
+                  </div>
+                  <p className="mt-4 text-sm text-blue-600 dark:text-blue-400">
+                    購入後すぐに全文をお読みいただけます
+                  </p>
                 </div>
               </div>
             )}
@@ -797,29 +816,6 @@ export const ArticleDetailPage: React.FC = () => {
                     {contentToShow}
                   </code>
                 </pre>
-              </div>
-            )}
-
-            {/* 有料記事で未購入の場合の続きを読むボタン */}
-            {article.is_paid && !isPurchased && (
-              <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-                <div className="text-center">
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    続きを読むには記事を購入してください
-                  </p>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      if (!user) {
-                        navigate("/login");
-                      } else {
-                        setShowPaymentModal(true);
-                      }
-                    }}
-                  >
-                    {formatCurrency(article.price || 0)}で購入する
-                  </Button>
-                </div>
               </div>
             )}
           </CardBody>
