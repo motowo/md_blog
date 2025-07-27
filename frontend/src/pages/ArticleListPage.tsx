@@ -46,7 +46,7 @@ export const ArticleListPage: React.FC = () => {
     try {
       const response = await paymentApi.getPaymentHistory(1);
       const purchasedIds = response.data
-        .filter((payment) => payment.status === "success")
+        .filter((payment) => payment.status === "completed")
         .map((payment) => payment.article_id);
       setPurchasedArticles(new Set(purchasedIds));
     } catch (error) {

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "./ui/Card";
-import { generatePreviewText, generateBlurredText } from "../utils/markdown";
+import { generatePreviewText } from "../utils/markdown";
 import { useAuth } from "../contexts/AuthContextDefinition";
 import { PaidArticleAccessModal } from "./PaidArticleAccessModal";
 import type { Article } from "../types/article";
@@ -39,12 +39,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     article.is_paid,
     isPurchased,
   );
-
-  // 有料記事で未購入の場合はぼかし効果を適用
-  const displayText =
-    article.is_paid && !isPurchased
-      ? generateBlurredText(previewText)
-      : previewText;
 
   // 投稿者本人または管理者かチェック
   const isOwnerOrAdmin =
@@ -88,14 +82,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
       <CardBody>
         <div className="mb-4">
-          <p
-            className={`text-gray-600 dark:text-gray-400 text-sm ${
-              article.is_paid && !isPurchased
-                ? "filter blur-sm select-none"
-                : ""
-            }`}
-          >
-            {displayText}
+          <p className="text-gray-600 dark:text-gray-400 text-sm">
+            {previewText}
           </p>
           {article.is_paid && !isPurchased && (
             <div className="mt-2 text-center">

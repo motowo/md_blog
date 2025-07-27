@@ -45,7 +45,7 @@ const PaymentHistoryPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusLabels = {
-      success: "成功",
+      completed: "成功",
       failed: "失敗",
       pending: "保留",
     };
@@ -130,7 +130,7 @@ const PaymentHistoryPage: React.FC = () => {
                       <p className="text-lg font-bold text-gray-900 dark:text-white">
                         {formatCurrency(payment.amount)}
                       </p>
-                      {payment.status === "success" && (
+                      {payment.status === "completed" && (
                         <Link to={`/articles/${payment.article_id}`}>
                           <Button variant="outline" size="sm" className="mt-2">
                             記事を読む
