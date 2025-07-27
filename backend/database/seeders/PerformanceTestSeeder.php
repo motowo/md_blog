@@ -50,17 +50,32 @@ class PerformanceTestSeeder extends Seeder
         $userCount = (int) env('PERF_TEST_USERS', self::DEFAULT_USERS);
         $articleCount = (int) env('PERF_TEST_ARTICLES', self::DEFAULT_ARTICLES);
         $paymentCount = (int) env('PERF_TEST_PAYMENTS', self::DEFAULT_PAYMENTS);
+        
+        // バッチサイズの設定
+        $batchSize = (int) env('PERF_TEST_BATCH_SIZE', 200);
 
         $this->command->info('=== パフォーマンステストデータ生成開始 ===');
         $this->command->info("予定ユーザー数: {$userCount}");
         $this->command->info("予定記事数: {$articleCount}");
         $this->command->info("予定決済数: {$paymentCount}");
+        $this->command->info("バッチサイズ: {$batchSize}");
+        
+        $this->command->warn('大量データの生成には時間がかかります。');
+        $this->command->warn('分割実行する場合は、以下のコマンドを使用してください：');
+        $this->command->line('php artisan seed:performance users --batch-size=1000');
+        $this->command->line('php artisan seed:performance articles --batch-size=500');
+        $this->command->line('php artisan seed:performance payments --batch-size=1000');
+        $this->command->line('');
+        
+        if (!$this->command->confirm('既存のSeederで続行しますか？（大量データの場合は非推奨）')) {
+            $this->command->info('処理を中止しました。上記のコマンドを使用してください。');
+            return;
+        }
 
         // タグを取得
         $tags = Tag::all();
         if ($tags->isEmpty()) {
             $this->command->error('タグが見つかりません。先にTagSeederを実行してください。');
-
             return;
         }
 
