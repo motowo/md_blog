@@ -39,11 +39,6 @@ const HomePage: React.FC = () => {
     }
   }, [user]);
 
-  // 購入成功時の処理
-  const handlePurchaseSuccess = (articleId: number) => {
-    setPurchasedArticles((prev) => new Set(prev).add(articleId));
-  };
-
   // 新着記事を取得
   useEffect(() => {
     const fetchRecentArticles = async () => {
@@ -141,7 +136,6 @@ const HomePage: React.FC = () => {
                   key={article.id}
                   article={article}
                   isPurchased={isPurchased}
-                  onPurchaseSuccess={handlePurchaseSuccess}
                 />
               );
             })}
@@ -194,7 +188,6 @@ const HomePage: React.FC = () => {
                     key={article.id}
                     article={article}
                     isPurchased={isPurchased}
-                    onPurchaseSuccess={handlePurchaseSuccess}
                   />
                 );
               })}

@@ -164,11 +164,6 @@ export const ArticleListPage: React.FC = () => {
     setSearchParams(newSearchParams);
   };
 
-  // 購入成功時の処理
-  const handlePurchaseSuccess = (articleId: number) => {
-    setPurchasedArticles((prev) => new Set(prev).add(articleId));
-  };
-
   // 初期ロード時にタグ一覧を取得
   useEffect(() => {
     fetchTags();
@@ -342,7 +337,6 @@ export const ArticleListPage: React.FC = () => {
                   key={article.id}
                   article={article}
                   isPurchased={isPurchased}
-                  onPurchaseSuccess={handlePurchaseSuccess}
                 />
               );
             })}

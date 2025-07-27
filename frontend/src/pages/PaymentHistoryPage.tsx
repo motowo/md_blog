@@ -114,11 +114,13 @@ const PaymentHistoryPage: React.FC = () => {
                       <div className="flex items-center mb-2">
                         <Link
                           to={`/articles/${payment.article_id}`}
-                          className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
+                          className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 underline-offset-2 hover:underline"
                         >
                           {payment.article.title}
                         </Link>
-                        {getStatusBadge(payment.status)}
+                        <div className="ml-2">
+                          {getStatusBadge(payment.status)}
+                        </div>
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                         <span>購入日時: {formatDate(payment.paid_at)}</span>
