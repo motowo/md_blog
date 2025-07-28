@@ -3,11 +3,12 @@ import apiClient from "../utils/api";
 // 決済データの型定義
 export interface PaymentData {
   article_id: number;
-  card_number: string;
-  card_name: string;
-  expiry_month: string;
-  expiry_year: string;
+  card_number?: string;
+  card_name?: string;
+  expiry_month?: string;
+  expiry_year?: string;
   cvv: string;
+  use_saved_card?: boolean;
 }
 
 export interface PaymentResponse {

@@ -6,7 +6,6 @@ import Alert from "./Alert";
 import { Card, CardBody, CardHeader } from "./ui/Card";
 import { paymentApi } from "../api/payment";
 import { creditCardApi } from "../api/creditCard";
-import type { PaymentData } from "../api/payment";
 import type { CreditCardResponse } from "../api/creditCard";
 import type { Article } from "../types/article";
 import { formatCurrency } from "../utils/currency";
@@ -89,7 +88,7 @@ export const PaidArticleAccessModal: React.FC<PaidArticleAccessModalProps> = ({
         article_id: article.id,
         use_saved_card: true,
         cvv: cvv,
-      } as PaymentData & { use_saved_card: boolean });
+      });
 
       if (onPurchaseSuccess) {
         onPurchaseSuccess();

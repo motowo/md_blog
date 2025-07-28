@@ -361,7 +361,7 @@ class ArticleController extends Controller
             ->selectRaw('COALESCE(SUM(payments.amount), 0) as total_sales')
             ->leftJoin('payments', function ($join) use ($oneMonthAgo) {
                 $join->on('articles.id', '=', 'payments.article_id')
-                    ->where('payments.status', '=', 'success')
+                    ->where('payments.status', '=', 'completed')
                     ->where('payments.created_at', '>=', $oneMonthAgo);
             })
             ->where('articles.status', 'published')

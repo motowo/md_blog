@@ -150,7 +150,7 @@ class User extends Authenticatable
     {
         return $this->payments()
             ->where('article_id', $article->id)
-            ->where('status', 'success')
+            ->where('status', 'completed')
             ->exists();
     }
 
