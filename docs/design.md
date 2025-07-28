@@ -18,7 +18,7 @@ graph TB
     User[ユーザー] --> Frontend[フロントエンド<br/>React + TypeScript]
     Frontend --> API[バックエンドAPI<br/>Laravel 11]
     API --> DB[(データベース<br/>MySQL 8.0)]
-    API --> Cache[(キャッシュ<br/>Redis)]
+    API --> Cache[(キャッシュ<br/>MySQL Database)]
     Frontend --> Storage[ファイルストレージ<br/>ローカル/S3]
     
     subgraph "Docker環境"
@@ -42,7 +42,7 @@ graph TB
 | | Laravel | 11.x | Webフレームワーク |
 | | Laravel Sanctum | - | API認証 |
 | **データベース** | MySQL | 8.0.x | メインデータベース |
-| | Redis | 7.x | キャッシュ・セッション |
+| **キャッシュ** | MySQL Cache | 8.0.x | データベースキャッシュ（cacheテーブル） |
 | **インフラ** | Docker | - | コンテナ化 |
 | | Docker Compose | - | 開発環境 |
 | | Nginx | - | Webサーバー |
@@ -669,7 +669,7 @@ $articles = Article::where('id', '<', $lastId)
 
 ### キャッシュ戦略
 
-#### Redis活用
+#### MySQL Database Cache活用
 ```php
 // 記事一覧のキャッシュ
 $cacheKey = "articles:published:" . md5(json_encode($filters));
@@ -753,5 +753,309 @@ export default defineConfig({
   }
 });
 ```
+
+## 💰 ビジネスプロセス設計
+
+### 記事購入から振込までの完全フロー
+
+MD Blogプラットフォームの中核となるビジネスプロセスを、ジュニアエンジニアでも理解しやすいようにUML図で解説します。
+
+#### 📊 全体フロー概要
+
+```mermaid
+graph TD
+    START[ユーザーが有料記事を発見] --> CHECK{記事購入可能?}
+    CHECK -->|Yes| LOGIN{ログイン済み?}
+    CHECK -->|No| ERROR1[エラー: 無料記事/非公開記事]
+    
+    LOGIN -->|No| REDIRECT[ログインページへリダイレクト]
+    LOGIN -->|Yes| PURCHASED{購入済み?}
+    
+    PURCHASED -->|Yes| READ[記事全文表示]
+    PURCHASED -->|No| PAYMENT[決済処理]
+    
+    PAYMENT --> VALIDATION[カード情報検証]
+    VALIDATION --> MOCK[Mock決済実行]
+    MOCK -->|成功| SUCCESS[決済完了]
+    MOCK -->|失敗| FAIL[決済失敗]
+    
+    SUCCESS --> RECORD[Paymentレコード作成]
+    RECORD --> NOTIFICATION[購入完了通知]
+    NOTIFICATION --> READ
+    
+    FAIL --> RETRY{再試行?}
+    RETRY -->|Yes| PAYMENT
+    RETRY -->|No| CANCEL[購入キャンセル]
+    
+    %% 月次処理
+    SUCCESS -.-> MONTHLY[月次処理<br/>（バッチ処理）]
+    MONTHLY --> COMMISSION[手数料計算]
+    COMMISSION --> PAYOUT[振込データ生成]
+    PAYOUT --> CARRYOVER{1000円以上?}
+    CARRYOVER -->|Yes| TRANSFER[振込実行]
+    CARRYOVER -->|No| NEXT[翌月繰越]
+```
+
+#### 🔄 詳細シーケンス図：記事購入プロセス
+
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant UI as React UI
+    participant API as Laravel API
+    participant Auth as 認証システム
+    participant Payment as PaymentController
+    participant Article as ArticleModel
+    participant PaymentModel as PaymentModel
+    participant MockGW as Mock決済ゲートウェイ
+    participant DB as MySQL Database
+    participant Notification as 通知サービス
+
+    Note over User, Notification: 1. 記事購入開始
+    User->>UI: 有料記事の「購入」ボタンクリック
+    UI->>API: GET /api/articles/{id}
+    API->>Article: 記事詳細取得
+    Article-->>API: 記事データ（価格、公開状態等）
+    API-->>UI: 記事情報 + 購入状態
+    
+    alt 未ログイン
+        UI->>User: ログインページにリダイレクト
+    else ログイン済み
+        UI->>User: 決済モーダル表示
+    end
+    
+    Note over User, Notification: 2. 決済情報入力・送信
+    User->>UI: カード情報入力 + 購入確定
+    UI->>API: POST /api/payments
+    Note right of API: リクエスト内容:<br/>- article_id<br/>- card_number<br/>- cvv等
+    
+    Note over User, Notification: 3. バリデーション・重複チェック
+    API->>Auth: ユーザー認証確認
+    Auth-->>API: 認証済みユーザー情報
+    
+    API->>Article: 記事購入可能性チェック
+    Article-->>API: is_paid=true, status=published
+    
+    API->>PaymentModel: 重複購入チェック
+    PaymentModel-->>API: 既存購入レコードなし
+    
+    Note over User, Notification: 4. Mock決済処理
+    API->>MockGW: カード番号による決済判定
+    Note right of MockGW: Mock決済ルール:<br/>4242...=成功<br/>4000...0002=拒否<br/>4000...9995=残高不足
+    MockGW-->>API: 決済結果 + TransactionID
+    
+    Note over User, Notification: 5. 決済結果の処理
+    alt 決済成功
+        API->>DB: BEGIN TRANSACTION
+        API->>PaymentModel: Payment作成 (status=completed)
+        PaymentModel->>DB: INSERT INTO payments
+        API->>DB: COMMIT
+        
+        API->>Notification: 購入完了通知送信
+        Notification-->>User: メール/プッシュ通知
+        
+        API-->>UI: 成功レスポンス
+        UI->>User: 「購入完了」メッセージ表示
+        UI->>API: GET /api/articles/{id} (再取得)
+        API-->>UI: 記事全文 + has_purchased=true
+        UI->>User: 記事全文表示
+        
+    else 決済失敗
+        API->>PaymentModel: Payment作成 (status=failed)
+        PaymentModel->>DB: INSERT INTO payments
+        
+        API-->>UI: エラーレスポンス (400)
+        UI->>User: エラーメッセージ表示
+        Note right of User: 「カードが拒否されました」<br/>「残高不足です」等
+    end
+```
+
+#### 🏦 月次振込プロセス（バッチ処理）
+
+```mermaid
+sequenceDiagram
+    participant Cron as Cronジョブ
+    participant Command as RegeneratePayoutCommand
+    participant Service as CommissionService
+    participant Payment as PaymentModel
+    participant Commission as CommissionSetting
+    participant Payout as PayoutModel
+    participant TimeZone as TimeZoneHelper
+    participant Admin as 管理者
+    participant Bank as 銀行システム
+
+    Note over Cron, Bank: 月次振込処理（毎月1日実行）
+    
+    Cron->>Command: php artisan payout:regenerate
+    Command->>Service: processMonthlyPayouts(yearMonth)
+    
+    Note over Service, TimeZone: 1. 対象期間の決済データ抽出
+    Service->>TimeZone: JST基準の月範囲取得
+    TimeZone-->>Service: 開始UTC, 終了UTC
+    
+    Service->>Payment: 期間内の完了済み決済を著者別集計
+    Note right of Payment: SELECT articles.user_id,<br/>SUM(amount) as total<br/>FROM payments<br/>JOIN articles<br/>WHERE status='completed'<br/>AND paid_at BETWEEN ?
+    Payment-->>Service: 著者別売上データ
+    
+    Note over Service, Commission: 2. 手数料計算
+    loop 各著者ごと
+        Service->>Commission: 月末時点の手数料設定取得
+        Commission-->>Service: commission_rate (例: 10%)
+        
+        Service->>Service: 手数料計算実行
+        Note right of Service: gross_amount = 総売上<br/>commission = gross × rate<br/>net_amount = gross - commission
+    end
+    
+    Note over Service, Payout: 3. 振込データ生成・更新
+    loop 各著者ごと
+        Service->>Payout: 既存振込レコード確認
+        alt 新規著者
+            Service->>Payout: 新規Payoutレコード作成
+            Note right of Payout: status = 'unpaid'<br/>amount = net_amount
+        else 既存著者（未払い）
+            Service->>Payout: 既存レコード更新
+        else 既存著者（支払済み）
+            Service->>Service: スキップ
+        end
+    end
+    
+    Note over Command, Payout: 4. 1000円未満繰越ルール適用
+    Command->>Command: applyCarryOverRule()
+    
+    loop 各ユーザーの未払い分
+        Command->>Payout: 期間順に未払い振込取得
+        alt 累積1000円以上
+            Command->>Payout: status='unpaid'維持（振込対象）
+        else 1000円未満
+            Command->>Command: 次月へ繰越
+            Note right of Command: 繰越金額を次の振込に加算
+        end
+    end
+    
+    Command-->>Cron: 処理完了レポート
+    
+    Note over Admin, Bank: 5. 手動振込実行
+    Admin->>Payout: 振込対象データ確認
+    Admin->>Bank: 銀行振込実行
+    Bank-->>Admin: 振込完了通知
+    Admin->>Payout: status='paid'更新 + paid_at設定
+```
+
+#### 💾 データフロー図
+
+```mermaid
+graph TB
+    subgraph "決済時のデータフロー"
+        A[ユーザー決済] --> B[PaymentController]
+        B --> C{Mock決済判定}
+        C -->|成功| D[payments テーブル<br/>status=completed]
+        C -->|失敗| E[payments テーブル<br/>status=failed]
+        D --> F[購入完了通知]
+    end
+    
+    subgraph "月次集計のデータフロー"
+        G[月次バッチ] --> H[CommissionService]
+        H --> I[payments JOIN articles<br/>著者別集計]
+        I --> J[commission_settings<br/>手数料率取得]
+        J --> K[payouts テーブル<br/>振込データ生成]
+        K --> L{1000円判定}
+        L -->|以上| M[振込対象]
+        L -->|未満| N[翌月繰越]
+    end
+    
+    subgraph "振込実行のデータフロー"
+        O[管理者操作] --> P[振込対象確認]
+        P --> Q[銀行振込実行]
+        Q --> R[payouts テーブル<br/>status=paid更新]
+    end
+    
+    D -.-> I
+    style D fill:#e1f5fe
+    style K fill:#f3e5f5
+    style R fill:#e8f5e8
+```
+
+#### 📊 関連するデータベーステーブル
+
+##### payments テーブル
+```sql
+CREATE TABLE payments (
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT,              -- 購入者ID
+    article_id BIGINT,           -- 記事ID
+    amount DECIMAL(10,0),        -- 決済金額（円）
+    status ENUM('completed', 'failed', 'pending'), -- 決済状態
+    transaction_id VARCHAR(255), -- Mock決済のトランザクションID
+    paid_at TIMESTAMP,           -- 決済完了日時（UTC）
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    
+    INDEX idx_payments_user_status (user_id, status, created_at),
+    INDEX idx_payments_article_completed (article_id, status),
+    INDEX idx_payments_paid_at (paid_at)
+);
+```
+
+##### payouts テーブル
+```sql
+CREATE TABLE payouts (
+    id BIGINT PRIMARY KEY,
+    user_id BIGINT,              -- 著者ID（振込先）
+    period VARCHAR(7),           -- 対象期間（YYYY-MM）
+    gross_amount DECIMAL(10,2),  -- 総売上金額
+    commission_rate DECIMAL(5,2), -- 手数料率（%）
+    commission_amount DECIMAL(10,2), -- 手数料金額
+    amount DECIMAL(10,2),        -- 振込金額（総売上-手数料）
+    status ENUM('unpaid', 'paid', 'failed'), -- 振込状態
+    paid_at TIMESTAMP,           -- 振込実行日時
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    
+    UNIQUE KEY unique_user_period (user_id, period),
+    INDEX idx_payouts_status_period (status, period),
+    INDEX idx_payouts_user_unpaid (user_id, status)
+);
+```
+
+##### commission_settings テーブル
+```sql
+CREATE TABLE commission_settings (
+    id BIGINT PRIMARY KEY,
+    rate DECIMAL(5,2),           -- 手数料率（例: 10.00%）
+    effective_from DATE,         -- 適用開始日
+    effective_to DATE,           -- 適用終了日（NULL=無期限）
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    
+    INDEX idx_commission_effective (effective_from, effective_to)
+);
+```
+
+#### 🔍 重要なビジネスルール
+
+| ルール | 説明 | 実装箇所 |
+|--------|------|----------|
+| **二重購入防止** | 同一ユーザーが同一記事を複数回購入できない | PaymentController.php:53-62 |
+| **有料記事限定** | 無料記事は購入処理対象外 | PaymentController.php:40-44 |
+| **公開記事限定** | 非公開記事は購入不可 | PaymentController.php:46-50 |
+| **手数料計算** | 月末時点の手数料設定を使用 | CommissionService.php:67-72 |
+| **繰越ルール** | 1000円未満は翌月繰越 | RegeneratePayout.php:99-135 |
+| **JST基準集計** | 売上集計は日本時間基準 | TimeZoneHelper::monthRangeFilterSql |
+
+#### 💡 ジュニアエンジニア向け学習ポイント
+
+1. **トランザクション管理**: 決済処理では必ずDB::beginTransaction()を使用
+2. **バリデーション**: ビジネスルールの検証を決済処理前に実行
+3. **ステータス管理**: `payments.status`と`payouts.status`の状態遷移を理解
+4. **タイムゾーン**: 売上集計はJSTベース、DBはUTCで統一
+5. **エラーハンドリング**: Mock決済の失敗パターンも適切に記録
+6. **冪等性**: 月次処理は何度実行しても同じ結果になるよう設計
+
+#### 🎯 パフォーマンス考慮事項
+
+- **インデックス活用**: 期間検索用の複合インデックス設定
+- **バッチ処理**: 大量データはチャンク処理で分割
+- **キャッシュ戦略**: 手数料設定はキャッシュして高速化
+- **非同期処理**: 通知送信は Queue で非同期実行
 
 この技術設計書は、MD Blogプロジェクトの技術的基盤を定義し、開発チームが一貫したアーキテクチャとベストプラクティスに従って開発できるようにサポートします。
