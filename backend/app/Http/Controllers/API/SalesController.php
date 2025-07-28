@@ -50,9 +50,20 @@ class SalesController extends Controller
         ];
 
         if ($summary['total_sales'] > 0) {
-            // 平均手数料率を計算
-            $avgCommissionRate = 10; // デフォルト値
-            $summary['total_commission'] = $summary['total_sales'] * ($avgCommissionRate / 100);
+            // 実際の手数料額と純売上を計算（各支払いに設定された手数料率を適用）
+            $detailQuery = Payment::query();
+            $commonConditions($detailQuery);
+            
+            $totalCommission = 0;
+            $detailQuery->chunk(100, function ($payments) use (&$totalCommission) {
+                foreach ($payments as $payment) {
+                    $commissionSetting = CommissionSetting::getActiveSettingForDate($payment->paid_at);
+                    $commissionRate = $commissionSetting ? $commissionSetting->rate : 10;
+                    $totalCommission += $payment->amount * ($commissionRate / 100);
+                }
+            });
+            
+            $summary['total_commission'] = $totalCommission;
             $summary['total_net'] = $summary['total_sales'] - $summary['total_commission'];
         } else {
             $summary['total_commission'] = 0;

@@ -21,18 +21,6 @@ const SalesManagement: React.FC = () => {
       setSummary(response.summary);
       setCurrentPage(response.data.current_page);
       setLastPage(response.data.last_page);
-
-      // 最初の1行目をコンソールログに表示
-      if (response.data.data && response.data.data.length > 0) {
-        console.log(
-          `売上履歴の最初の1行目 (月フィルター: ${selectedMonth || "全期間"}):`,
-          response.data.data[0],
-        );
-      } else {
-        console.log(
-          `売上データが0件でした (月フィルター: ${selectedMonth || "全期間"})`,
-        );
-      }
     } catch (err) {
       setError("売上データの取得に失敗しました");
       console.error(err);
@@ -47,18 +35,30 @@ const SalesManagement: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     // バックエンドから既にJST形式で受け取るので、そのまま表示
-    // 秒まで含む形式で表示
-    return dateString;
+    // 2024-01-15 10:30:45 形式を 2024/01/15 10:30 形式に変換
+    if (!dateString) return "";
+
+    try {
+      const date = new Date(
+        dateString + (dateString.includes("T") ? "" : "T00:00:00"),
+      );
+      return date.toLocaleDateString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (error) {
+      console.warn("日時の変換に失敗:", dateString, error);
+      return dateString; // 変換に失敗した場合は元の文字列をそのまま返す
+    }
   };
 
   // 現在から過去12ヶ月の選択肢を生成
   const generateMonthOptions = () => {
     const options = [];
     const now = new Date();
-
-    console.log("現在の日時:", now);
-    console.log("現在の年:", now.getFullYear());
-    console.log("現在の月:", now.getMonth());
 
     for (let i = 0; i < 12; i++) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -72,8 +72,6 @@ const SalesManagement: React.FC = () => {
         year: "numeric",
         month: "long",
       });
-
-      console.log(`i=${i}: date=${date}, value=${value}, label=${label}`);
 
       options.push({ value, label });
     }
@@ -120,18 +118,6 @@ const SalesManagement: React.FC = () => {
               setSummary(response.summary);
               setCurrentPage(response.data.current_page);
               setLastPage(response.data.last_page);
-
-              // 最初の1行目をコンソールログに表示
-              if (response.data.data && response.data.data.length > 0) {
-                console.log(
-                  `売上履歴の最初の1行目 (月フィルター: ${e.target.value || "全期間"}):`,
-                  response.data.data[0],
-                );
-              } else {
-                console.log(
-                  `売上データが0件でした (月フィルター: ${e.target.value || "全期間"})`,
-                );
-              }
             } catch (err) {
               setError("売上データの取得に失敗しました");
               console.error(err);
@@ -268,7 +254,7 @@ const SalesManagement: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
-                        {formatCurrency(parseFloat(sale.amount))}
+                        {formatCurrency(sale.amount)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-red-600 dark:text-red-400">
                         -{formatCurrency(sale.commission_amount)}
