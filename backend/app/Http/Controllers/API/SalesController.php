@@ -25,7 +25,7 @@ class SalesController extends Controller
         $commonConditions = function ($query) use ($user, $request) {
             $query->join('articles', 'payments.article_id', '=', 'articles.id')
                 ->where('articles.user_id', $user->id)
-                ->where('payments.status', 'success');
+                ->where('payments.status', 'completed');
 
             if ($request->has('month')) {
                 $month = $request->input('month'); // YYYY-MM形式
@@ -120,7 +120,7 @@ class SalesController extends Controller
         $monthlySales = Payment::query()
             ->join('articles', 'payments.article_id', '=', 'articles.id')
             ->where('articles.user_id', $user->id)
-            ->where('payments.status', 'success')
+            ->where('payments.status', 'completed')
             ->selectRaw('
                 '.TimeZoneHelper::monthFilterSql('payments.paid_at').' as month,
                 COUNT(*) as sales_count,
