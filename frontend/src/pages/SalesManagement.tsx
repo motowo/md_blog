@@ -39,9 +39,14 @@ const SalesManagement: React.FC = () => {
     if (!dateString) return "";
 
     try {
-      const date = new Date(
-        dateString + (dateString.includes("T") ? "" : "T00:00:00"),
-      );
+      // "2025-07-27 18:47:55" 形式の文字列を適切にパース
+      const date = new Date(dateString.replace(" ", "T"));
+
+      if (isNaN(date.getTime())) {
+        console.warn("日時の変換に失敗:", dateString);
+        return dateString;
+      }
+
       return date.toLocaleDateString("ja-JP", {
         year: "numeric",
         month: "2-digit",
