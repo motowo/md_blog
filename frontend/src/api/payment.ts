@@ -14,7 +14,7 @@ export interface PaymentResponse {
   id: number;
   article_id: number;
   amount: number;
-  status: "success" | "failed" | "pending";
+  status: "completed" | "failed" | "pending";
   transaction_id: string;
   paid_at: string;
 }
@@ -72,7 +72,7 @@ export const paymentApi = {
 
       const purchasedArticle = response.data.data.find(
         (payment) =>
-          payment.article_id === articleId && payment.status === "success",
+          payment.article_id === articleId && payment.status === "completed",
       );
 
       return !!purchasedArticle;
