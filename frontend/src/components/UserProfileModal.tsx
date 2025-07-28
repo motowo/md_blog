@@ -258,9 +258,9 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                         </h3>
                         {isReadOnly ? (
                           <div className="flex justify-center">
-                            {user.avatar_path ? (
+                            {user.avatar_url ? (
                               <img
-                                src={`http://localhost:8000${user.avatar_path}`}
+                                src={user.avatar_url}
                                 alt={user.name}
                                 className="h-32 w-32 rounded-full object-cover"
                               />
@@ -278,7 +278,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                           </div>
                         ) : (
                           <AvatarUpload
-                            currentAvatar={user.avatar_path}
+                            currentAvatar={user.avatar_url}
                             onUpload={() => {}}
                             onDelete={() => {}}
                             loading={avatarUploading}
