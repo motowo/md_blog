@@ -836,9 +836,18 @@ export const ArticleDetailPage: React.FC = () => {
         article={article}
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        onPurchaseSuccess={() => {
+        onPurchaseSuccess={async () => {
           setShowPaymentModal(false);
           setIsPurchased(true);
+          // 購入後に記事情報を再取得して最新状態に更新
+          try {
+            const response = await ArticleService.getArticle(parseInt(id!));
+            if (response.has_purchased !== undefined) {
+              setIsPurchased(response.has_purchased);
+            }
+          } catch (error) {
+            console.error("Failed to refresh article after purchase:", error);
+          }
         }}
         isLoggedIn={!!user}
       />
