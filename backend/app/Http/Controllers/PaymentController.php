@@ -52,7 +52,7 @@ class PaymentController extends Controller
         // 既に購入済みかチェック
         $existingPayment = Payment::where('user_id', auth()->id())
             ->where('article_id', $article->id)
-            ->where('status', 'success')
+            ->where('status', 'completed')
             ->first();
 
         if ($existingPayment) {
@@ -86,7 +86,7 @@ class PaymentController extends Controller
                 'user_id' => auth()->id(),
                 'article_id' => $article->id,
                 'amount' => $article->price,
-                'status' => $cardResult === 'success' ? 'success' : 'failed',
+                'status' => $cardResult === 'success' ? 'completed' : 'failed',
                 'transaction_id' => $transactionId,
                 'paid_at' => $cardResult === 'success' ? now() : null,
             ]);
