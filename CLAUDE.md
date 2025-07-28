@@ -6,8 +6,8 @@
 - git ブランチを作成し開発をスタートします
 - 1タスクごとに実施してください
 - Docker Composeを使用した開発環境で作業します
-- 仕様は要件定義 (docs/requirements.md) 及び、 技術設計書(docs/design.md)に記載されています
-- 実装タスクはdocs/tasks.mdに記載されています
+- 仕様は要件定義 (docs/01_requirements.md) 及び、 技術設計書(docs/02_design.md)に記載されています
+- 実装タスクはdocs/04_tasks.mdに記載されています
 
 ### 新しい開発開始時の手順
 

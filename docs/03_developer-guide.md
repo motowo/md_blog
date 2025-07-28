@@ -187,7 +187,7 @@ docs/
 
 #### API定義
 - **backend/routes/api.php**: 全APIエンドポイント定義
-- **docs/api-reference.md**: API仕様書
+- **docs/06_api-reference.md**: API仕様書
 - **docs/swagger.yaml**: OpenAPI形式仕様
 
 #### テスト関連
