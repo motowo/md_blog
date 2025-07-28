@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const currentUser = await AuthService.getCurrentUser();
         console.log("✅ AuthContext.refreshUser: Got user", {
           username: currentUser.username,
-          hasAvatar: !!currentUser.avatar_path,
+          hasAvatar: !!currentUser.avatar_url,
         });
         setUser(currentUser);
         console.log("✅ AuthContext.refreshUser: User updated in context");
@@ -152,7 +152,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const updateUser = (newUser: User): void => {
     console.log("🔵 AuthContext.updateUser: Updating user directly", {
       username: newUser.username,
-      hasAvatar: !!newUser.avatar_path,
+      hasAvatar: !!newUser.avatar_url,
     });
     setUser(newUser);
     localStorage.setItem("user", JSON.stringify(newUser));

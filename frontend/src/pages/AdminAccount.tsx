@@ -64,12 +64,12 @@ const AdminAccount: React.FC = () => {
         await UserService.deleteAvatar(activeAvatar.id);
         alert("アバター画像を削除しました");
 
-        // ユーザー情報を更新（avatar_pathをクリア）
+        // ユーザー情報を更新（avatar_urlをクリア）
         if (user) {
           console.log(
             "🔵 AdminAccount.handleAvatarDelete: Updating user via AuthContext.updateUser",
           );
-          const updatedUser = { ...user, avatar_path: null };
+          const updatedUser = { ...user, avatar_url: null };
           updateUser(updatedUser);
           console.log(
             "✅ AdminAccount.handleAvatarDelete: User updated successfully without API calls",
