@@ -812,8 +812,8 @@ docker-compose logs -f --tail=100 frontend
 - [TailwindCSS Documentation](https://tailwindcss.com/docs)
 
 ### プロジェクト固有リソース
-- [API リファレンス](api-reference.md)
-- [データベース設計](design.md#データ設計)
-- [テストデータ仕様](test.md)
+- [API リファレンス](06_api-reference.md)
+- [データベース設計](02_design.md#データベース設計)
+- [テストデータ仕様](07_test.md)
 
 このガイドが開発の助けになることを願っています。不明な点があれば、プロジェクトメンバーまでお気軽にお尋ねください。
